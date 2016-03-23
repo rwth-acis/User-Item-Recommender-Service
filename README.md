@@ -1,5 +1,3 @@
-# recommender
-
 Time and community aware recommender system
 
 This is a recommender system implemented as a RESTful webservice.

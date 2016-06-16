@@ -51,9 +51,6 @@ import io.swagger.annotations.SwaggerDefinition;
 		))
 public class RecommenderMain extends Service {
 
-	// instantiate the logger class
-//	private final L2pLogger logger = L2pLogger.getInstance(StorageService.class.getName());
-
 	/*
 	 * Database configuration
 	 */
@@ -70,7 +67,6 @@ public class RecommenderMain extends Service {
 		setFieldValues();
 		// instantiate a database manager to handle database connection pooling and credentials
 		dbm = new DatabaseManager(jdbcDriverClassName, jdbcLogin, jdbcPass, jdbcUrl, jdbcSchema);
-//		dbm = new DatabaseManager();
 	}
 
 	// //////////////////////////////////////////////////////////////////////////////////////

@@ -115,7 +115,7 @@ public class NeighSVD {
 				
 				Vector qiAdd = new DenseVector(factorSize).zero();
 				for(VectorEntry ve : userRatings){
-					qiAdd
+//					qiAdd
 				}
 				qiAdd = pu.copy(); 
 				

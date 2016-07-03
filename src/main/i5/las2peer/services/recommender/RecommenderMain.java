@@ -73,6 +73,7 @@ public class RecommenderMain extends Service {
 	// Service methods.
 	// //////////////////////////////////////////////////////////////////////////////////////
 	
+	// Service methods for database initialization.
 	
 	/**
 	 * Method that initializes the database.
@@ -111,6 +112,8 @@ public class RecommenderMain extends Service {
 		return response;
 	}
 	
+	// Service methods for dataset import.
+
 	/**
 	 * Import dataset files
 	 * Imports a dataset file. So far the only supported dataset format is MovieLens. The movies.csv file must be imported first as
@@ -198,7 +201,36 @@ public class RecommenderMain extends Service {
 		return response;
 	}
 	
+	// Service methods for database initialization.
 
+	
+	/**
+	 * Description
+	 * ...
+	 * 
+	 * @param param1 Description of parameter param1
+	 * @param param2 Description of parameter param2
+	 * @return HTTP response with status code 200 for success and 500 for failure.
+	 */
+	@POST
+	@Path("/import/{dataset}/{file}")
+	@Consumes(MediaType.TEXT_CSV)
+	@Produces(MediaType.TEXT_PLAIN)
+	@ApiOperation(
+			value = "Import a dataset file",
+			notes = "Import a file from a dataset."
+					+ " Allowed datasets: MovieLens."
+					+ " Allowed files for the MovieLens dataset: movies, ratings, tags.")
+	@ApiResponses(value = {
+			@ApiResponse(code = HttpURLConnection.HTTP_OK, message = "Dataset inserted into database"),
+			@ApiResponse(code = HttpURLConnection.HTTP_INTERNAL_ERROR, message = "Could not read dataset or error accessing the database")
+	})
+	public HttpResponse myMethod(
+			@ApiParam(value="Short description", required=true) @ContentParam String param1,
+			@ApiParam(value="Short description", required=true) @PathParam("param2") String param2){
+		// ... code ...
+		 return null;
+	}
 	
 	// //////////////////////////////////////////////////////////////////////////////////////
 	// Methods required by the LAS2peer framework.

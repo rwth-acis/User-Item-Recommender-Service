@@ -3,7 +3,7 @@ package i5.las2peer.services.recommender.graphs;
 import java.io.*;
 import java.util.*;
 
-public class AccuracyEstimation {
+public class GFAccuracyEstimation {
 	public static void printAccuracy(GFSparseMatrix inputMatrix, double[][] kNNGraph, int k, int numVerification) {
 		// There are many duplicate calculations
 		// Thus we need to refine this source code if "numVerification" is a high value
@@ -27,7 +27,7 @@ public class AccuracyEstimation {
 		// 2) For each selected node, calculate the exact k-NN		
 		for (int i=0; i<numVerification; i++)
 			for (int j = 0; j < inputMatrix.numVector; j++)
-				SimilarityCalculation.calculateCosineSim(inputMatrix, exactkNNGraph, k, randomVector[i], j);
+				GFSimilarityCalculation.calculateCosineSim(inputMatrix, exactkNNGraph, k, randomVector[i], j);
 
 		// 3) Compare "exactkNNGraph" with "kNNGraph"
 		int totalCount = numVerification * k;

@@ -13,7 +13,7 @@ public class GreedyFiltering {
 			for (int j=0; j<i; j++) {				
 				int n = bucket.get(j);
 				
-				SimilarityCalculation.calculateCosineSim(inputMatrix, kNNGraph, k, m, n);				
+				GFSimilarityCalculation.calculateCosineSim(inputMatrix, kNNGraph, k, m, n);				
 				numCandidates++;			
 			}
 		}

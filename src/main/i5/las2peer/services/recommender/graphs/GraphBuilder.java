@@ -146,11 +146,10 @@ public class GraphBuilder {
 		}
 		
 		// Compute TF-IDF values and store in tfidfMatrix
-		int vectorCounter = 0;
-		int elementCounter = 0;
+		int elementIdx = 0;
 		
 		for (int vectorIdx = 0; vectorIdx < numVectors; vectorIdx++){
-			tfidfMatrix.setVectorIndex(vectorCounter, elementCounter); 
+			tfidfMatrix.setVectorIndex(vectorIdx, elementIdx); 
 			
 			SparseVector vector = getUserMatrix ? ratingsMatrix.row(vectorIdx) : ratingsMatrix.column(vectorIdx);
 			
@@ -169,15 +168,13 @@ public class GraphBuilder {
 				
 				double tfidfValue = (0.5 + (0.5 * value / maxValue)) * Math.log((double) numDimensions / (double) frequencies[dimension]);
 				
-				tfidfMatrix.setDimension(elementCounter, dimension);
-				tfidfMatrix.setValue(elementCounter, tfidfValue);
+				tfidfMatrix.setDimension(elementIdx, dimension);
+				tfidfMatrix.setValue(elementIdx, tfidfValue);
 				
-				elementCounter++;
+				elementIdx++;
 			}
 
-			vectorCounter++;
 		}
-		tfidfMatrix.setVectorIndex(vectorCounter, elementCounter);
 		
 		// Sort each vector by value as required by the knn graph construction algorithm
 		GFSorting.sortByValue(tfidfMatrix);

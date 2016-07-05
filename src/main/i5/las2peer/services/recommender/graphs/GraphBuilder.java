@@ -50,18 +50,31 @@ public class GraphBuilder {
 	
 	public void buildGraphs(){
 		Stopwatch sw = Stopwatch.createStarted();
+		
 		if(taggingsMatrix != null){
 			buildGraphsFromTaggings();
 		}
 		else if (ratingsMatrix != null){
 			buildGraphsFromRatings();
 		}
+		
 		sw.stop();
 		graphConstrTime = (int) sw.elapsed(TimeUnit.SECONDS);
 	}
 	
+	public SparseMatrix getUserAdjacencyMatrix(){
+		return userAdjMatrix;
+	}
+	
+	public SparseMatrix getItemAdjacencyMatrix(){
+		return itemAdjMatrix;
+	}
+	
+	public int getComputationTime(){
+		return graphConstrTime;
+	}
+	
 	private void buildGraphsFromRatings() {
-		
 		// Construct GFSparseMatrix from ratings matrix and compute TF-IDF value for each element
 		GFSparseMatrix userTfidfMatrix = getTfidfMatrix(true);
 		GFSparseMatrix itemTfidfMatrix = getTfidfMatrix(false);
@@ -186,16 +199,4 @@ public class GraphBuilder {
 		// TODO Auto-generated method stub
 	}
 
-	public SparseMatrix getUserAdjacencyMatrix(){
-		return userAdjMatrix;
-	}
-	
-	public SparseMatrix getItemAdjacencyMatrix(){
-		return itemAdjMatrix;
-	}
-	
-	public int getComputationTime(){
-		return graphConstrTime;
-	}
-	
 }

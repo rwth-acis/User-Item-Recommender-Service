@@ -36,7 +36,9 @@
     
     <property name="lib.junit" location="${lib}/junit-4.12.jar" />
     
-    
+	<!-- yFiles -->
+	<property name="lib.y" location="${lib}/y.jar" />
+	
     <!-- Ivy Installation (Tool to fetch Libraries) -->
     <property name="ivy.install.version" value="2.3.0" />
     <property name="ivy.jar.dir" value="${basedir}/etc/ivy" />
@@ -260,12 +262,12 @@ agent-user-${las2peer_user3.name}.xml;${las2peer_user3.password}
     <target name="clean" description="--> clean">
         <delete dir="${tmp}" />
         <delete dir="${export}" />
-        <delete dir="${lib}" />
         <delete dir="${service}" />
     </target>
     
     <target name="clean_all" depends="clean" description="--> clean all data">
         <delete dir="${log}"/>
+    	<delete dir="${lib}"/>
         <delete dir="node-storage"/>
     </target>
     

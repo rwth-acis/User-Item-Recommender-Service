@@ -1,10 +1,7 @@
 package i5.las2peer.services.recommender.graphs;
 
-import java.io.*;
-import java.util.*;
-
 public class GFSimilarityCalculation {
-	private static int temp = 0;	
+//	private static int temp = 0;	
 	
 	public static void calculateCosineSim(GFSparseMatrix inputMatrix, double[][] kNNGraph, int k, int m, int n) {
 		// Note: We can calculate cosine similarity faster than this version

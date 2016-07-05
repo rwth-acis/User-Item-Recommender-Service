@@ -1,6 +1,5 @@
 package i5.las2peer.services.recommender.graphs;
 
-import java.io.*;
 import java.util.*;
 
 public class GreedyFiltering {
@@ -26,6 +25,7 @@ public class GreedyFiltering {
 		// 1) Find candidate pairs
 		System.out.println("Finding candidate pairs...");
 				
+		@SuppressWarnings("unchecked")
 		Vector<Integer>[] bucket = new Vector[inputMatrix.numDimension];
 		for (int i=0; i<inputMatrix.numDimension; i++)
 			bucket[i] = new Vector<Integer>();

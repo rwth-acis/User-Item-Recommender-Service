@@ -25,7 +25,6 @@ import java.text.DecimalFormat;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 //import librec.util.FileIO.Converter;
 //import librec.util.FileIO.MapWriter;
@@ -43,7 +42,7 @@ import com.google.common.collect.Multiset;
  */
 public class Strings {
 	public static final String EMPTY = "";
-	private static String SEP = "\n";
+//	private static String SEP = "\n";
 	private static final DecimalFormat intFormatter = new DecimalFormat("#,###");
 
 	/**

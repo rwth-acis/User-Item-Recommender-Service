@@ -18,5 +18,6 @@
 		<dependency org="commons-dbutils" name="commons-dbutils" rev="1.6"/>
 		<dependency org="com.googlecode.matrix-toolkits-java" name="mtj" rev="1.0.4"/>
 		<dependency org="org.la4j" name="la4j" rev="0.4.9"/>
+		<dependency org="net.java.dev.jna" name="jna" rev="4.2.2"/>
     </dependencies>
 </ivy-module>

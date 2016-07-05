@@ -84,5 +84,6 @@
 	<classpathentry kind="lib" path="lib/slf4j-jdk14-1.7.5.jar"/>
 	<classpathentry kind="lib" path="lib/y.jar"/>
 	<classpathentry kind="lib" path="lib/la4j-0.4.9.jar"/>
+	<classpathentry kind="lib" path="lib/jna-4.2.2.jar"/>
 	<classpathentry kind="output" path="output"/>
 </classpath>

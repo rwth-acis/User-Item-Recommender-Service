@@ -17,7 +17,7 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Table;
 
-import librec.data.SparseMatrix;
+import i5.las2peer.services.recommender.librec.data.SparseMatrix;
 import y.base.Node;
 import y.base.NodeCursor;
 

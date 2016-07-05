@@ -10,8 +10,8 @@ import i5.las2peer.services.recommender.communities.webocd.Cover;
 import i5.las2peer.services.recommender.communities.webocd.CustomGraph;
 import i5.las2peer.services.recommender.communities.webocd.OcdAlgorithmException;
 import i5.las2peer.services.recommender.communities.webocd.RandomWalkLabelPropagationAlgorithm;
-import librec.data.MatrixEntry;
-import librec.data.SparseMatrix;
+import i5.las2peer.services.recommender.librec.data.MatrixEntry;
+import i5.las2peer.services.recommender.librec.data.SparseMatrix;
 import y.base.Edge;
 import y.base.Node;
 

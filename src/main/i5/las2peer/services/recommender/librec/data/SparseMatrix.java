@@ -16,7 +16,7 @@
 // along with LibRec. If not, see <http://www.gnu.org/licenses/>.
 //
 
-package librec.data;
+package i5.las2peer.services.recommender.librec.data;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -26,8 +26,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import librec.util.Stats;
-
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -36,6 +34,8 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Table;
 import com.google.common.collect.Table.Cell;
+
+import i5.las2peer.services.recommender.librec.util.Stats;
 
 /**
  * Data Structure: Sparse Matrix whose implementation is modified from M4J library

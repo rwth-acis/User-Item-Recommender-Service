@@ -16,7 +16,7 @@
 // along with LibRec. If not, see <http://www.gnu.org/licenses/>.
 //
 
-package librec.util;
+package i5.las2peer.services.recommender.librec.util;
 
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;

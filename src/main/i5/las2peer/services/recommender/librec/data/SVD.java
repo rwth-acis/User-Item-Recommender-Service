@@ -16,9 +16,9 @@
 // along with LibRec. If not, see <http://www.gnu.org/licenses/>.
 //
 
-package librec.data;
+package i5.las2peer.services.recommender.librec.data;
 
-import librec.util.Maths;
+import i5.las2peer.services.recommender.librec.util.Maths;
 
 /**
  * <strong>Singular Value Decomposition: adapted from the JAMA implementations</strong><br>

@@ -16,13 +16,13 @@
 // along with LibRec. If not, see <http://www.gnu.org/licenses/>.
 //
 
-package librec.data;
+package i5.las2peer.services.recommender.librec.data;
 
 import java.io.Serializable;
 
-import librec.util.Randoms;
-import librec.util.Stats;
-import librec.util.Strings;
+import i5.las2peer.services.recommender.librec.util.Randoms;
+import i5.las2peer.services.recommender.librec.util.Stats;
+import i5.las2peer.services.recommender.librec.util.Strings;
 
 /**
  * Data Structure: dense vector

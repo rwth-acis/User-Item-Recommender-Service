@@ -16,7 +16,7 @@
 // along with LibRec. If not, see <http://www.gnu.org/licenses/>.
 //
 
-package librec.data;
+package i5.las2peer.services.recommender.librec.data;
 
 /**
  * An entry of a vector.

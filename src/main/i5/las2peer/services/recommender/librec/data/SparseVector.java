@@ -16,7 +16,7 @@
 // along with LibRec. If not, see <http://www.gnu.org/licenses/>.
 //
 
-package librec.data;
+package i5.las2peer.services.recommender.librec.data;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -26,7 +26,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import librec.util.Stats;
+import i5.las2peer.services.recommender.librec.util.Stats;
 
 /**
  * Data Structure: Sparse Vector whose implementation is modified from M4J

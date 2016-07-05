@@ -2,10 +2,13 @@ package i5.las2peer.services.recommender.communities;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 
+import i5.las2peer.services.recommender.communities.igraph.Igraph;
 import i5.las2peer.services.recommender.communities.webocd.Cover;
 import i5.las2peer.services.recommender.communities.webocd.CustomGraph;
 import i5.las2peer.services.recommender.communities.webocd.OcdAlgorithmException;
@@ -30,6 +33,8 @@ public class CommunityDetector {
 	
 	// Walktrap parameters
 	private int walktrapSteps = 2;
+	
+	private int communityDetectionTime;
 	
 	
 	public enum CommunityDetectionAlgorithm{
@@ -56,20 +61,29 @@ public class CommunityDetector {
 	}
 	
 	public void detectCommunities() throws OcdAlgorithmException, InterruptedException{
+		Stopwatch sw = Stopwatch.createStarted();
+
 		switch(algorithm){
-		case WALKTRAP:
-			detectWalktrap();
-			break;
-		case DMID:
-			detectDmid();
-			break;
-		default:
-			break;
+			case WALKTRAP:
+				detectWalktrap();
+				break;
+			case DMID:
+				detectDmid();
+				break;
+			default:
+				break;
 		}
+		
+		sw.stop();
+		communityDetectionTime = (int) sw.elapsed(TimeUnit.SECONDS);
 	}
 	
-	public SparseMatrix getCommunityStructure(){
+	public SparseMatrix getMemberships(){
 		return membershipsMatrix;
+	}
+	
+	public int getComputationTime(){
+		return communityDetectionTime;
 	}
 	
 	private void detectDmid() throws OcdAlgorithmException, InterruptedException {
@@ -85,11 +99,6 @@ public class CommunityDetector {
 		Cover cover = dmidAlgo.detectOverlappingCommunities(customGraph);
 		
 		membershipsMatrix = cover.getMemberships();
-	}
-	
-	private void detectWalktrap() {
-		// TODO Auto-generated method stub
-		
 	}
 	
 	private CustomGraph getWebOCDCustomGraph() {
@@ -118,6 +127,14 @@ public class CommunityDetector {
 		}
 		
 		return customGraph;
+	}
+	
+	private void detectWalktrap() {
+		Igraph igraph = new Igraph();
+		
+		igraph.setGraph(graph);
+		igraph.detectCommunitiesWalktrap(walktrapSteps);
+		membershipsMatrix = igraph.getMemberships();
 	}
 	
 }

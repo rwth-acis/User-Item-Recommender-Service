@@ -12,6 +12,12 @@ import org.la4j.matrix.sparse.CCSMatrix;
 import org.la4j.vector.Vector;
 import org.la4j.vector.Vectors;
 
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Table;
+
+import librec.data.SparseMatrix;
 import y.base.Node;
 import y.base.NodeCursor;
 
@@ -143,21 +149,48 @@ public class Cover {
 	 * Entry (i,j) in row i and column j represents the membership degree / belonging factor of the node with index i
 	 * with respect to the community with index j. All entries are non-negative and the matrix is row-wise normalized according to the 1-norm.
 	 */
-	public Matrix getMemberships() {
-		Matrix memberships = new CCSMatrix(graph.nodeCount(), communities.size());
-		Map<CustomNode, Node> reverseNodeMap = new HashMap<CustomNode, Node>();
-		NodeCursor nodes = graph.nodes();
-		while(nodes.ok()) {
-			Node node = nodes.node();
-			reverseNodeMap.put(graph.getCustomNode(node), node);
-			nodes.next();
-		}
-		for(int i=0; i<communities.size(); i++) {
-			Community community = communities.get(i);
+//	public Matrix getMemberships() {
+//		Matrix memberships = new CCSMatrix(graph.nodeCount(), communities.size());
+//		Map<CustomNode, Node> reverseNodeMap = new HashMap<CustomNode, Node>();
+//		NodeCursor nodes = graph.nodes();
+//		while(nodes.ok()) {
+//			Node node = nodes.node();
+//			reverseNodeMap.put(graph.getCustomNode(node), node);
+//			nodes.next();
+//		}
+//		for(int i=0; i<communities.size(); i++) {
+//			Community community = communities.get(i);
+//			for(Map.Entry<Node, Double> membership : community.getMemberships().entrySet()) {
+//				memberships.set(membership.getKey().index(), i, membership.getValue());
+//			}
+//		}
+//		return memberships;
+//	}
+	
+	/**
+	 * Getter for the membership matrix representing the community structure. Returns a SparseMatrix for integration with LibRec.
+	 * @return The membership matrix. Contains one row for each node and one column for each community.
+	 * Entry (i,j) in row i and column j represents the membership degree / belonging factor of the node with index i
+	 * with respect to the community with index j. All entries are non-negative and the matrix is row-wise normalized according to the 1-norm.
+	 */
+	public SparseMatrix getMemberships() {
+		Table<Integer, Integer, Double> membershipsTable = HashBasedTable.create();
+		Multimap<Integer, Integer> membershipsColMap = HashMultimap.create();
+		
+		int numNodes = graph.nodeCount();
+		int numCommunities = communities.size();
+		
+		for(int communityIdx=0; communityIdx<numCommunities; communityIdx++) {
+			Community community = communities.get(communityIdx);
 			for(Map.Entry<Node, Double> membership : community.getMemberships().entrySet()) {
-				memberships.set(membership.getKey().index(), i, membership.getValue());
+				int nodeIdx = membership.getKey().index();
+				double membershipValue = membership.getValue();
+				membershipsTable.put(nodeIdx, communityIdx, membershipValue);
 			}
 		}
+
+		SparseMatrix memberships = new SparseMatrix(numNodes, numCommunities, membershipsTable, membershipsColMap);
+
 		return memberships;
 	}
 	

@@ -2,13 +2,11 @@ package i5.las2peer.services.recommender.communities.webocd;
 
 import java.awt.Color;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import org.la4j.matrix.Matrix;
-import org.la4j.matrix.sparse.CCSMatrix;
 import org.la4j.vector.Vector;
 import org.la4j.vector.Vectors;
 
@@ -19,7 +17,6 @@ import com.google.common.collect.Table;
 
 import i5.las2peer.services.recommender.librec.data.SparseMatrix;
 import y.base.Node;
-import y.base.NodeCursor;
 
 /**
  * Represents a cover, i.e. the result of an overlapping community detection algorithm holding the community structure and additional meta data.

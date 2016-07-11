@@ -25,14 +25,15 @@ import java.text.DecimalFormat;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-//import librec.util.FileIO.Converter;
-//import librec.util.FileIO.MapWriter;
+import java.util.Map.Entry;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multiset;
+
+import i5.las2peer.services.recommender.librec.util.FileIO.Converter;
+import i5.las2peer.services.recommender.librec.util.FileIO.MapWriter;
 
 /**
  * String Utility Class
@@ -42,7 +43,7 @@ import com.google.common.collect.Multiset;
  */
 public class Strings {
 	public static final String EMPTY = "";
-//	private static String SEP = "\n";
+	private static String SEP = "\n";
 	private static final DecimalFormat intFormatter = new DecimalFormat("#,###");
 
 	/**
@@ -322,21 +323,21 @@ public class Strings {
 		return Joiner.on(sep).skipNulls().join(ts);
 	}
 
-//	public static <T> String toString(Collection<T> ts, Converter<T, String> lw) throws Exception {
-//		if (ts == null || ts.size() == 0)
-//			return null;
-//		StringBuilder sb = new StringBuilder();
-//
-//		int N = ts.size(), i = 0;
-//		for (T t : ts) {
-//			String line = lw != null ? lw.transform(t) : t.toString();
-//
-//			sb.append(line);
-//			if (i++ < N - 1)
-//				sb.append(SEP);
-//		}
-//		return sb.toString();
-//	}
+	public static <T> String toString(Collection<T> ts, Converter<T, String> lw) throws Exception {
+		if (ts == null || ts.size() == 0)
+			return null;
+		StringBuilder sb = new StringBuilder();
+
+		int N = ts.size(), i = 0;
+		for (T t : ts) {
+			String line = lw != null ? lw.transform(t) : t.toString();
+
+			sb.append(line);
+			if (i++ < N - 1)
+				sb.append(SEP);
+		}
+		return sb.toString();
+	}
 
 	public static <K, V> String toString(Map<K, V> map) {
 		return toString(map, "\n");
@@ -346,23 +347,23 @@ public class Strings {
 		return Joiner.on(sep).withKeyValueSeparator(" -> ").join(map);
 	}
 
-//	public static <K, V> String toString(Map<K, V> map, MapWriter<K, V> mw) {
-//		StringBuilder sb = new StringBuilder();
-//
-//		int size = map.size();
-//		int count = 0;
-//		for (Entry<K, V> en : map.entrySet()) {
-//			K key = en.getKey();
-//			V val = en.getValue();
-//			String line = mw != null ? mw.processEntry(key, val) : key + " -> " + val;
-//
-//			sb.append(line);
-//			if (count++ < size - 1)
-//				sb.append(SEP);
-//		}
-//
-//		return sb.toString();
-//	}
+	public static <K, V> String toString(Map<K, V> map, MapWriter<K, V> mw) {
+		StringBuilder sb = new StringBuilder();
+
+		int size = map.size();
+		int count = 0;
+		for (Entry<K, V> en : map.entrySet()) {
+			K key = en.getKey();
+			V val = en.getValue();
+			String line = mw != null ? mw.processEntry(key, val) : key + " -> " + val;
+
+			sb.append(line);
+			if (count++ < size - 1)
+				sb.append(SEP);
+		}
+
+		return sb.toString();
+	}
 
 	public static String toString(double[] data) {
 		StringBuilder sb = new StringBuilder();

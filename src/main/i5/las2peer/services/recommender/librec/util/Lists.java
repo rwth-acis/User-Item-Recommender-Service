@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-//import librec.util.FileIO.Converter;
+import i5.las2peer.services.recommender.librec.util.FileIO.Converter;
 
 /**
  * This class is for the operations of arrays or collections
@@ -212,17 +212,17 @@ public class Lists {
 		return da;
 	}
 
-//	public static <K, T> List<T> toList(K[] data, Converter<K, T> c) throws Exception {
-//		if (data == null || data.length < 1)
-//			return null;
-//
-//		List<T> da = new ArrayList<>();
-//
-//		for (K d : data)
-//			da.add(c.transform(d));
-//
-//		return da;
-//	}
+	public static <K, T> List<T> toList(K[] data, Converter<K, T> c) throws Exception {
+		if (data == null || data.length < 1)
+			return null;
+
+		List<T> da = new ArrayList<>();
+
+		for (K d : data)
+			da.add(c.transform(d));
+
+		return da;
+	}
 
 	/**
 	 * Convert int array to int list

@@ -16,26 +16,31 @@
 // along with LibRec. If not, see <http://www.gnu.org/licenses/>.
 //
 
-package i5.las2peer.services.recommender.librec.data;
+package i5.las2peer.services.recommender.librec.baseline;
+
+import i5.las2peer.services.recommender.librec.data.SparseMatrix;
+import i5.las2peer.services.recommender.librec.intf.Recommender;
 
 /**
- * An entry of a vector.
+ * Baseline: predict by a constant rating
+ * 
+ * @author guoguibing
+ * 
  */
-public interface VectorEntry {
+public class ConstantGuess extends Recommender {
 
-	/**
-	 * Returns the current index
-	 */
-	int index();
+	private double constant;
 
-	/**
-	 * Returns the value at the current index
-	 */
-	double get();
+	public ConstantGuess(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
+		super(trainMatrix, testMatrix, fold);
 
-	/**
-	 * Sets the value at the current index
-	 */
-	void set(double value);
+		algoName = "Constant";
+		constant = (minRate + maxRate) / 2.0; // can also use given constant
+	}
+
+	@Override
+	protected double predict(int u, int j) {
+		return constant;
+	}
 
 }

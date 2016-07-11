@@ -16,26 +16,28 @@
 // along with LibRec. If not, see <http://www.gnu.org/licenses/>.
 //
 
-package i5.las2peer.services.recommender.librec.data;
+package i5.las2peer.services.recommender.librec.baseline;
+
+import i5.las2peer.services.recommender.librec.data.SparseMatrix;
+import i5.las2peer.services.recommender.librec.intf.Recommender;
 
 /**
- * An entry of a vector.
+ * Baseline: predict by average rating of all users
+ * 
+ * @author guoguibing
+ * 
  */
-public interface VectorEntry {
+public class GlobalAverage extends Recommender {
 
-	/**
-	 * Returns the current index
-	 */
-	int index();
+	public GlobalAverage(SparseMatrix rm, SparseMatrix tm, int fold) {
+		super(rm, tm, fold);
 
-	/**
-	 * Returns the value at the current index
-	 */
-	double get();
+		this.algoName = "GlobalAvg";
+	}
 
-	/**
-	 * Sets the value at the current index
-	 */
-	void set(double value);
+	@Override
+	protected double predict(int u, int j) {
+		return globalMean;
+	}
 
 }

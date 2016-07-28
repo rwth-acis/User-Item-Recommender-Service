@@ -38,11 +38,11 @@ public abstract class IterativeRecommender extends Recommender {
 
 	/************************************ Static parameters for all recommenders ***********************************/
 	// init, maximum learning rate, momentum
-	protected static float initLRate, maxLRate, momentum;
+	protected static float initLRate, initLRateN, maxLRate, momentum;
 	// line configer for regularization parameters
 	protected static LineConfiger regOptions;
 	// user, item and bias regularization
-	protected static float regU, regI, regB, reg;
+	protected static float regU, regI, regB, regN, reg;
 	// number of factors
 	protected static int numFactors;
 	// number of iterations
@@ -69,7 +69,7 @@ public abstract class IterativeRecommender extends Recommender {
 	protected DenseVector itemBias;
 
 	// adaptive learn rate
-	protected double lRate;
+	protected double lRate, lRateN;
 	// objective loss
 	protected double loss, last_loss = 0;
 	// predictive measure
@@ -88,6 +88,7 @@ public abstract class IterativeRecommender extends Recommender {
 			LineConfiger lc = cf.getParamOptions("learn.rate");
 			if (lc != null) {
 				initLRate = Float.parseFloat(lc.getMainParam());
+				initLRateN = lc.getFloat("-n", initLRate);
 				maxLRate = lc.getFloat("-max", -1);
 				isBoldDriver = lc.contains("-bold-driver");
 				decay = lc.getFloat("-decay", -1);
@@ -100,6 +101,7 @@ public abstract class IterativeRecommender extends Recommender {
 				regU = regOptions.getFloat("-u", reg);
 				regI = regOptions.getFloat("-i", reg);
 				regB = regOptions.getFloat("-b", reg);
+				regN = regOptions.getFloat("-n", reg);
 			}
 
 			numFactors = cf.getInt("num.factors", 10);
@@ -108,6 +110,7 @@ public abstract class IterativeRecommender extends Recommender {
 
 		// method-specific settings
 		lRate = initLRate;
+		lRateN = initLRateN;
 		initByNorm = true;
 	}
 
@@ -170,7 +173,7 @@ public abstract class IterativeRecommender extends Recommender {
 						(float) measure, earlyStopMeasure, delta_measure });
 			}
 
-			Logs.debug("{}{} iter {}: loss = {}, delta_loss = {}{}{}", new Object[] { algoName, foldInfo, iter,
+			Logs.info("{}{} iter {}: loss = {}, delta_loss = {}{}{}", new Object[] { algoName, foldInfo, iter,
 					(float) loss, delta_loss, earlyStop, learnRate });
 		}
 

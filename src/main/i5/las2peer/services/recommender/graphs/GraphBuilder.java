@@ -9,8 +9,6 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Table;
 
 import i5.las2peer.services.recommender.librec.data.SparseMatrix;
-import i5.las2peer.services.recommender.librec.data.SparseVector;
-import i5.las2peer.services.recommender.librec.data.VectorEntry;
 
 public class GraphBuilder {
 	private int k = 10;
@@ -76,8 +74,8 @@ public class GraphBuilder {
 	
 	private void buildGraphsFromRatings() {
 		// Construct GFSparseMatrix from ratings matrix and compute TF-IDF value for each element
-		GFSparseMatrix userTfidfMatrix = getTfidfMatrix(true);
-		GFSparseMatrix itemTfidfMatrix = getTfidfMatrix(false);
+		GFSparseMatrix userTfidfMatrix = GraphUtils.getTfidfMatrix(ratingsMatrix, true);
+		GFSparseMatrix itemTfidfMatrix = GraphUtils.getTfidfMatrix(ratingsMatrix, false);
 		
 		// Initialize the double[][] arrays that will hold the graphs returned by the Greedy Filtering K-NN algorithm.
 		// The structure of these arrays is as follows:
@@ -135,66 +133,6 @@ public class GraphBuilder {
 		
 	}
 	
-	private GFSparseMatrix getTfidfMatrix(boolean getUserMatrix) {
-		// In this method we regard the ratingsMatrix as a matrix of feature vectors.
-		// If we want to build the user TF-IDF matrix, then we consider each row of the ratings matrix as the
-		// respective user's feature vector and each item represents one dimension of the feature vectors.
-		// If we want to build the item TF-IDF matrix, then we consider each column of the ratings matrix as the
-		// respective item's feature vector and each user represents one dimension of the feature vectors.
-		
-		int numVectors = getUserMatrix ? numUsers : numItems;
-		int numDimensions = getUserMatrix ? numItems : numUsers;
-		int numElements = ratingsMatrix.size();
-		
-		GFSparseMatrix tfidfMatrix = new GFSparseMatrix(numVectors, numElements, numDimensions);
-
-		// Get value frequencies (number of vectors containing each value)
-		int[] frequencies = new int[numDimensions];
-		for (int vectorIdx = 0; vectorIdx < numVectors; vectorIdx++){
-			SparseVector vector = getUserMatrix ? ratingsMatrix.row(vectorIdx) : ratingsMatrix.column(vectorIdx);
-			for (VectorEntry element : vector){
-				int dimension = element.index();
-				frequencies[dimension]++;
-			}
-		}
-		
-		// Compute TF-IDF values and store in tfidfMatrix
-		int elementIdx = 0;
-		
-		for (int vectorIdx = 0; vectorIdx < numVectors; vectorIdx++){
-			tfidfMatrix.setVectorIndex(vectorIdx, elementIdx); 
-			
-			SparseVector vector = getUserMatrix ? ratingsMatrix.row(vectorIdx) : ratingsMatrix.column(vectorIdx);
-			
-			// Get max element value
-			double maxValue = 0;
-			for (VectorEntry element : vector){
-				double value = element.get();
-				if (maxValue < value){
-					maxValue = value;
-				}
-			}
-			
-			for (VectorEntry element : vector){
-				int dimension = element.index();
-				double value = element.get();
-				
-				double tfidfValue = (0.5 + (0.5 * value / maxValue)) * Math.log((double) numDimensions / (double) frequencies[dimension]);
-				
-				tfidfMatrix.setDimension(elementIdx, dimension);
-				tfidfMatrix.setValue(elementIdx, tfidfValue);
-				
-				elementIdx++;
-			}
-
-		}
-		
-		// Sort each vector by value as required by the knn graph construction algorithm
-		GFSorting.sortByValue(tfidfMatrix);
-
-		return tfidfMatrix;
-	}
-
 	private void buildGraphsFromTaggings() {
 		// TODO Auto-generated method stub
 	}

@@ -105,7 +105,7 @@ import i5.las2peer.services.recommender.librec.util.Systems;
  * @author guoguibing
  * 
  */
-public class LibRec {
+public class LibRecDemo {
 	// version: MAJOR version (significant changes), followed by MINOR version (small changes, bug fixes)
 	protected static String version = "1.4";
 	// output directory path
@@ -231,7 +231,7 @@ public class LibRec {
 	public static void main(String[] args) {
 
 		try {
-			new LibRec().execute(args);
+			new LibRecDemo().execute(args);
 
 		} catch (Exception e) {
 			// capture exception to log file

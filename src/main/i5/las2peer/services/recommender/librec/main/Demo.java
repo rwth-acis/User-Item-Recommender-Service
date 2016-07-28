@@ -192,7 +192,7 @@ public class Demo {
 				break;
 
 			// run algorithm
-			LibRec librec = new LibRec();
+			LibRecDemo librec = new LibRecDemo();
 			librec.setConfigFiles(configDirPath + configFile);
 			librec.execute(args);
 

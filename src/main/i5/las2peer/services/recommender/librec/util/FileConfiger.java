@@ -38,6 +38,10 @@ public class FileConfiger extends StringMap {
 		p.load(new FileInputStream(FileIO.getResource(conf)));
 	}
 
+	public FileConfiger(Properties prop) {
+		p = new Properties(prop);
+	}
+
 	public LineConfiger getParamOptions(String key) {
 		String lineOptions = getString(key);
 		return lineOptions == null ? null : new LineConfiger(lineOptions);

@@ -34,14 +34,21 @@ public class GreedyFiltering {
 		// For each vector, set the prefix of the vector to 1 
 		// (the prefix part contains the first element)		
 		for (int i=0; i<inputMatrix.numVector; i++) {
-			int vectorIndex = inputMatrix.vectorIndex[i];						
-			int dim = (int)Math.round(inputMatrix.dimension[vectorIndex]);
-			bucket[dim].add(i);
+			int vectorSize = inputMatrix.vectorIndex[i+1]-inputMatrix.vectorIndex[i];
+			if (vectorSize > 0){
+				int vectorIndex = inputMatrix.vectorIndex[i];
+				int dim = (int)Math.round(inputMatrix.dimension[vectorIndex]);
+				bucket[dim].add(i);
+			}
 		}
 	
 		// "todoVector" contains vectors that do not meet the stop condition
-		for (int i=0; i<inputMatrix.numVector; i++)
-			todoVector.add(i);				
+		// initially contains all non-empty vectors
+		for (int i=0; i<inputMatrix.numVector; i++){
+			int vectorSize = inputMatrix.vectorIndex[i+1]-inputMatrix.vectorIndex[i];
+			if (vectorSize > 0)
+				todoVector.add(i);				
+		}
 		int currentPrefix = 1;
 		int size;
 		do {

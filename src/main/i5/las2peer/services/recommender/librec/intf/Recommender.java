@@ -85,6 +85,8 @@ public abstract class Recommender implements Runnable {
 
 	// is ranking/rating prediction
 	public static boolean isRankingPred;
+	// is evaluation required
+	public static boolean isEvaluate = true;
 	// threshold to binarize ratings
 	public static float binThold;
 	// the ratio of validation data split from training data
@@ -194,7 +196,7 @@ public abstract class Recommender implements Runnable {
 
 		// config recommender
 		if (cf == null || rateMatrix == null) {
-			Logs.error("Recommender is not well configed");
+			Logs.error("Recommender is not well configured");
 			System.exit(-1);
 		}
 
@@ -342,29 +344,35 @@ public abstract class Recommender implements Runnable {
 		}
 
 		// evaluation
-		if (verbose)
-			Logs.debug("{}{} evaluate test data ... ", algoName, foldInfo);
-		// TODO: to predict ratings only, or do item recommendations only
-		measures = isRankingPred ? evalRankings() : evalRatings();
-		String measurements = getEvalInfo(measures);
-		sw.stop();
-		long testTime = sw.elapsed(TimeUnit.MILLISECONDS) - trainTime;
-
-		// collecting results
-		measures.put(Measure.TrainTime, (double) trainTime);
-		measures.put(Measure.TestTime, (double) testTime);
-
-		String evalInfo = algoName + foldInfo + ": " + measurements + "\tTime: "
-				+ Dates.parse(measures.get(Measure.TrainTime).longValue()) + ", "
-				+ Dates.parse(measures.get(Measure.TestTime).longValue());
-		if (!isRankingPred)
-			evalInfo += "\tView: " + view;
-
-		if (fold > 0)
-			Logs.debug(evalInfo);
+		if (isEvaluate){
+			if (verbose)
+				Logs.debug("{}{} evaluate test data ... ", algoName, foldInfo);
+			// TODO: to predict ratings only, or do item recommendations only
+			measures = isRankingPred ? evalRankings() : evalRatings();
+			String measurements = getEvalInfo(measures);
+			sw.stop();
+			long testTime = sw.elapsed(TimeUnit.MILLISECONDS) - trainTime;
+	
+			// collecting results
+			measures.put(Measure.TrainTime, (double) trainTime);
+			measures.put(Measure.TestTime, (double) testTime);
+	
+			String evalInfo = algoName + foldInfo + ": " + measurements + "\tTime: "
+					+ Dates.parse(measures.get(Measure.TrainTime).longValue()) + ", "
+					+ Dates.parse(measures.get(Measure.TestTime).longValue());
+			if (!isRankingPred)
+				evalInfo += "\tView: " + view;
+	
+			if (fold > 0)
+				Logs.info(evalInfo);
+		}
 
 		if (isSaveModel)
 			saveModel();
+	}
+	
+	public double getPrediction(int u, int j) throws Exception {
+		return predict(u, j);
 	}
 
 	private void printAlgoConfig() {
@@ -389,9 +397,9 @@ public abstract class Recommender implements Runnable {
 
 		if (!algoInfo.isEmpty()) {
 			if (!algoConfig.isEmpty())
-				Logs.debug("{}: [{}] = [{}]", algoName, algoConfig, algoInfo);
+				Logs.info("{}: [{}] = [{}]", algoName, algoConfig, algoInfo);
 			else
-				Logs.debug("{}: {}", algoName, algoInfo);
+				Logs.info("{}: {}", algoName, algoInfo);
 		}
 	}
 
@@ -434,7 +442,7 @@ public abstract class Recommender implements Runnable {
 	}
 
 	/**
-	 * initilize recommender model
+	 * initialize recommender model
 	 */
 	protected void initModel() throws Exception {
 	}
@@ -868,7 +876,7 @@ public abstract class Recommender implements Runnable {
 
 		return measures;
 	}
-
+	
 	/**
 	 * predict a specific rating for user u on item j. It is useful for evalution which requires predictions are
 	 * bounded.

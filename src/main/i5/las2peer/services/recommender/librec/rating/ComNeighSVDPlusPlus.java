@@ -172,22 +172,18 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 					sgd = euj * userMemberships.get(u, cu) - regB * bc;
 					userComBias.add(cu, lRate * sgd);
 					loss += regB * bc * bc;
-//					Logs.info("{}: Loss bcu {}", algoName, regB * bc * bc);
-
 				}
 				for (int ci : itemCommunities){
 					double bc = itemComBias.get(ci);
 					sgd = euj * itemMemberships.get(j, ci) - regB * bc;
 					itemComBias.add(ci, lRate * sgd);
 					loss += regB * bc * bc;
-//					Logs.info("{}: Loss bci {}", algoName, regB * bc * bc);
 				}
 
 				// update neighborhood model parameters
 				for (int k : items){	// to reduce complexity we can reduce the list of items to the nearest neighbors of item k
 					double ruk = trainMatrix.get(u, k);
-					double buk = globalMean + userBias.get(u) + itemBias.get(k);
-					
+					double buk = getBias(u,k, userCommunities, itemCommunitiesCache.get(k));
 					double wjk = W.get(j, k);
 					sgd = euj * (ruk - buk) / w - regN * wjk;
 					W.add(j, k, lRateN * sgd);
@@ -201,19 +197,10 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 				for (int k : userCommunitiesItems){
 					double djk = D.get(j, k);
 					double rcuk = userCommunitiesRatingsMatrix.get(u, k);
-					double bcuk = 0;
-					double membershipsSum = 0;
-					for (int c : userCommunities){
-						double communityRating = communityRatingsMatrix.get(c, k);
-						double userMembership = userMemberships.get(u, c);
-						bcuk += communityRating + userMembership;
-						membershipsSum += userMembership;
-					}
-					bcuk = bcuk / membershipsSum;
-					sgd = euj / cw * (rcuk - bcuk) - regN * djk;
+					double buk = getBias(u,k, userCommunities, itemCommunitiesCache.get(k));
+					sgd = euj / cw * (rcuk - buk) - regN * djk;
 					D.add(j, k , lRateN * sgd);
 					loss += regN * djk * djk;
-//					Logs.info("{}: Loss djk {}", algoName, regN * djk * djk);
 				}
 				
 				// update factor model parameters
@@ -233,67 +220,58 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 					sum_zs[f] = cw > 0 ? sum_f / cw : sum_f;
 				}
 				
-//				double[] sum_ocus = new double[numFactors];
-//				for (int f = 0; f < numFactors; f++) {
-//					for (int c : userCommunities)
-//						sum_ocus[f] += Ocu.get(c, f) * userMemberships.get(u, c);
-//				}
+				double[] sum_ocus = new double[numFactors];
+				for (int f = 0; f < numFactors; f++) {
+					for (int c : userCommunities)
+						sum_ocus[f] += Ocu.get(c, f) * userMemberships.get(u, c);
+				}
 				
-//				double[] sum_ocis = new double[numFactors];
-//				for (int f = 0; f < numFactors; f++) {
-//					for (int c : itemCommunities)
-//						sum_ocis[f] += Oci.get(c, f) * itemMemberships.get(j, c);
-//				}
+				double[] sum_ocis = new double[numFactors];
+				for (int f = 0; f < numFactors; f++) {
+					for (int c : itemCommunities)
+						sum_ocis[f] += Oci.get(c, f) * itemMemberships.get(j, c);
+				}
 				
 				for (int f = 0; f < numFactors; f++) {
 					double puf = P.get(u, f);
 					double qjf = Q.get(j, f);
 
-//					double sgd_u = euj * (qjf + sum_ocis[f]) - regU * puf;
-//					double sgd_j = euj * (puf + sum_ocus[f] + sum_ys[f] + sum_zs[f]) - regI * qjf;
-					double sgd_u = euj * (qjf) - regU * puf;
-					double sgd_j = euj * (puf + sum_ys[f] + sum_zs[f]) - regI * qjf;
+					double sgd_puf = euj * (qjf + sum_ocis[f]) - regU * puf;
+					double sgd_qjf = euj * (puf + sum_ocus[f] + sum_ys[f] + sum_zs[f]) - regI * qjf;
 
-					P.add(u, f, lRate * sgd_u);
-					Q.add(j, f, lRate * sgd_j);
+					P.add(u, f, lRate * sgd_puf);
+					Q.add(j, f, lRate * sgd_qjf);
 
 					loss += regU * puf * puf + regI * qjf * qjf;
 
 					for (int k : items) {
 						double ykf = Y.get(k, f);
-//						double delta_y = euj * (qjf + sum_ocis[f]) / w - regU * ykf;
-						double delta_y = euj * qjf / w - regU * ykf;
+						double delta_y = euj * (qjf + sum_ocis[f]) / w - regU * ykf;
 						Y.add(k, f, lRate * delta_y);
 						loss += regU * ykf * ykf;
 					}
 					
 					for (int k : userCommunitiesItems){
 						double zkf = Z.get(k, f);
-//						double delta_z = euj * (qjf + sum_ocis[f]) / cw - regU * zkf;
-						double delta_z = euj * qjf / cw - regU * zkf;
+						double delta_z = euj * (qjf + sum_ocis[f]) / cw - regU * zkf;
 						Z.add(k, f, lRate * delta_z);
 						loss += regU * zkf * zkf;
-//						Logs.info("{}: Loss zkf {}", algoName, regU * zkf * zkf);
 					}
 					
-//					for (int c : userCommunities){
-//						double ocuf = Ocu.get(c, f);
-//						double delta_ocu = euj * userMemberships.get(u, c) * (qjf + sum_ocis[f]) - regU + ocuf;
-//						Ocu.add(c, f, lRate * delta_ocu);
-//						loss += regU * ocuf * ocuf;
-////						Logs.info("{}: Loss ocu {}", algoName, regU * ocuf * ocuf);
-//					}
+					for (int c : userCommunities){
+						double ocuf = Ocu.get(c, f);
+						double delta_ocu = euj * userMemberships.get(u, c) * (qjf + sum_ocis[f]) - regU + ocuf;
+						Ocu.add(c, f, lRate * delta_ocu);
+						loss += regU * ocuf * ocuf;
+					}
 					
-//					for (int c : itemCommunities){
-//						double ocif = Oci.get(c, f);
-//						double delta_oci = euj * itemMemberships.get(j, c) * (puf + sum_ocus[f] + sum_ys[f] + sum_zs[f]) - regI + ocif;
-//						Oci.add(c, f, lRate * delta_oci);
-//						loss += regI * ocif * ocif;
-////						Logs.info("{}: Loss oci {}", algoName, regI * ocif * ocif);
-//					}
-
+					for (int c : itemCommunities){
+						double ocif = Oci.get(c, f);
+						double delta_oci = euj * itemMemberships.get(j, c) * (puf + sum_ocus[f] + sum_ys[f] + sum_zs[f]) - regI + ocif;
+						Oci.add(c, f, lRate * delta_oci);
+						loss += regI * ocif * ocif;
+					}
 				}
-
 			}
 
 			loss *= 0.5;
@@ -316,21 +294,11 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 		double cw = Math.sqrt(userCommunitiesItems.size());  // used for normalizing over the user's communities
 
 		// baseline prediction
-		double pred = globalMean + userBias.get(u) + itemBias.get(j);
-		for (int cu : userCommunities){
-			double bc = userComBias.get(cu);
-			double mw = userMemberships.get(u, cu);  // community membership weight
-			pred += bc * mw;
-		}
-		for (int ci : itemCommunities){
-			double bc = itemComBias.get(ci);
-			double mw = itemMemberships.get(j, ci);  // community membership weight
-			pred += bc * mw;
-		}
+		double pred = getBias(u, j, userCommunities, itemCommunities);
 		
 		// neighborhood model prediction
 		for (int k : items){
-			double buk = globalMean + userBias.get(u) + itemBias.get(k);
+			double buk = getBias(u,k, userCommunities, itemCommunitiesCache.get(k));
 			double ruk = trainMatrix.get(u, k);
 			double wjk = W.get(j, k);
 			double cjk = C.get(j, k);
@@ -338,35 +306,25 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 		}
 		for (int k : userCommunitiesItems){
 			double rcuk = userCommunitiesRatingsMatrix.get(u, k);
-			double bcuk = 0;
-			double membershipsSum = 0;
-			for (int c : userCommunities){
-				double communityRating = communityRatingsMatrix.get(c, k);
-				double userMembership = userMemberships.get(u, c);
-				bcuk += communityRating + userMembership;
-				membershipsSum += userMembership;
-			}
-			bcuk = bcuk / membershipsSum;
+			double buk = getBias(u,k, userCommunities, itemCommunitiesCache.get(k));
 			double djk = D.get(j, k);
-			pred += (rcuk - bcuk) * djk / cw;
+			pred += (rcuk - buk) * djk / cw;
 		}
 		
 		// factor model prediction
-		pred += DenseMatrix.rowMult(P, u, Q, j);
+		DenseVector userFactor = P.row(u);
+		DenseVector itemFactor = Q.row(j);
 		for (int k : items)
-			pred += DenseMatrix.rowMult(Y, k, Q, j) / w;
+			userFactor.add(Y.row(k).scale(1.0/w));
 		for (int k : userCommunitiesItems)
-			pred += DenseMatrix.rowMult(Z, k, Q, j) / cw;
-//		DenseVector ocu = new DenseVector(numFactors);
-//		for (int c : userCommunities){
-//			ocu.add(Ocu.row(c).scale(userMemberships.get(u, c)));
-//		}
-//		pred += ocu.inner(P.row(u));
-//		DenseVector oci = new DenseVector(numFactors);
-//		for (int c : itemCommunities){
-//			oci.add(Oci.row(c).scale(itemMemberships.get(j, c)));
-//		}
-//		pred += oci.inner(Q.row(j));
+			userFactor.add(Z.row(k).scale(1.0/cw));
+		for (int c : userCommunities){
+			userFactor.add(Ocu.row(c).scale(userMemberships.get(u, c)));
+		}
+		for (int c : itemCommunities){
+			itemFactor.add(Oci.row(c).scale(itemMemberships.get(j, c)));
+		}
+		pred += itemFactor.inner(userFactor);
 
 		return pred;
 	}
@@ -423,5 +381,20 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 		}
 		SparseMatrix matrix = new SparseMatrix(numUsers, numItems, userCommunitiesRatingsTable);
 		return matrix;
+	}
+	
+	private double getBias(int u, int j, List<Integer> userCommunities, List<Integer> itemCommunities){
+		double bias = globalMean + userBias.get(u) + itemBias.get(j);
+		for (int cu : userCommunities){
+			double bc = userComBias.get(cu);
+			double muc = userMemberships.get(u, cu);  // community membership weight
+			bias += bc * muc;
+		}
+		for (int ci : itemCommunities){
+			double bc = itemComBias.get(ci);
+			double mic = itemMemberships.get(j, ci);  // community membership weight
+			bias += bc * mic;
+		}
+		return bias;
 	}
 }

@@ -28,13 +28,14 @@ import i5.las2peer.services.recommender.communities.CommunityDetector;
 import i5.las2peer.services.recommender.communities.CommunityDetector.CommunityDetectionAlgorithm;
 import i5.las2peer.services.recommender.graphs.GraphBuilder;
 import i5.las2peer.services.recommender.graphs.GraphBuilder.SimilarityMeasure;
+import i5.las2peer.services.recommender.librec.data.Configuration;
 import i5.las2peer.services.recommender.librec.data.DenseMatrix;
 import i5.las2peer.services.recommender.librec.data.DenseVector;
 import i5.las2peer.services.recommender.librec.data.MatrixEntry;
 import i5.las2peer.services.recommender.librec.data.SparseMatrix;
 import i5.las2peer.services.recommender.librec.data.SparseVector;
 import i5.las2peer.services.recommender.librec.data.VectorEntry;
-import i5.las2peer.services.recommender.librec.util.Logs;
+import i5.las2peer.services.recommender.librec.util.Strings;
 
 /**
  * Community-aware model based on Yehuda Koren, Factorization Meets the Neighborhood: a Multifaceted Collaborative Filtering Model., KDD 2008.
@@ -42,6 +43,8 @@ import i5.las2peer.services.recommender.librec.util.Logs;
  * @author guoguibing, martin
  * 
  */
+@Configuration("factors, lRate, lRateN, lRateF, lRateC, lRateCN, lRateCF, maxLRate,"
+		+ " regB, regN, regU, regI, regC, regCN, regCF, iters, boldDriver")
 public class ComNeighSVDPlusPlus extends BiasedMF {
 
 	protected DenseMatrix Y, Z , Ocu, Oci;
@@ -396,5 +399,12 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 			bias += bc * mic;
 		}
 		return bias;
+	}
+	
+	@Override
+	public String toString() {
+		return Strings.toString(new Object[] { numFactors, initLRate, initLRateN, initLRateF,
+				initLRateC, initLRateCN, initLRateCF, maxLRate,
+				regB, regN, regU, regI, regC, regCN, regCF, numIters, isBoldDriver});
 	}
 }

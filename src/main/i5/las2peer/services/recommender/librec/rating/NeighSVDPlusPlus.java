@@ -20,9 +20,11 @@ package i5.las2peer.services.recommender.librec.rating;
 
 import java.util.List;
 
+import i5.las2peer.services.recommender.librec.data.Configuration;
 import i5.las2peer.services.recommender.librec.data.DenseMatrix;
 import i5.las2peer.services.recommender.librec.data.MatrixEntry;
 import i5.las2peer.services.recommender.librec.data.SparseMatrix;
+import i5.las2peer.services.recommender.librec.util.Strings;
 
 /**
  * Yehuda Koren, <strong>Factorization Meets the Neighborhood: a Multifaceted Collaborative Filtering Model.</strong>,
@@ -31,6 +33,7 @@ import i5.las2peer.services.recommender.librec.data.SparseMatrix;
  * @author guoguibing, martin
  * 
  */
+@Configuration("factors, lRate, lRateN, lRateF, maxLRate, regB, regN, regU, regI, iters, boldDriver")
 public class NeighSVDPlusPlus extends BiasedMF {
 
 	protected DenseMatrix Y;
@@ -173,4 +176,11 @@ public class NeighSVDPlusPlus extends BiasedMF {
 
 		return pred;
 	}
+	
+	@Override
+	public String toString() {
+		return Strings.toString(new Object[] { numFactors, initLRate, initLRateN, initLRateF, maxLRate, regB, regN, regU, regI, numIters,
+				isBoldDriver});
+	}
+
 }

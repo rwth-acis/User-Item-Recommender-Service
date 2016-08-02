@@ -112,47 +112,6 @@ public class LibRec {
 		}
 	}
 	
-//	public RatingEstimator(RatingEstimationAlgorithm algorithm){
-//		this.algorithm = algorithm;
-//		configuration = new Properties();
-//		
-//		switch(algorithm){
-//		case ItemKNN:
-//			configuration.setProperty("similarity", "PCC");
-//			configuration.setProperty("num.shrinkage", "30");
-//			configuration.setProperty("num.neighbors", "50");
-//			break;
-//		case WRMF:
-//			configuration.setProperty("num.factors", "10");
-//			configuration.setProperty("num.max.iter", "30");
-//			configuration.setProperty("learn.rate", "0.001 -max -1 -bold-driver");
-//			configuration.setProperty("reg.lambda", "0.1 -u 0.001 -i 0.001 -b 0.001");
-//			configuration.setProperty("WRMF", "-alpha 1");
-//			break;
-//		case SVDPlusPlus:
-//			configuration.setProperty("num.factors", "10");
-//			configuration.setProperty("num.max.iter", "30");
-//			configuration.setProperty("learn.rate", "0.01 -max -1 -bold-driver");
-//			configuration.setProperty("reg.lambda", "0.1 -u 0.1 -i 0.1 -b 0.1");
-//			break;
-//		case NeighSVDPlusPlus:
-//			break;
-//		case TimeSVDPlusPlus:
-//			configuration.setProperty("num.factors", "10");
-//			configuration.setProperty("num.max.iter", "30");
-//			configuration.setProperty("learn.rate", "0.01 -max -1 -bold-driver");
-//			configuration.setProperty("reg.lambda", "0.1 -u 0.1 -i 0.1 -b 0.1");
-//			configuration.setProperty("timeSVD++", "-beta 0.04 -bins 30");
-//			break;
-//		case TimeNeighSVDPlusPlus:
-//			break;
-//		case CommNeighSVDPlusPlus:
-//			break;
-//		case TimeCommNeighSVDPlusPlus:
-//			break;
-//		}
-//	}
-	
 	public void setParameter(String parameter, String value){
 		configuration.setProperty(parameter, value);
 	}

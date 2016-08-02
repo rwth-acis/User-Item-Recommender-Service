@@ -14,6 +14,7 @@ import i5.las2peer.services.recommender.librec.intf.Recommender;
 import i5.las2peer.services.recommender.librec.intf.Recommender.Measure;
 import i5.las2peer.services.recommender.librec.ranking.WRMF;
 import i5.las2peer.services.recommender.librec.rating.ComNeighSVDPlusPlus;
+import i5.las2peer.services.recommender.librec.rating.ComNeighSVDPlusPlus2;
 import i5.las2peer.services.recommender.librec.rating.ItemKNN;
 import i5.las2peer.services.recommender.librec.rating.NeighSVDPlusPlus;
 import i5.las2peer.services.recommender.librec.rating.SVDPlusPlus;
@@ -37,9 +38,10 @@ public class LibRec {
 	public enum DatasetType { FilmTrust, MovieLens, Netflix }
 	
 	public enum Algorithm {
-		ItemKNN, WRMF,
-		SVDPlusPlus, NeighSVDPlusPlus, TimeSVDPlusPlus, TimeNeighSVDPlusPlus,
-		ComNeighSVDPlusPlus, TimeComNeighSVDPlusPlus, ComNeighSVDPlusPlusFast, TimeComNeighSVDPlusPlusFast
+		ItemKNN, WRMF, SVDPlusPlus, TimeSVDPlusPlus,
+		NeighSVDPlusPlus, TimeNeighSVDPlusPlus,
+		ComNeighSVDPlusPlus, ComNeighSVDPlusPlus2, ComNeighSVDPlusPlusFast,
+		TimeComNeighSVDPlusPlus, TimeComNeighSVDPlusPlusFast
 	}
 	
 	public LibRec(){
@@ -90,6 +92,11 @@ public class LibRec {
 			break;
 		case "cnsvd":
 			this.algorithm = Algorithm.ComNeighSVDPlusPlus;
+			configuration.setProperty("learn.rate", "0.007 -n 0.007 -max -1 -bold-driver");
+			configuration.setProperty("reg.lambda", "0.05 -u 0.05 -i 0.05 -b 0.05 -n 0.15");
+			break;
+		case "cnsvd2":
+			this.algorithm = Algorithm.ComNeighSVDPlusPlus2;
 			configuration.setProperty("learn.rate", "0.007 -n 0.007 -max -1 -bold-driver");
 			configuration.setProperty("reg.lambda", "0.05 -u 0.05 -i 0.05 -b 0.05 -n 0.15");
 			break;
@@ -283,6 +290,8 @@ public class LibRec {
 			break;
 		case ComNeighSVDPlusPlus:
 			return new ComNeighSVDPlusPlus(trainMatrix, testMatrix, fold);
+		case ComNeighSVDPlusPlus2:
+			return new ComNeighSVDPlusPlus2(trainMatrix, testMatrix, fold);
 		case TimeComNeighSVDPlusPlus:
 			break;
 		default:

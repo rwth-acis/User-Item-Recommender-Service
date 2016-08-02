@@ -144,9 +144,10 @@ public class RecommenderCLI {
 					+ " -max -1 -bold-driver");
 		
 		String lambda="0.1";
+		String lambdaB="0.001";
+		String lambdaN="0.001";
 		String lambdaU="0.001";
 		String lambdaI="0.001";
-		String lambdaB="0.001";
 		String lambdaC="0.001";
 		String lambdaCN="0.001";
 		String lambdaCF="0.001";
@@ -155,16 +156,20 @@ public class RecommenderCLI {
 			lambda = options.get("--rec-lambda");
 			setLambda = true;
 		}
+		if(options.containsKey("--rec-lambda-b")){
+			lambdaB = options.get("--rec-lambda-b");
+			setLambda = true;
+		}
+		if(options.containsKey("--rec-lambda-n")){
+			lambdaN = options.get("--rec-lambda-n");
+			setLambda = true;
+		}
 		if(options.containsKey("--rec-lambda-u")){
 			lambdaU = options.get("--rec-lambda-u");
 			setLambda = true;
 		}
 		if(options.containsKey("--rec-lambda-i")){
 			lambdaI = options.get("--rec-lambda-i");
-			setLambda = true;
-		}
-		if(options.containsKey("--rec-lambda-b")){
-			lambdaB = options.get("--rec-lambda-b");
 			setLambda = true;
 		}
 		if(options.containsKey("--rec-lambda-c")){
@@ -181,9 +186,10 @@ public class RecommenderCLI {
 		}
 		if(setLambda){
 			librec.setParameter("reg.lambda", lambda
+					+ " -b " + lambdaB
+					+ " -n " + lambdaN
 					+ " -u " + lambdaU
 					+ " -i " + lambdaI
-					+ " -b " + lambdaB
 					+ " -c " + lambdaC
 					+ " -cn " + lambdaCN
 					+ " -cf " + lambdaCF);

@@ -164,15 +164,15 @@ public class ComNeighSVDPlusPlus2 extends BiasedMF {
 				
 				for (int cu : userCommunities){
 					double bc = userComBias.get(cu);
-					sgd = euj * userMemberships.get(u, cu) - regB * bc;
-					userComBias.add(cu, lRate * sgd);
-					loss += regB * bc * bc;
+					sgd = euj * userMemberships.get(u, cu) - regC * bc;
+					userComBias.add(cu, lRateC * sgd);
+					loss += regC * bc * bc;
 				}
 				for (int ci : itemCommunities){
 					double bc = itemComBias.get(ci);
-					sgd = euj * itemMemberships.get(j, ci) - regB * bc;
-					itemComBias.add(ci, lRate * sgd);
-					loss += regB * bc * bc;
+					sgd = euj * itemMemberships.get(j, ci) - regC * bc;
+					itemComBias.add(ci, lRateC * sgd);
+					loss += regC * bc * bc;
 				}
 
 				// update neighborhood model parameters
@@ -193,9 +193,9 @@ public class ComNeighSVDPlusPlus2 extends BiasedMF {
 					double djk = D.get(j, k);
 					double rcuk = userCommunitiesRatingsMatrix.get(u, k);
 					double buk = getBias(u,k, userCommunities, itemCommunitiesCache.get(k));
-					sgd = euj / cw * (rcuk - buk) - regN * djk;
-					D.add(j, k , lRateN * sgd);
-					loss += regN * djk * djk;
+					sgd = euj / cw * (rcuk - buk) - regCN * djk;
+					D.add(j, k , lRateCN * sgd);
+					loss += regCN * djk * djk;
 				}
 				
 				// update factor model parameters
@@ -236,9 +236,9 @@ public class ComNeighSVDPlusPlus2 extends BiasedMF {
 					
 					for (int k : userCommunitiesItems){
 						double zkf = Z.get(k, f);
-						double delta_z = euj * qjf / cw - regU * zkf;
-						Z.add(k, f, lRate * delta_z);
-						loss += regU * zkf * zkf;
+						double delta_z = euj * qjf / cw - regCF * zkf;
+						Z.add(k, f, lRateCF * delta_z);
+						loss += regCF * zkf * zkf;
 					}
 				}
 			}

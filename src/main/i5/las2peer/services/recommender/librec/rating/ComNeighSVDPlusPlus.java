@@ -169,15 +169,15 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 				
 				for (int cu : userCommunities){
 					double bc = userComBias.get(cu);
-					sgd = euj * userMemberships.get(u, cu) - regB * bc;
-					userComBias.add(cu, lRate * sgd);
-					loss += regB * bc * bc;
+					sgd = euj * userMemberships.get(u, cu) - regC * bc;
+					userComBias.add(cu, lRateC * sgd);
+					loss += regC * bc * bc;
 				}
 				for (int ci : itemCommunities){
 					double bc = itemComBias.get(ci);
-					sgd = euj * itemMemberships.get(j, ci) - regB * bc;
-					itemComBias.add(ci, lRate * sgd);
-					loss += regB * bc * bc;
+					sgd = euj * itemMemberships.get(j, ci) - regC * bc;
+					itemComBias.add(ci, lRateC * sgd);
+					loss += regC * bc * bc;
 				}
 
 				// update neighborhood model parameters
@@ -198,9 +198,9 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 					double djk = D.get(j, k);
 					double rcuk = userCommunitiesRatingsMatrix.get(u, k);
 					double buk = getBias(u,k, userCommunities, itemCommunitiesCache.get(k));
-					sgd = euj / cw * (rcuk - buk) - regN * djk;
-					D.add(j, k , lRateN * sgd);
-					loss += regN * djk * djk;
+					sgd = euj / cw * (rcuk - buk) - regCN * djk;
+					D.add(j, k , lRateCN * sgd);
+					loss += regCN * djk * djk;
 				}
 				
 				// update factor model parameters
@@ -253,23 +253,23 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 					
 					for (int k : userCommunitiesItems){
 						double zkf = Z.get(k, f);
-						double delta_z = euj * (qjf + sum_ocis[f]) / cw - regU * zkf;
-						Z.add(k, f, lRate * delta_z);
-						loss += regU * zkf * zkf;
+						double delta_z = euj * (qjf + sum_ocis[f]) / cw - regCF * zkf;
+						Z.add(k, f, lRateCF * delta_z);
+						loss += regCF * zkf * zkf;
 					}
 					
 					for (int c : userCommunities){
 						double ocuf = Ocu.get(c, f);
-						double delta_ocu = euj * userMemberships.get(u, c) * (qjf + sum_ocis[f]) - regU + ocuf;
-						Ocu.add(c, f, lRate * delta_ocu);
-						loss += regU * ocuf * ocuf;
+						double delta_ocu = euj * userMemberships.get(u, c) * (qjf + sum_ocis[f]) - regCF + ocuf;
+						Ocu.add(c, f, lRateCF * delta_ocu);
+						loss += regCF * ocuf * ocuf;
 					}
 					
 					for (int c : itemCommunities){
 						double ocif = Oci.get(c, f);
-						double delta_oci = euj * itemMemberships.get(j, c) * (puf + sum_ocus[f] + sum_ys[f] + sum_zs[f]) - regI + ocif;
-						Oci.add(c, f, lRate * delta_oci);
-						loss += regI * ocif * ocif;
+						double delta_oci = euj * itemMemberships.get(j, c) * (puf + sum_ocus[f] + sum_ys[f] + sum_zs[f]) - regCF + ocif;
+						Oci.add(c, f, lRateCF * delta_oci);
+						loss += regCF * ocif * ocif;
 					}
 				}
 			}

@@ -105,6 +105,10 @@ public class RecommenderCLI {
 		
 		String lRate = "0.01";
 		String lRateN = "0.01";
+		String lRateF = "0.01";
+		String lRateC = "0.01";
+		String lRateCN = "0.01";
+		String lRateCF = "0.01";
 		boolean setLRate = false;
 		if(options.containsKey("--rec-learn-rate")){
 			lRate = options.get("--rec-learn-rate");
@@ -114,34 +118,75 @@ public class RecommenderCLI {
 			lRateN = options.get("--rec-learn-rate-n");
 			setLRate = true;
 		}
+		if(options.containsKey("--rec-learn-rate-f")){
+			lRateF = options.get("--rec-learn-rate-f");
+			setLRate = true;
+		}
+		if(options.containsKey("--rec-learn-rate-c")){
+			lRateC = options.get("--rec-learn-rate-c");
+			setLRate = true;
+		}
+		if(options.containsKey("--rec-learn-rate-cn")){
+			lRateCN = options.get("--rec-learn-rate-cn");
+			setLRate = true;
+		}
+		if(options.containsKey("--rec-learn-rate-cf")){
+			lRateCF = options.get("--rec-learn-rate-cf");
+			setLRate = true;
+		}
 		if (setLRate)
-			librec.setParameter("learn.rate", lRate + " -n " + lRateN + " -max -1 -bold-driver");
+			librec.setParameter("learn.rate", lRate
+					+ " -n " + lRateN
+					+ " -f " + lRateF
+					+ " -c " + lRateC
+					+ " -cn " + lRateCN
+					+ " -cf " + lRateCF
+					+ " -max -1 -bold-driver");
 		
 		String lambda="0.1";
-		String lambdau="0.001";
-		String lambdai="0.001";
-		String lambdab="0.001";
+		String lambdaU="0.001";
+		String lambdaI="0.001";
+		String lambdaB="0.001";
+		String lambdaC="0.001";
+		String lambdaCN="0.001";
+		String lambdaCF="0.001";
 		boolean setLambda = false;
 		if(options.containsKey("--rec-lambda")){
 			lambda = options.get("--rec-lambda");
 			setLambda = true;
 		}
 		if(options.containsKey("--rec-lambda-u")){
-			lambdau = options.get("--rec-lambda-u");
+			lambdaU = options.get("--rec-lambda-u");
 			setLambda = true;
 		}
-		
 		if(options.containsKey("--rec-lambda-i")){
-			lambdai = options.get("--rec-lambda-i");
+			lambdaI = options.get("--rec-lambda-i");
 			setLambda = true;
 		}
-		
 		if(options.containsKey("--rec-lambda-b")){
-			lambdab = options.get("--rec-lambda-b");
+			lambdaB = options.get("--rec-lambda-b");
+			setLambda = true;
+		}
+		if(options.containsKey("--rec-lambda-c")){
+			lambdaC = options.get("--rec-lambda-c");
+			setLambda = true;
+		}
+		if(options.containsKey("--rec-lambda-cn")){
+			lambdaCN = options.get("--rec-lambda-cn");
+			setLambda = true;
+		}
+		if(options.containsKey("--rec-lambda-cf")){
+			lambdaCF = options.get("--rec-lambda-cf");
 			setLambda = true;
 		}
 		if(setLambda){
-			librec.setParameter("reg.lambda", lambda + " -u " + lambdau + " -i " + lambdai + " -b " + lambdab);
+			librec.setParameter("reg.lambda", lambda
+					+ " -u " + lambdaU
+					+ " -i " + lambdaI
+					+ " -b " + lambdaB
+					+ " -c " + lambdaC
+					+ " -cn " + lambdaCN
+					+ " -cf " + lambdaCF);
 		}
 		
 		String beta="0.04";

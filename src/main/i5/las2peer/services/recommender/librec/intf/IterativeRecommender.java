@@ -38,11 +38,11 @@ public abstract class IterativeRecommender extends Recommender {
 
 	/************************************ Static parameters for all recommenders ***********************************/
 	// init, maximum learning rate, momentum
-	protected static float initLRate, initLRateN, maxLRate, momentum;
+	protected static float initLRate, initLRateN, initLRateF, initLRateC, initLRateCN, initLRateCF, maxLRate, momentum;
 	// line configer for regularization parameters
 	protected static LineConfiger regOptions;
 	// user, item and bias regularization
-	protected static float regU, regI, regB, regN, reg;
+	protected static float reg, regB, regU, regI, regN, regC, regCN, regCF;
 	// number of factors
 	protected static int numFactors;
 	// number of iterations
@@ -69,7 +69,7 @@ public abstract class IterativeRecommender extends Recommender {
 	protected DenseVector itemBias;
 
 	// adaptive learn rate
-	protected double lRate, lRateN;
+	protected double lRate, lRateN, lRateF, lRateC, lRateCN, lRateCF;
 	// objective loss
 	protected double loss, last_loss = 0;
 	// predictive measure
@@ -89,6 +89,10 @@ public abstract class IterativeRecommender extends Recommender {
 			if (lc != null) {
 				initLRate = Float.parseFloat(lc.getMainParam());
 				initLRateN = lc.getFloat("-n", initLRate);
+				initLRateF = lc.getFloat("-f", initLRate);
+				initLRateC = lc.getFloat("-c", initLRate);
+				initLRateCN = lc.getFloat("-cn", initLRate);
+				initLRateCF = lc.getFloat("-cf", initLRate);
 				maxLRate = lc.getFloat("-max", -1);
 				isBoldDriver = lc.contains("-bold-driver");
 				decay = lc.getFloat("-decay", -1);
@@ -102,6 +106,9 @@ public abstract class IterativeRecommender extends Recommender {
 				regI = regOptions.getFloat("-i", reg);
 				regB = regOptions.getFloat("-b", reg);
 				regN = regOptions.getFloat("-n", reg);
+				regC = regOptions.getFloat("-c", reg);
+				regCN = regOptions.getFloat("-cn", reg);
+				regCF = regOptions.getFloat("-cf", reg);
 			}
 
 			numFactors = cf.getInt("num.factors", 10);
@@ -214,17 +221,39 @@ public abstract class IterativeRecommender extends Recommender {
 	 */
 	protected void updateLRate(int iter) {
 
-		if (lRate <= 0)
+		if (lRate <= 0 || lRateN <= 0 || lRateF <= 0 || lRateC <= 0 || lRateCN <= 0 || lRateCF <= 0)
 			return;
 
-		if (isBoldDriver && iter > 1)
+		if (isBoldDriver && iter > 1){
 			lRate = Math.abs(last_loss) > Math.abs(loss) ? lRate * 1.05 : lRate * 0.5;
-		else if (decay > 0 && decay < 1)
+			lRateN = Math.abs(last_loss) > Math.abs(loss) ? lRateN * 1.05 : lRateN * 0.5;
+			lRateF = Math.abs(last_loss) > Math.abs(loss) ? lRateF * 1.05 : lRateF * 0.5;
+			lRateC = Math.abs(last_loss) > Math.abs(loss) ? lRateC * 1.05 : lRateC * 0.5;
+			lRateCN = Math.abs(last_loss) > Math.abs(loss) ? lRateCN * 1.05 : lRateCN * 0.5;
+			lRateCF = Math.abs(last_loss) > Math.abs(loss) ? lRateCF * 1.05 : lRateCF * 0.5;
+		}
+		else if (decay > 0 && decay < 1){
 			lRate *= decay;
+			lRateN *= decay;
+			lRateF *= decay;
+			lRateC *= decay;
+			lRateCN *= decay;
+			lRateCF *= decay;
+		}
 
 		// limit to max-learn-rate after update
 		if (maxLRate > 0 && lRate > maxLRate)
 			lRate = maxLRate;
+		if (maxLRate > 0 && lRateN > maxLRate)
+			lRateN = maxLRate;
+		if (maxLRate > 0 && lRateF > maxLRate)
+			lRateF = maxLRate;
+		if (maxLRate > 0 && lRateC > maxLRate)
+			lRateC = maxLRate;
+		if (maxLRate > 0 && lRateCN > maxLRate)
+			lRateCN = maxLRate;
+		if (maxLRate > 0 && lRateCF > maxLRate)
+			lRateCF = maxLRate;
 	}
 
 	@Override

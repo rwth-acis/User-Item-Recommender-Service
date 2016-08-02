@@ -78,8 +78,8 @@ public class LibRec {
 			break;
 		case "nsvd":
 			this.algorithm = Algorithm.NeighSVDPlusPlus;
-			configuration.setProperty("learn.rate", "0.007 -n 0.007 -max -1 -bold-driver");
-			configuration.setProperty("reg.lambda", "0.1 -u 0.1 -i 0.1 -b 0.1 -n 0.15");
+			configuration.setProperty("learn.rate", "0.01 -n 0.01 -f 0.01 -max -1 -bold-driver");
+			configuration.setProperty("reg.lambda", "0.1 -b 0.1 -n 0.1 -u 0.1 -i 0.1");
 			break;
 		case "tsvd":
 			this.algorithm = Algorithm.TimeSVDPlusPlus;
@@ -92,13 +92,13 @@ public class LibRec {
 			break;
 		case "cnsvd":
 			this.algorithm = Algorithm.ComNeighSVDPlusPlus;
-			configuration.setProperty("learn.rate", "0.007 -n 0.007 -max -1 -bold-driver");
-			configuration.setProperty("reg.lambda", "0.05 -u 0.05 -i 0.05 -b 0.05 -n 0.15");
+			configuration.setProperty("learn.rate", "0.007 -n 0.007 -f 0.007 -c 0.007 -cn 0.007 -cf 0.007 -max -1 -bold-driver");
+			configuration.setProperty("reg.lambda", "0.05 -b 0.05 -n 0.15 -u 0.05 -i 0.05 -c 0.05 -cn 0.05 -cf 0.05");
 			break;
 		case "cnsvd2":
 			this.algorithm = Algorithm.ComNeighSVDPlusPlus2;
-			configuration.setProperty("learn.rate", "0.007 -n 0.007 -max -1 -bold-driver");
-			configuration.setProperty("reg.lambda", "0.05 -u 0.05 -i 0.05 -b 0.05 -n 0.15");
+			configuration.setProperty("learn.rate", "0.007 -n 0.007 -f 0.007 -c 0.007 -cn 0.007 -cf 0.007 -max -1 -bold-driver");
+			configuration.setProperty("reg.lambda", "0.05 -b 0.05 -n 0.15 -u 0.05 -i 0.05 -c 0.05 -cn 0.05 -cf 0.05");
 			break;
 		case "tcnsvd":
 			this.algorithm = Algorithm.TimeComNeighSVDPlusPlus;

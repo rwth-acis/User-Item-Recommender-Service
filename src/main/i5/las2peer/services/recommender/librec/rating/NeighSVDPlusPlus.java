@@ -124,15 +124,15 @@ public class NeighSVDPlusPlus extends BiasedMF {
 					double sgd_u = euj * qjf - regU * puf;
 					double sgd_j = euj * (puf + sum_ys[f]) - regI * qjf;
 
-					P.add(u, f, lRate * sgd_u);
-					Q.add(j, f, lRate * sgd_j);
+					P.add(u, f, lRateF * sgd_u);
+					Q.add(j, f, lRateF * sgd_j);
 
 					loss += regU * puf * puf + regI * qjf * qjf;
 
 					for (int k : items) {
 						double ykf = Y.get(k, f);
 						double delta_y = euj * qjf / w - regU * ykf;
-						Y.add(k, f, lRate * delta_y);
+						Y.add(k, f, lRateF * delta_y);
 
 						loss += regU * ykf * ykf;
 					}

@@ -22,6 +22,7 @@ import java.util.List;
 
 import com.google.common.cache.LoadingCache;
 
+import i5.las2peer.services.recommender.librec.data.CSVDataDAO;
 import i5.las2peer.services.recommender.librec.data.Configuration;
 import i5.las2peer.services.recommender.librec.data.DataDAO;
 import i5.las2peer.services.recommender.librec.data.SparseMatrix;
@@ -60,7 +61,7 @@ public abstract class SocialRecommender extends IterativeRecommender {
 		String socialPath = cf.getPath("dataset.social");
 		Logs.debug("Social dataset: {}", Strings.last(socialPath, 38));
 
-		socialDao = new DataDAO(socialPath, rateDao.getUserIds());
+		socialDao = new CSVDataDAO(socialPath, rateDao.getUserIds());
 
 		try {
 			socialMatrix = socialDao.readData()[0];

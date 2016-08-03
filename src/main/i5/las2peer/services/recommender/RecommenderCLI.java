@@ -28,12 +28,23 @@ public class RecommenderCLI {
 		setParameters();
 		
 		// Read rating data from file
-		String ratingsFile = options.containsKey("--ratings-file") ? options.get("--ratings-file") : "datasets/ratings.txt";
+		String ratingsFile = options.containsKey("--ratings-file") ? options.get("--ratings-file") : "datasets/filmtrust/ratings.txt";
+		String datasetType = options.containsKey("--dataset-type") ? options.get("--dataset-type") : "filmtrust";
 		try {
-			librec.readRatingsFromFile(ratingsFile, LibRec.DatasetType.FilmTrust);
+			librec.readRatingsFromFile(ratingsFile, datasetType);
 		} catch (Exception e) {
 			Logs.error("Error reading from dataset file " + ratingsFile);
 			Logs.error(e.getMessage());
+			e.printStackTrace();
+			return;
+		}
+		
+		try {
+			librec.printDatasetSpecifications();
+		} catch (Exception e) {
+			Logs.error("Error printing the dataset specifications");
+			Logs.error(e.getMessage());
+			e.printStackTrace();
 			return;
 		}
 		
@@ -42,6 +53,7 @@ public class RecommenderCLI {
 		} catch (InterruptedException e) {
 			Logs.error("Error during evaluation");
 			Logs.error(e.getMessage());
+			e.printStackTrace();
 			return;
 		}
 		

@@ -40,6 +40,7 @@ import i5.las2peer.services.recommender.librec.baseline.MostPopular;
 import i5.las2peer.services.recommender.librec.baseline.RandomGuess;
 import i5.las2peer.services.recommender.librec.baseline.UserAverage;
 import i5.las2peer.services.recommender.librec.baseline.UserCluster;
+import i5.las2peer.services.recommender.librec.data.CSVDataDAO;
 import i5.las2peer.services.recommender.librec.data.DataDAO;
 import i5.las2peer.services.recommender.librec.data.DataSplitter;
 import i5.las2peer.services.recommender.librec.data.MatrixEntry;
@@ -162,7 +163,7 @@ public class LibRecDemo {
 	 */
 	protected void readData() throws Exception {
 		// DAO object
-		rateDao = new DataDAO(cf.getPath("dataset.ratings"));
+		rateDao = new CSVDataDAO(cf.getPath("dataset.ratings"));
 
 		// data configuration
 		ratingOptions = cf.getParamOptions("ratings.setup");
@@ -183,8 +184,9 @@ public class LibRecDemo {
 		timeUnit = TimeUnit.valueOf(ratingOptions.getString("--time-unit", "seconds").toUpperCase());
 		rateDao.setTimeUnit(timeUnit);
 
-		SparseMatrix[] data = ratingOptions.contains("--as-tensor") ? rateDao.readTensor(columns, binThold) : rateDao
-				.readData(columns, binThold);
+//		SparseMatrix[] data = ratingOptions.contains("--as-tensor") ? rateDao.readTensor(columns, binThold) : rateDao
+//				.readData(columns, binThold);
+		SparseMatrix[] data = rateDao.readData(columns, binThold);
 		rateMatrix = data[0];
 		timeMatrix = data[1];
 
@@ -282,7 +284,7 @@ public class LibRecDemo {
 
 				String socialSet = cf.getPath("dataset.social");
 				if (!socialSet.equals("-1")) {
-					DataDAO socDao = new DataDAO(socialSet, rateDao.getUserIds());
+					CSVDataDAO socDao = new CSVDataDAO(socialSet, rateDao.getUserIds());
 					socDao.printSpecs();
 				}
 			}
@@ -433,7 +435,7 @@ public class LibRecDemo {
 			}
 			break;
 		case "test-set":
-			DataDAO testDao = new DataDAO(evalOptions.getString("-f"), rateDao.getUserIds(), rateDao.getItemIds());
+			CSVDataDAO testDao = new CSVDataDAO(evalOptions.getString("-f"), rateDao.getUserIds(), rateDao.getItemIds());
 			testDao.setTimeUnit(timeUnit);
 
 			SparseMatrix[] testData = testDao.readData(columns, binThold);

@@ -7,8 +7,10 @@ import java.util.concurrent.TimeUnit;
 
 import java.util.Properties;
 
+import i5.las2peer.services.recommender.librec.data.CSVDataDAO;
 import i5.las2peer.services.recommender.librec.data.DataDAO;
 import i5.las2peer.services.recommender.librec.data.DataSplitter;
+import i5.las2peer.services.recommender.librec.data.NetflixDataDAO;
 import i5.las2peer.services.recommender.librec.data.SparseMatrix;
 import i5.las2peer.services.recommender.librec.intf.Recommender;
 import i5.las2peer.services.recommender.librec.intf.Recommender.Measure;
@@ -20,7 +22,6 @@ import i5.las2peer.services.recommender.librec.rating.NeighSVDPlusPlus;
 import i5.las2peer.services.recommender.librec.rating.SVDPlusPlus;
 import i5.las2peer.services.recommender.librec.util.Dates;
 import i5.las2peer.services.recommender.librec.util.FileConfiger;
-import i5.las2peer.services.recommender.librec.util.FileIO;
 import i5.las2peer.services.recommender.librec.util.Logs;
 
 public class LibRec {
@@ -124,29 +125,37 @@ public class LibRec {
 		this.timeMatrix = timeMatrix;
 	}
 	
-	public void readRatingsFromFile(String filePath, DatasetType type) throws Exception {
+	public void readRatingsFromFile(String filePath, String type) throws Exception {
 		// DAO object
-		DataDAO rateDao = new DataDAO(filePath);
-		
-		// data columns to use
-		int[] columns;
-//		if(type == DatasetType.FilmTrust){
-		columns = new int[] {0, 1, 2};
-//		}
-//		else if(type == DatasetType.MovieLens){
-//			columns = new int[] {0, 1, 2, 3};
-//		}
-		
-		// is first line: headline
-		rateDao.setHeadline(false);
+		DataDAO rateDao;
 		
 		// rating threshold
 		float binThold = -1;
+
+		SparseMatrix[] data;
 		
-		// time unit of ratings' timestamps
-		rateDao.setTimeUnit(TimeUnit.SECONDS);
+		if(type.toLowerCase().equals("filmtrust")){
+			rateDao = new CSVDataDAO(filePath);
+			int[] columns = new int[] {0, 1, 2};	// contains three columns: userId, movieId, rating
+			rateDao.setHeadline(false); 			// does not contain headline
+			rateDao.setTimeUnit(TimeUnit.SECONDS);	// time unit of ratings' timestamps, not used since FilmTrust does not contain timestamps
+			data = rateDao.readData(columns, binThold);
+		}
+		else if(type.toLowerCase().equals("movielens")){
+			rateDao = new CSVDataDAO(filePath);
+			int[] columns = new int[] {0, 1, 2, 3};	// contains three columns: userId, movieId, rating, timestamp
+			rateDao.setHeadline(true);	 			// first line is headline
+			rateDao.setTimeUnit(TimeUnit.SECONDS);	// time unit of ratings' timestamps
+			data = rateDao.readData(columns, binThold);
+		}
+		else if(type.toLowerCase().equals("netflix")){
+			rateDao = new NetflixDataDAO(filePath);
+			data = rateDao.readData(binThold);
+		}
+		else{
+			return;
+		}
 		
-		SparseMatrix[] data = rateDao.readData(columns, binThold);
 		ratingsMatrix = data[0];
 		timeMatrix = data[1];
 		
@@ -154,6 +163,12 @@ public class LibRec {
 		Recommender.timeMatrix = timeMatrix;
 		Recommender.rateDao = rateDao;
 		Recommender.binThold = binThold;
+	}
+	
+	public void printDatasetSpecifications() throws Exception{
+		if(Recommender.rateDao != null){
+			Recommender.rateDao.printSpecs();
+		}
 	}
 	
 	public void buildModel() throws Exception{

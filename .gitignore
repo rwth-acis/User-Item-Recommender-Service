@@ -14,3 +14,4 @@ restMapping.xml
 /out
 /output/
 /datasets
+hs_err_*

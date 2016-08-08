@@ -117,6 +117,11 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 								cf.getDouble("cd.dmid.prec", 0.001),
 								cf.getDouble("cd.dmid.proficioncy", 0.1));
 			break;
+		case "slpa":
+			cd.setAlgorithm(CommunityDetectionAlgorithm.SLPA);
+			cd.setSlpaParameters(cf.getDouble("cd.slpa.prob", 0.15),
+								cf.getInt("cd.slpa.memory", 100));
+			break;
 		}
 		
 		cd.setGraph(userMatrix);

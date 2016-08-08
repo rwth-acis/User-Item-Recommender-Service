@@ -13,6 +13,7 @@ import i5.las2peer.services.recommender.communities.webocd.Cover;
 import i5.las2peer.services.recommender.communities.webocd.CustomGraph;
 import i5.las2peer.services.recommender.communities.webocd.OcdAlgorithmException;
 import i5.las2peer.services.recommender.communities.webocd.RandomWalkLabelPropagationAlgorithm;
+import i5.las2peer.services.recommender.communities.webocd.SpeakerListenerLabelPropagationAlgorithm;
 import i5.las2peer.services.recommender.librec.data.MatrixEntry;
 import i5.las2peer.services.recommender.librec.data.SparseMatrix;
 import i5.las2peer.services.recommender.librec.util.Logs;
@@ -35,11 +36,15 @@ public class CommunityDetector {
 	// Walktrap parameters
 	private int walktrapSteps = 2;
 	
+	// SLPA parameters
+	private double slpaProbabilityThreshold = 0.15;
+	private int slpaMemorySize = 100;
+	
 	private int communityDetectionTime;
 	
 	
 	public enum CommunityDetectionAlgorithm{
-		WALKTRAP, DMID
+		WALKTRAP, DMID, SLPA
 	}
 	
 	
@@ -61,6 +66,11 @@ public class CommunityDetector {
 		walktrapSteps = steps;
 	}
 	
+	public void setSlpaParameters(double probabilityThresh, int memorySize){
+		slpaProbabilityThreshold = probabilityThresh;
+		slpaMemorySize = memorySize;
+	}
+	
 	public void detectCommunities() throws OcdAlgorithmException, InterruptedException{
 		Stopwatch sw = Stopwatch.createStarted();
 
@@ -70,6 +80,9 @@ public class CommunityDetector {
 				break;
 			case DMID:
 				detectDmid();
+				break;
+			case SLPA:
+				detectSlpa();
 				break;
 			default:
 				break;
@@ -101,6 +114,23 @@ public class CommunityDetector {
 		dmidAlgo.setParameters(parameters);
 		
 		Cover cover = dmidAlgo.detectOverlappingCommunities(customGraph);
+		
+		membershipsMatrix = cover.getMemberships();
+	}
+	
+	private void detectSlpa() throws OcdAlgorithmException, InterruptedException {
+		Logs.info(String.format("SLPA: [PT, MS] = [%s, %s]",
+				slpaProbabilityThreshold, slpaMemorySize));
+		
+		SpeakerListenerLabelPropagationAlgorithm slpaAlgo = new SpeakerListenerLabelPropagationAlgorithm();
+		CustomGraph customGraph = getWebOCDCustomGraph();
+		
+		Map<String, String> parameters = new HashMap<String, String>();
+		parameters.put("probabilityThreshold", Double.toString(slpaProbabilityThreshold));
+		parameters.put("memorySize", Integer.toString(slpaMemorySize));
+		slpaAlgo.setParameters(parameters);
+		
+		Cover cover = slpaAlgo.detectOverlappingCommunities(customGraph);
 		
 		membershipsMatrix = cover.getMemberships();
 	}

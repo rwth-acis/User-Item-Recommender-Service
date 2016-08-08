@@ -15,6 +15,7 @@ import i5.las2peer.services.recommender.communities.webocd.OcdAlgorithmException
 import i5.las2peer.services.recommender.communities.webocd.RandomWalkLabelPropagationAlgorithm;
 import i5.las2peer.services.recommender.librec.data.MatrixEntry;
 import i5.las2peer.services.recommender.librec.data.SparseMatrix;
+import i5.las2peer.services.recommender.librec.util.Logs;
 import y.base.Edge;
 import y.base.Node;
 
@@ -87,6 +88,9 @@ public class CommunityDetector {
 	}
 	
 	private void detectDmid() throws OcdAlgorithmException, InterruptedException {
+		Logs.info(String.format("DMID: [LIB, LPF, PD] = [%s, %s, %s]",
+				dmidLeadershipIterationBound, dmidLeadershipPrecisionFactor, dmidProfitabilityDelta));
+		
 		RandomWalkLabelPropagationAlgorithm dmidAlgo = new RandomWalkLabelPropagationAlgorithm();
 		CustomGraph customGraph = getWebOCDCustomGraph();
 		
@@ -130,6 +134,8 @@ public class CommunityDetector {
 	}
 	
 	private void detectWalktrap() {
+		Logs.info(String.format("Walktrap: [steps] = [%s]", walktrapSteps));
+		
 		Igraph igraph = new Igraph();
 		
 		igraph.setGraph(graph);

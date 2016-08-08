@@ -110,7 +110,12 @@ public class CSVDataDAO extends DataDAO{
 			}
 
 			String[] data = line.trim().split("[ \t,]+");
-
+			
+			if(data.length < 2){
+				Logs.error(String.format("Dataset: Cannot read line \"%s\"", line));
+				continue;
+			}
+			
 			String user = data[cols[0]];
 			String item = data[cols[1]];
 			Double rate = (cols.length >= 3 && data.length >= 3) ? Double.valueOf(data[cols[2]]) : 1.0;

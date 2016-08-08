@@ -149,6 +149,13 @@ public class LibRec {
 			data = rateDao.readData(columns, binThold);
 		}
 		else if(type.toLowerCase().equals("netflix")){
+			rateDao = new CSVDataDAO(filePath);
+			int[] columns = new int[] {0, 1, 2, 3};	// contains three columns: userId, movieId, rating, timestamp
+			rateDao.setHeadline(true);	 			// first line is headline
+			rateDao.setTimeUnit(TimeUnit.MILLISECONDS);	// time unit of ratings' timestamps
+			data = rateDao.readData(columns, binThold);
+		}
+		else if(type.toLowerCase().equals("netflix_orig")){
 			rateDao = new NetflixDataDAO(filePath);
 			data = rateDao.readData(binThold);
 		}

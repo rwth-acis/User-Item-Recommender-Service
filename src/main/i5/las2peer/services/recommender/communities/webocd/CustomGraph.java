@@ -183,6 +183,18 @@ public class CustomGraph extends Graph2D {
 		this.types = new HashSet<Integer>(graph.types);
 	}
 	
+	public Node createNode(){
+		Node node = super.createNode();
+		addCustomNode(node);
+		return node;
+	}
+	
+	public Edge createEdge(Node arg0, Node arg1){
+		Edge edge = super.createEdge(arg0, arg1);
+		addCustomEdge(edge);
+		return edge;
+	}
+	
 	/**
 	 * Sets all the structural information to that of another graph.
 	 * This includes the structure of the nodes and edges, their custom information

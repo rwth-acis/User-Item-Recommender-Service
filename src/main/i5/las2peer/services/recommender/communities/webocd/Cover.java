@@ -183,6 +183,7 @@ public class Cover {
 				int nodeIdx = membership.getKey().index();
 				double membershipValue = membership.getValue();
 				membershipsTable.put(nodeIdx, communityIdx, membershipValue);
+				membershipsColMap.put(communityIdx, nodeIdx);
 			}
 		}
 

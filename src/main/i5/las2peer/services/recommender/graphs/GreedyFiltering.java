@@ -3,7 +3,7 @@ package i5.las2peer.services.recommender.graphs;
 import java.util.*;
 
 public class GreedyFiltering {
-	private static int numCandidates;
+//	private static int numCandidates;
 
 	public static void bucketJoin(GFSparseMatrix inputMatrix, Vector<Integer> bucket, double[][] kNNGraph, int k) {
 		for (int i=1; i<bucket.size(); i++) {
@@ -13,17 +13,17 @@ public class GreedyFiltering {
 				int n = bucket.get(j);
 				
 				GFSimilarityCalculation.calculateCosineSim(inputMatrix, kNNGraph, k, m, n);				
-				numCandidates++;			
+//				numCandidates++;			
 			}
 		}
 	}
 
 	public static void kNNGraphConstruction(GFSparseMatrix inputMatrix, double[][] kNNGraph, int k, int mu) {
-		double startTime = System.currentTimeMillis();
-		numCandidates = 0;
+//		double startTime = System.currentTimeMillis();
+//		numCandidates = 0;
 		
 		// 1) Find candidate pairs
-		System.out.println("Finding candidate pairs...");
+//		System.out.println("Finding candidate pairs...");
 				
 		@SuppressWarnings("unchecked")
 		Vector<Integer>[] bucket = new Vector[inputMatrix.numDimension];
@@ -85,18 +85,18 @@ public class GreedyFiltering {
 		} while (size > 0);
 
 		// Before calculating similarities, sort each element into ascending order of its dimension number
-		System.out.println("Sorting in an ascending order of dimension numbers...");
+//		System.out.println("Sorting in an ascending order of dimension numbers...");
 		GFSorting.sortByDimNumber(inputMatrix);		
 		
 		// 2) Calculate the similarity for each candidate pair
-		System.out.println("Calculating similarities...");
+//		System.out.println("Calculating similarities...");
 				
 		for (int i=0; i<inputMatrix.numDimension; i++)
 			if (bucket[i].size() >= 2)
 				bucketJoin(inputMatrix, bucket[i], kNNGraph, k);
 		
-		double endTime = System.currentTimeMillis();
-		System.out.println("Elapsed time: " + (endTime-startTime));
-		System.out.println("Scan rate: " + ((double)numCandidates / ((double)inputMatrix.numVector * (inputMatrix.numVector-1) / 2)));
+//		double endTime = System.currentTimeMillis();
+//		System.out.println("Elapsed time: " + (endTime-startTime));
+//		System.out.println("Scan rate: " + ((double)numCandidates / ((double)inputMatrix.numVector * (inputMatrix.numVector-1) / 2)));
 	}
 }

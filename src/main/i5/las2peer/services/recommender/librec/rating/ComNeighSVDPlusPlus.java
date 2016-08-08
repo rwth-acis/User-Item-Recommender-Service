@@ -35,6 +35,7 @@ import i5.las2peer.services.recommender.librec.data.MatrixEntry;
 import i5.las2peer.services.recommender.librec.data.SparseMatrix;
 import i5.las2peer.services.recommender.librec.data.SparseVector;
 import i5.las2peer.services.recommender.librec.data.VectorEntry;
+import i5.las2peer.services.recommender.librec.util.Logs;
 import i5.las2peer.services.recommender.librec.util.Strings;
 
 /**
@@ -92,6 +93,7 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 		userItemsCache = trainMatrix.rowColumnsCache(cacheSpec);
 
 		// build the user and item graphs
+		Logs.info("{}{} build user and item graphs ...", new Object[] { algoName, foldInfo });
 		GraphBuilder gb = new GraphBuilder();
 		gb.setRatingData(trainMatrix);
 		gb.setK(10);
@@ -101,9 +103,21 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 		SparseMatrix itemMatrix = gb.getItemAdjacencyMatrix();
 		
 		// detect communities
+		Logs.info("{}{} detect communities ...", new Object[] { algoName, foldInfo });
 		CommunityDetector cd = new CommunityDetector();
-		cd.setAlgorithm(CommunityDetectionAlgorithm.WALKTRAP);
-		cd.setWalktrapParameters(2);
+		switch(cf.getString("cd.algo", "dmid").toLowerCase()){
+		default:
+		case "walktrap":
+			cd.setAlgorithm(CommunityDetectionAlgorithm.WALKTRAP);
+			cd.setWalktrapParameters(cf.getInt("cd.walktrap.steps", 2));
+			break;
+		case "dmid":
+			cd.setAlgorithm(CommunityDetectionAlgorithm.DMID);
+			cd.setDmidParameters(cf.getInt("cd.dmid.iter", 1000),
+								cf.getDouble("cd.dmid.prec", 0.001),
+								cf.getDouble("cd.dmid.proficioncy", 0.1));
+			break;
+		}
 		
 		cd.setGraph(userMatrix);
 		cd.detectCommunities();
@@ -135,6 +149,7 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 		Oci.init(initMean, initStd);
 
 		// iteratively learn the model parameters
+		Logs.info("{}{} learn model parameters ...", new Object[] { algoName, foldInfo });
 		for (int iter = 1; iter <= numIters; iter++) {
 
 			loss = 0;

@@ -12,6 +12,7 @@ import i5.las2peer.services.recommender.librec.data.DataDAO;
 import i5.las2peer.services.recommender.librec.data.DataSplitter;
 import i5.las2peer.services.recommender.librec.data.NetflixDataDAO;
 import i5.las2peer.services.recommender.librec.data.SparseMatrix;
+import i5.las2peer.services.recommender.librec.data.TimeDataSplitter;
 import i5.las2peer.services.recommender.librec.intf.Recommender;
 import i5.las2peer.services.recommender.librec.intf.Recommender.Measure;
 import i5.las2peer.services.recommender.librec.ranking.WRMF;
@@ -194,28 +195,42 @@ public class LibRec {
 	}
 	
 	public void evaluate() throws InterruptedException{
-		// TODO: Follow evaluation protocol, e.g. sort by date, ensure time-dependency of training/test data
-		
 		// Split data into training and testing data
 		Recommender.rateMatrix = ratingsMatrix;
 		Recommender.isEvaluate = true;
 		
 		// Add configuration to recommender
-		Recommender.cf = new FileConfiger(configuration);
+		FileConfiger cf = new FileConfiger(configuration);
+		Recommender.cf = cf;
 		
-		int cvFolds = 5;
-
-		DataSplitter ds = new DataSplitter(ratingsMatrix, cvFolds);
-
-		Thread[] ts = new Thread[cvFolds];
-		Recommender[] models = new Recommender[cvFolds];
-
-		for (int i = 0; i < cvFolds; i++) {
-			SparseMatrix[] kthFoldMatrices = ds.getKthFold(i + 1);
-			Recommender algo = getRecommender(kthFoldMatrices[0], kthFoldMatrices[1], i + 1);
-
-			models[i] = algo;
-			ts[i] = new Thread(algo);
+		String evalType = cf.getString("eval.type", "TimeCV");
+		int folds = cf.getInt("eval.folds", 5);
+		
+		Thread[] ts = new Thread[folds];
+		Recommender[] models = new Recommender[folds];
+		
+		switch (evalType.toLowerCase()){
+		case "cv":
+			DataSplitter ds = new DataSplitter(ratingsMatrix, folds);
+			for (int i = 0; i < folds; i++) {
+				SparseMatrix[] kthFoldMatrices = ds.getKthFold(i + 1);
+				models[i] = getRecommender(kthFoldMatrices[0], kthFoldMatrices[1], i + 1);
+			}
+			break;
+		default:
+		case "timecv":
+			double trainRatio = cf.getDouble("eval.train.ratio", 0.8);
+			double foldSize = cf.getDouble("eval.fold.size", 0.2);
+			TimeDataSplitter tds = new TimeDataSplitter(ratingsMatrix, timeMatrix, folds, trainRatio, foldSize);
+			for (int i = 0; i < folds; i++) {
+				SparseMatrix[] kthFoldMatrices = tds.getKthFold(i + 1);
+				models[i] = getRecommender(kthFoldMatrices[0], kthFoldMatrices[1], i + 1);
+			}
+			break;
+		}
+		
+		for (int i = 0; i < folds; i++) {
+			ts[i] = new Thread(models[i]);
 			ts[i].start();
 		}
 
@@ -228,7 +243,7 @@ public class LibRec {
 			for (Entry<Measure, Double> en : model.measures.entrySet()) {
 				Measure m = en.getKey();
 				double val = evalMeasures.containsKey(m) ? evalMeasures.get(m) : 0.0;
-				evalMeasures.put(m, val + en.getValue() / cvFolds);
+				evalMeasures.put(m, val + en.getValue() / folds);
 				// TODO: Maybe not only compute average, but also mean and variance. Should do that if we use SLPA.
 			}
 		}
@@ -248,7 +263,61 @@ public class LibRec {
 
 		String evalInfo = sb.toString();
 		Logs.info(evalInfo);
+	}
+	
+	public void evaluateCV() throws InterruptedException{
+		// Split data into training and testing data
+		Recommender.rateMatrix = ratingsMatrix;
+		Recommender.isEvaluate = true;
+		
+		// Add configuration to recommender
+		Recommender.cf = new FileConfiger(configuration);
+		
+		int folds = 5;
 
+		DataSplitter ds = new DataSplitter(ratingsMatrix, folds);
+
+		Thread[] ts = new Thread[folds];
+		Recommender[] models = new Recommender[folds];
+
+		for (int i = 0; i < folds; i++) {
+			SparseMatrix[] kthFoldMatrices = ds.getKthFold(i + 1);
+			Recommender algo = getRecommender(kthFoldMatrices[0], kthFoldMatrices[1], i + 1);
+
+			models[i] = algo;
+			ts[i] = new Thread(algo);
+			ts[i].start();
+		}
+
+		for (Thread t : ts)
+			t.join();
+
+		// average performance of k-fold
+		evalMeasures = new HashMap<>();
+		for (Recommender model : models) {
+			for (Entry<Measure, Double> en : model.measures.entrySet()) {
+				Measure m = en.getKey();
+				double val = evalMeasures.containsKey(m) ? evalMeasures.get(m) : 0.0;
+				evalMeasures.put(m, val + en.getValue() / folds);
+				// TODO: Maybe not only compute average, but also mean and variance. Should do that if we use SLPA.
+			}
+		}
+
+		String result = Recommender.getEvalInfo(evalMeasures);
+		// we add quota symbol to indicate the textual format of time
+		String time = String.format("'%s','%s'", Dates.parse(evalMeasures.get(Measure.TrainTime).longValue()),
+				Dates.parse(evalMeasures.get(Measure.TestTime).longValue()));
+
+		// double commas as the separation of results and configuration
+		StringBuilder sb = new StringBuilder();
+		String config = models[0].toString();
+		sb.append(models[0].algoName).append(",").append(result).append(",,");
+		if (!config.isEmpty())
+			sb.append(config).append(",");
+		sb.append(time).append("\n");
+
+		String evalInfo = sb.toString();
+		Logs.info(evalInfo);
 	}
 	
 	public double getEvalResult(Measure measure){

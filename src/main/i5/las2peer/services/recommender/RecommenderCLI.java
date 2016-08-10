@@ -235,6 +235,23 @@ public class RecommenderCLI {
 		if(options.containsKey("--rec-knn-k")){
 			librec.setParameter("num.neighbors", options.get("--rec-knn-k"));
 		}
+		
+		if(options.containsKey("--eval-type")){
+			librec.setParameter("eval.type", options.get("--eval-type"));
+		}
+		
+		if(options.containsKey("--eval-folds")){
+			librec.setParameter("eval.folds", options.get("--eval-folds"));
+		}
+		
+		if(options.containsKey("--eval-train-ratio")){
+			librec.setParameter("eval.train.ratio", options.get("--eval-train-ratio"));
+		}
+		
+		if(options.containsKey("--eval-fold-size")){
+			librec.setParameter("eval.fold.size", options.get("--eval-fold-size"));
+		}
+		
 	}
 	
 }

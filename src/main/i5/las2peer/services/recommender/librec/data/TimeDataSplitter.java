@@ -107,15 +107,23 @@ public class TimeDataSplitter {
 		long earliestStart = minTimestamp;
 		long latestStart = maxTimestamp - foldLength;
 		
-		// time between fold start timestamps
-		long foldStep = (latestStart - earliestStart) / (kfold - 1);
-		
-		// start, end and split timestamps for each fold
-		for (int i = 0; i < kfold; i++){
-			startTimestamp[i] = earliestStart + i * foldStep;
-			endTimestamp[i] = startTimestamp[i] + foldLength;
-			splitTimestamp[i] = startTimestamp[i] + (long) (trainRatio * foldLength);
+		if (kfold == 1){
+			startTimestamp[0] = latestStart;
+			endTimestamp[0] = maxTimestamp;
+			splitTimestamp[0] = startTimestamp[0] + (long) (trainRatio * foldLength);
 		}
+		else{
+			// time between fold start timestamps
+			long foldStep = (latestStart - earliestStart) / (kfold - 1);
+			
+			// start, end and split timestamps for each fold
+			for (int i = 0; i < kfold; i++){
+				startTimestamp[i] = earliestStart + i * foldStep;
+				endTimestamp[i] = startTimestamp[i] + foldLength;
+				splitTimestamp[i] = startTimestamp[i] + (long) (trainRatio * foldLength);
+			}
+		}
+		
 	}
 
 	/**
@@ -166,7 +174,7 @@ public class TimeDataSplitter {
 		int testSamples = testMatrix.size();
 		int trainRatio = (int) Math.round((double) trainSamples / (trainSamples+testSamples) * 100);
 		int testRatio = (int) Math.round((double) testSamples / (trainSamples+testSamples) * 100);
-		Logs.info("train days: {}, train amount: {}, test days: {}, test amount: {}, train/test ratio: {}/{}",
+		Logs.info("{}train days: {}, train amount: {}, test days: {}, test amount: {}, train/test ratio: {}/{}",
 				foldInfo, trainDays, trainSamples, testDays, testSamples, trainRatio, testRatio);
 	}
 }

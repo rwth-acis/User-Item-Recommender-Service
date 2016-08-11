@@ -18,9 +18,11 @@
 
 package i5.las2peer.services.recommender.librec.rating;
 
+import java.util.LinkedList;
 import java.util.List;
 
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ArrayTable;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 
@@ -87,10 +89,10 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 		C = new DenseMatrix(numItems, numItems);
 		C.init(initMean, initStd);
 		
+		userItemsCache = trainMatrix.rowColumnsCache(cacheSpec);
+		
 		D = new DenseMatrix(numItems, numItems);
 		D.init(initMean, initStd);
-		
-		userItemsCache = trainMatrix.rowColumnsCache(cacheSpec);
 
 		// build the user and item graphs
 		Logs.info("{}{} build user and item graphs ...", new Object[] { algoName, foldInfo });
@@ -134,11 +136,14 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 		itemMemberships = cd.getMemberships();
 		itemCommunitiesCache = itemMemberships.rowColumnsCache(cacheSpec);
 		
-		numUserCommunities = userMemberships.numColumns(); 
+		numUserCommunities = userMemberships.numColumns();
+		numItemCommunities = itemMemberships.numColumns(); 
+		
+		debugCommunityInfo();
+		
 		userComBias = new DenseVector(numUserCommunities);
 		userComBias.init(initMean, initStd);
 		
-		numItemCommunities = itemMemberships.numColumns(); 
 		itemComBias = new DenseVector(numItemCommunities);
 		itemComBias.init(initMean, initStd);
 
@@ -146,6 +151,8 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 		
 		userCommunitiesRatingsMatrix = getUserCommunitiesRatings();
 		userCommunitiesItemsCache = userCommunitiesRatingsMatrix.rowColumnsCache(cacheSpec);
+		Logs.info("{}{} userCommunitiesRatings: Total number of entries: {}, Avg. entries per user: {}",
+				algoName, foldInfo, userCommunitiesRatingsMatrix.size(), (double) userCommunitiesRatingsMatrix.size() / numUsers);
 		
 		Ocu = new DenseMatrix(numUserCommunities, numFactors);
 		Ocu.init(initMean, initStd);
@@ -384,10 +391,21 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 	private SparseMatrix getUserCommunitiesRatings() throws Exception {
 		// Get each user's community ratings, i.e. the weighted average rating of the user's communities for each item
 		// The resulting matrix has dimensions numUsers x numItems
-		Table<Integer, Integer, Double> userCommunitiesRatingsTable = HashBasedTable.create();
+		
+		List<Integer> rowKeysList = new LinkedList<Integer>();
+		List<Integer> colKeysList = new LinkedList<Integer>();
+		for (int user = 0; user < numUsers; user++){
+			rowKeysList.add(user);
+		}
+		for (int item = 0; item < numItems; item++){
+			colKeysList.add(item);
+		}
+		Table<Integer, Integer, Double> userCommunitiesRatingsTable = ArrayTable.create(rowKeysList, colKeysList);
+		
 		for (int user = 0; user < numUsers; user++){
 			for (int item = 0; item < numItems; item++){
-				List<Integer> userCommunities = userCommunitiesCache.get(user);
+				List<Integer> userCommunities;
+				userCommunities = userCommunitiesCache.get(user);
 				double ratingsSum = 0;
 				double membershipsSum = 0;
 				for (int community : userCommunities){
@@ -421,10 +439,25 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 		return bias;
 	}
 	
+	private void debugCommunityInfo() {
+		int userMemSize = userMemberships.size();
+		int itemMemSize = itemMemberships.size();
+		double upc = (double) userMemSize / numUserCommunities;
+		double cpu = (double) userMemSize / numUsers;
+		double ipc = (double) itemMemSize / numItemCommunities;
+		double cpi = (double) itemMemSize / numItems;
+		
+		Logs.info("{}{} user communites: {}, users per community: {}, communities per user: {}",
+				new Object[] { algoName, foldInfo, numUserCommunities, upc, cpu });
+		Logs.info("{}{} item communites: {}, items per community: {}, communities per item: {}",
+				new Object[] { algoName, foldInfo, numItemCommunities, ipc, cpi });
+	}
+	
 	@Override
 	public String toString() {
 		return Strings.toString(new Object[] { numFactors, initLRate, initLRateN, initLRateF,
 				initLRateC, initLRateCN, initLRateCF, maxLRate,
 				regB, regN, regU, regI, regC, regCN, regCF, numIters, isBoldDriver});
 	}
+	
 }

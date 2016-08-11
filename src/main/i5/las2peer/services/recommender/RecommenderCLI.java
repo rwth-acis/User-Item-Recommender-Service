@@ -252,6 +252,10 @@ public class RecommenderCLI {
 			librec.setParameter("eval.fold.size", options.get("--eval-fold-size"));
 		}
 		
+		if(options.containsKey("--eval-parallel")){
+			librec.setParameter("eval.parallel", options.get("--eval-parallel"));
+		}
+		
 	}
 	
 }

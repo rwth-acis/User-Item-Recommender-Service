@@ -205,6 +205,7 @@ public class LibRec {
 		
 		String evalType = cf.getString("eval.type", "TimeCV");
 		int folds = cf.getInt("eval.folds", 5);
+		boolean isParallel = cf.getString("eval.parallel", "true").toLowerCase().equals("false") ? false : true;
 		
 		Thread[] ts = new Thread[folds];
 		Recommender[] models = new Recommender[folds];
@@ -232,11 +233,15 @@ public class LibRec {
 		for (int i = 0; i < folds; i++) {
 			ts[i] = new Thread(models[i]);
 			ts[i].start();
+			if (!isParallel)
+				ts[i].join();
 		}
-
-		for (Thread t : ts)
-			t.join();
-
+		
+		if (isParallel){
+			for (Thread t : ts)
+				t.join();
+		}
+		
 		// average performance of k-fold
 		evalMeasures = new HashMap<>();
 		for (Recommender model : models) {

@@ -18,11 +18,9 @@
 
 package i5.las2peer.services.recommender.librec.rating;
 
-import java.util.LinkedList;
 import java.util.List;
 
 import com.google.common.cache.LoadingCache;
-import com.google.common.collect.ArrayTable;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 
@@ -378,13 +376,15 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 						membershipsSum += userMembership;
 					}
 				}
-				if (membershipsSum != 0){
+				if (membershipsSum > 0){
 					double communityRating = ratingsSum / membershipsSum;
 					communityRatingsTable.put(community, item, communityRating);
 				}
 			}
 		}
 		SparseMatrix matrix = new SparseMatrix(numUserCommunities, numItems, communityRatingsTable);
+		Logs.info("{}{} Community Ratings: Number of communities: {}, Avg. number of ratings per community: {}",
+				algoName, foldInfo, matrix.numRows(), matrix.size() / matrix.numRows());
 		return matrix;
 	}
 		
@@ -392,20 +392,12 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 		// Get each user's community ratings, i.e. the weighted average rating of the user's communities for each item
 		// The resulting matrix has dimensions numUsers x numItems
 		
-		List<Integer> rowKeysList = new LinkedList<Integer>();
-		List<Integer> colKeysList = new LinkedList<Integer>();
-		for (int user = 0; user < numUsers; user++){
-			rowKeysList.add(user);
-		}
-		for (int item = 0; item < numItems; item++){
-			colKeysList.add(item);
-		}
-		Table<Integer, Integer, Double> userCommunitiesRatingsTable = ArrayTable.create(rowKeysList, colKeysList);
+	    Table<Integer, Integer, Double> userCommunitiesRatingsTable = HashBasedTable.create();
 		
 		for (int user = 0; user < numUsers; user++){
+			List<Integer> userCommunities;
+			userCommunities = userCommunitiesCache.get(user);
 			for (int item = 0; item < numItems; item++){
-				List<Integer> userCommunities;
-				userCommunities = userCommunitiesCache.get(user);
 				double ratingsSum = 0;
 				double membershipsSum = 0;
 				for (int community : userCommunities){
@@ -414,13 +406,15 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 					ratingsSum += communityRating * userMembership;
 					membershipsSum += userMembership;
 				}
-				if (membershipsSum != 0){
+				if (ratingsSum > 0){
 					double userCommunitiesRating = ratingsSum / membershipsSum;
 					userCommunitiesRatingsTable.put(user, item, userCommunitiesRating);
 				}
 			}
 		}
 		SparseMatrix matrix = new SparseMatrix(numUsers, numItems, userCommunitiesRatingsTable);
+		Logs.info("{}{} User Communities Ratings: Number of users: {}, Avg. number of community ratings per user: {}",
+				algoName, foldInfo, matrix.numRows(), matrix.size() / matrix.numRows());
 		return matrix;
 	}
 	

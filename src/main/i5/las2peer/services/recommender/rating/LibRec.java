@@ -18,9 +18,11 @@ import i5.las2peer.services.recommender.librec.intf.Recommender.Measure;
 import i5.las2peer.services.recommender.librec.ranking.WRMF;
 import i5.las2peer.services.recommender.librec.rating.ComNeighSVDPlusPlus;
 import i5.las2peer.services.recommender.librec.rating.ComNeighSVDPlusPlus2;
+import i5.las2peer.services.recommender.librec.rating.ComNeighSVDPlusPlusFast;
 import i5.las2peer.services.recommender.librec.rating.ItemKNN;
 import i5.las2peer.services.recommender.librec.rating.NeighSVDPlusPlus;
 import i5.las2peer.services.recommender.librec.rating.SVDPlusPlus;
+import i5.las2peer.services.recommender.librec.rating.TimeSVD;
 import i5.las2peer.services.recommender.librec.util.Dates;
 import i5.las2peer.services.recommender.librec.util.FileConfiger;
 import i5.las2peer.services.recommender.librec.util.Logs;
@@ -99,6 +101,11 @@ public class LibRec {
 			break;
 		case "cnsvd2":
 			this.algorithm = Algorithm.ComNeighSVDPlusPlus2;
+			configuration.setProperty("learn.rate", "0.007 -n 0.007 -f 0.007 -c 0.007 -cn 0.007 -cf 0.007 -max -1 -bold-driver");
+			configuration.setProperty("reg.lambda", "0.05 -b 0.05 -n 0.15 -u 0.05 -i 0.05 -c 0.05 -cn 0.05 -cf 0.05");
+			break;
+		case "cnsvdfast":
+			this.algorithm = Algorithm.ComNeighSVDPlusPlusFast;
 			configuration.setProperty("learn.rate", "0.007 -n 0.007 -f 0.007 -c 0.007 -cn 0.007 -cf 0.007 -max -1 -bold-driver");
 			configuration.setProperty("reg.lambda", "0.05 -b 0.05 -n 0.15 -u 0.05 -i 0.05 -c 0.05 -cn 0.05 -cf 0.05");
 			break;
@@ -340,11 +347,13 @@ public class LibRec {
 		case NeighSVDPlusPlus:
 			return new NeighSVDPlusPlus(trainMatrix, testMatrix, fold);
 		case TimeSVDPlusPlus:
-			break;
+			return new TimeSVD(trainMatrix, testMatrix, fold);
 		case TimeNeighSVDPlusPlus:
 			break;
 		case ComNeighSVDPlusPlus:
 			return new ComNeighSVDPlusPlus(trainMatrix, testMatrix, fold);
+		case ComNeighSVDPlusPlusFast:
+			return new ComNeighSVDPlusPlusFast(trainMatrix, testMatrix, fold);
 		case ComNeighSVDPlusPlus2:
 			return new ComNeighSVDPlusPlus2(trainMatrix, testMatrix, fold);
 		case TimeComNeighSVDPlusPlus:

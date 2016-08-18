@@ -448,7 +448,7 @@ public abstract class Recommender implements Runnable {
 	}
 
 	protected LineConfiger getModelParams(String algoName) {
-		return cf.contains(algoName) ? cf.getParamOptions(algoName) : null;
+		return cf.getParamOptions(algoName);
 	}
 
 	/**

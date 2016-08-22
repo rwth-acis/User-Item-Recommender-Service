@@ -38,7 +38,7 @@ public abstract class IterativeRecommender extends Recommender {
 
 	/************************************ Static parameters for all recommenders ***********************************/
 	// init, maximum learning rate, momentum
-	protected static float initLRate, initLRateN, initLRateF, initLRateC, initLRateCN, initLRateCF, maxLRate, momentum;
+	protected static float initLRate, initLRateN, initLRateF, initLRateMu, initLRateC, initLRateCN, initLRateCF, maxLRate, momentum;
 	// line configer for regularization parameters
 	protected static LineConfiger regOptions;
 	// user, item and bias regularization
@@ -69,7 +69,7 @@ public abstract class IterativeRecommender extends Recommender {
 	protected DenseVector itemBias;
 
 	// adaptive learn rate
-	protected double lRate, lRateN, lRateF, lRateC, lRateCN, lRateCF;
+	protected double lRate, lRateN, lRateF, lRateMu, lRateC, lRateCN, lRateCF;
 	// objective loss
 	protected double loss, last_loss = 0;
 	// predictive measure
@@ -90,6 +90,7 @@ public abstract class IterativeRecommender extends Recommender {
 				initLRate = Float.parseFloat(lc.getMainParam());
 				initLRateN = lc.getFloat("-n", initLRate);
 				initLRateF = lc.getFloat("-f", initLRate);
+				initLRateMu = lc.getFloat("-mu", initLRate);
 				initLRateC = lc.getFloat("-c", initLRate);
 				initLRateCN = lc.getFloat("-cn", initLRate);
 				initLRateCF = lc.getFloat("-cf", initLRate);
@@ -118,6 +119,11 @@ public abstract class IterativeRecommender extends Recommender {
 		// method-specific settings
 		lRate = initLRate;
 		lRateN = initLRateN;
+		lRateF = initLRateF;
+		lRateMu = initLRateMu;
+		lRateC = initLRateC;
+		lRateCN = initLRateCN;
+		lRateCF = initLRateCF;
 		initByNorm = true;
 	}
 
@@ -228,6 +234,7 @@ public abstract class IterativeRecommender extends Recommender {
 			lRate = Math.abs(last_loss) > Math.abs(loss) ? lRate * 1.05 : lRate * 0.5;
 			lRateN = Math.abs(last_loss) > Math.abs(loss) ? lRateN * 1.05 : lRateN * 0.5;
 			lRateF = Math.abs(last_loss) > Math.abs(loss) ? lRateF * 1.05 : lRateF * 0.5;
+			lRateMu = Math.abs(last_loss) > Math.abs(loss) ? lRateMu * 1.05 : lRateMu * 0.5;
 			lRateC = Math.abs(last_loss) > Math.abs(loss) ? lRateC * 1.05 : lRateC * 0.5;
 			lRateCN = Math.abs(last_loss) > Math.abs(loss) ? lRateCN * 1.05 : lRateCN * 0.5;
 			lRateCF = Math.abs(last_loss) > Math.abs(loss) ? lRateCF * 1.05 : lRateCF * 0.5;
@@ -236,6 +243,7 @@ public abstract class IterativeRecommender extends Recommender {
 			lRate *= decay;
 			lRateN *= decay;
 			lRateF *= decay;
+			lRateMu *= decay;
 			lRateC *= decay;
 			lRateCN *= decay;
 			lRateCF *= decay;
@@ -248,6 +256,8 @@ public abstract class IterativeRecommender extends Recommender {
 			lRateN = maxLRate;
 		if (maxLRate > 0 && lRateF > maxLRate)
 			lRateF = maxLRate;
+		if (maxLRate > 0 && lRateMu > maxLRate)
+			lRateMu = maxLRate;
 		if (maxLRate > 0 && lRateC > maxLRate)
 			lRateC = maxLRate;
 		if (maxLRate > 0 && lRateCN > maxLRate)

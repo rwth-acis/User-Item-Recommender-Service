@@ -22,6 +22,7 @@ import i5.las2peer.services.recommender.librec.rating.ComNeighSVDPlusPlusFast;
 import i5.las2peer.services.recommender.librec.rating.ItemKNN;
 import i5.las2peer.services.recommender.librec.rating.NeighSVDPlusPlus;
 import i5.las2peer.services.recommender.librec.rating.SVDPlusPlus;
+import i5.las2peer.services.recommender.librec.rating.TimeNeighSVD;
 import i5.las2peer.services.recommender.librec.rating.TimeSVD;
 import i5.las2peer.services.recommender.librec.util.Dates;
 import i5.las2peer.services.recommender.librec.util.FileConfiger;
@@ -87,12 +88,15 @@ public class LibRec {
 			break;
 		case "tsvd":
 			this.algorithm = Algorithm.TimeSVDPlusPlus;
-			configuration.setProperty("learn.rate", "0.005 -max -1 -bold-driver");
-			configuration.setProperty("reg.lambda", "0.05 -u 0.05 -i 0.05 -b 0.15");
+			configuration.setProperty("learn.rate", "0.001 -max -1 -bold-driver");
+			configuration.setProperty("reg.lambda", "0.002 -u 0.002 -i 0.002 -b 0.002");
 			configuration.setProperty("timeSVD++", "-beta 0.04 -bins 30");
 			break;
 		case "tnsvd":
 			this.algorithm = Algorithm.TimeNeighSVDPlusPlus;
+			configuration.setProperty("learn.rate", "0.005 -n 0.005 -f 0.005 -mu 0.0000001 -max -1 -bold-driver");
+			configuration.setProperty("reg.lambda", "0.002 -b 0.002 -n 0.002 -u 0.002 -i 0.002");
+			configuration.setProperty("timeNeighSVD++", "-beta 0.04 -bins 30");
 			break;
 		case "cnsvd":
 			this.algorithm = Algorithm.ComNeighSVDPlusPlus;
@@ -349,7 +353,7 @@ public class LibRec {
 		case TimeSVDPlusPlus:
 			return new TimeSVD(trainMatrix, testMatrix, fold);
 		case TimeNeighSVDPlusPlus:
-			break;
+			return new TimeNeighSVD(trainMatrix, testMatrix, fold);
 		case ComNeighSVDPlusPlus:
 			return new ComNeighSVDPlusPlus(trainMatrix, testMatrix, fold);
 		case ComNeighSVDPlusPlusFast:

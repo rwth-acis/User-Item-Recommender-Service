@@ -18,6 +18,7 @@
 
 package i5.las2peer.services.recommender.librec.rating;
 
+import java.util.HashSet;
 import java.util.List;
 
 import com.google.common.cache.LoadingCache;
@@ -88,6 +89,7 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 		C.init(initMean, initStd);
 		
 		userItemsCache = trainMatrix.rowColumnsCache(cacheSpec);
+		itemUsersCache = trainMatrix.columnRowsCache(cacheSpec);
 		
 		D = new DenseMatrix(numItems, numItems);
 		D.init(initMean, initStd);
@@ -115,7 +117,7 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 			cd.setAlgorithm(CommunityDetectionAlgorithm.DMID);
 			cd.setDmidParameters(cf.getInt("cd.dmid.iter", 1000),
 								cf.getDouble("cd.dmid.prec", 0.001),
-								cf.getDouble("cd.dmid.proficioncy", 0.1));
+								cf.getDouble("cd.dmid.proficiency", 0.1));
 			break;
 		case "slpa":
 			cd.setAlgorithm(CommunityDetectionAlgorithm.SLPA);
@@ -145,8 +147,10 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 		itemComBias = new DenseVector(numItemCommunities);
 		itemComBias.init(initMean, initStd);
 
+		Logs.info("{}{} compute community ratings ...", new Object[] { algoName, foldInfo });
 		communityRatingsMatrix = getCommunityRatings();
 		
+		Logs.info("{}{} compute community ratings per user ...", new Object[] { algoName, foldInfo });
 		userCommunitiesRatingsMatrix = getUserCommunitiesRatings();
 		userCommunitiesItemsCache = userCommunitiesRatingsMatrix.rowColumnsCache(cacheSpec);
 		Logs.info("{}{} userCommunitiesRatings: Total number of entries: {}, Avg. entries per user: {}",
@@ -357,19 +361,30 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 		return pred;
 	}
 
-	private SparseMatrix getCommunityRatings() {
+	private SparseMatrix getCommunityRatings() throws Exception {
 		// Get the average community ratings for each item
 		Table<Integer, Integer, Double> communityRatingsTable = HashBasedTable.create();
 		for (int community = 0; community < numUserCommunities; community++){
-			SparseVector communityUsersVector = userMemberships.column(community);  // Contains each user's membership level for the community
-			for (int item = 0; item < numItems; item++){
-				double ratingsSum = 0;  // Sum of ratings given by users of the community to
-										// the item, weighted by the users community membership levels
-				double membershipsSum = 0;  // For normalization
-				SparseVector itemUsersVector = trainMatrix.column(item);  // Contains each users rating for the item
+			// each user's membership level for the community
+			SparseVector communityUsersVector = userMemberships.column(community);
+			// build set of items that have been rated by members of the community
+			HashSet<Integer> items = new HashSet<Integer> ();
+			for (VectorEntry e : communityUsersVector){
+				int user = e.index();
+				List<Integer> userItems = userItemsCache.get(user);
+				for (int item : userItems)
+					items.add(item);
+			}
+			for (int item : items){
+				// Sum of ratings given by users of the community to item, weighted by the users community membership levels
+				double ratingsSum = 0;
+				// sum of membership levels of the users that have rated the item, used for normalization
+				double membershipsSum = 0;
+				// each user's rating for the item
+				SparseVector itemUsersVector = trainMatrix.column(item);
 				for (VectorEntry e : communityUsersVector){
 					int user = e.index();
-					if (itemUsersVector.contains(user)){  // Only consider users that are part of the community and have rated the item
+					if (itemUsersVector.contains(user)){
 						double userMembership = communityUsersVector.get(user);
 						double userRating = itemUsersVector.get(user);
 						ratingsSum += userRating * userMembership;
@@ -395,8 +410,7 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 	    Table<Integer, Integer, Double> userCommunitiesRatingsTable = HashBasedTable.create();
 		
 		for (int user = 0; user < numUsers; user++){
-			List<Integer> userCommunities;
-			userCommunities = userCommunitiesCache.get(user);
+			List<Integer> userCommunities = userCommunitiesCache.get(user);
 			for (int item = 0; item < numItems; item++){
 				double ratingsSum = 0;
 				double membershipsSum = 0;

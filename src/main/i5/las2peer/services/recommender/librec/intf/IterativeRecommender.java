@@ -191,7 +191,8 @@ public abstract class IterativeRecommender extends Recommender {
 		}
 
 		if (Double.isNaN(loss) || Double.isInfinite(loss)) {
-			Logs.error("Loss = NaN or Infinity: current settings does not fit the recommender! Change the settings and try again!");
+//			Logs.error("Loss = NaN or Infinity: current settings does not fit the recommender! Change the settings and try again!");
+			Logs.error("Loss = {}: current settings does not fit the recommender! Change the settings and try again!", loss);
 			System.exit(-1);
 		}
 

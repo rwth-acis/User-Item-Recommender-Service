@@ -22,6 +22,7 @@ import i5.las2peer.services.recommender.librec.rating.ComNeighSVDPlusPlusFast;
 import i5.las2peer.services.recommender.librec.rating.ItemKNN;
 import i5.las2peer.services.recommender.librec.rating.NeighSVDPlusPlus;
 import i5.las2peer.services.recommender.librec.rating.SVDPlusPlus;
+import i5.las2peer.services.recommender.librec.rating.TimeComNeighSVD;
 import i5.las2peer.services.recommender.librec.rating.TimeNeighSVD;
 import i5.las2peer.services.recommender.librec.rating.TimeSVD;
 import i5.las2peer.services.recommender.librec.util.Dates;
@@ -115,6 +116,9 @@ public class LibRec {
 			break;
 		case "tcnsvd":
 			this.algorithm = Algorithm.TimeComNeighSVDPlusPlus;
+			configuration.setProperty("learn.rate", "0.005 -n 0.005 -f 0.005 -mu 0.0000001 -max -1 -bold-driver");
+			configuration.setProperty("reg.lambda", "0.002 -b 0.002 -n 0.002 -u 0.002 -i 0.002");
+			configuration.setProperty("timeComNeighSVD++", "-beta 0.04 -bins 30 -cbins 2");
 			break;
 		case "cnsvd-fast":
 			this.algorithm = Algorithm.ComNeighSVDPlusPlusFast;
@@ -361,7 +365,7 @@ public class LibRec {
 		case ComNeighSVDPlusPlus2:
 			return new ComNeighSVDPlusPlus2(trainMatrix, testMatrix, fold);
 		case TimeComNeighSVDPlusPlus:
-			break;
+			return new TimeComNeighSVD(trainMatrix, testMatrix, fold);
 		default:
 			break;
 		}

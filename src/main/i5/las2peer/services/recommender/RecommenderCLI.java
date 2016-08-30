@@ -75,6 +75,10 @@ public class RecommenderCLI {
 	
 	private static void setParameters() {
 		
+		if(options.containsKey("--rec-tcnsvd-cbins")){
+			librec.setParameter("timeComNeighSVD++", "-beta 0.04 -bins 30 -cbins " + options.get("--rec-tcnsvd-cbins"));
+		}
+		
 		if(options.containsKey("--cd-algo")){
 			librec.setParameter("cd.algo", options.get("--cd-algo"));
 		}

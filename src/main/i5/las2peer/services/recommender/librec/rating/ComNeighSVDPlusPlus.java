@@ -52,6 +52,16 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 	protected DenseMatrix Y, Z , Ocu, Oci;
 	protected DenseMatrix W, C, D; // weighting factors for neighborhood model
 	
+	// ---Community-related algorithm parameters
+	// k parameter for the k-nn graph construction
+	private int knn;
+	// Similarity measure for the k-nn graph construction
+	private SimilarityMeasure sim;
+	// Community detection algorithm
+	private CommunityDetectionAlgorithm cdAlgo;
+	// Steps parameter for the Walktrap algorithm
+	private int wtSteps;
+
 	protected int numUserCommunities;
 	protected int numItemCommunities;
 	
@@ -67,15 +77,36 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 		super(trainMatrix, testMatrix, fold);
 
 		setAlgoName("ComNeighSVD++");
+		
+		knn = cf.getInt("graph.knn.k", 10);
+		switch (cf.getString("graph.knn.sim", "cosine").toLowerCase()){
+		case "pearson":
+			sim = SimilarityMeasure.PEARSON_CORRELATION;
+			break;
+		default:
+		case "cosine":
+			sim = SimilarityMeasure.COSINE_SIMILARITY;
+			break;
+		}
+		switch (cf.getString("cd.algo", "wt").toLowerCase()){
+		case "dmid":
+			cdAlgo = CommunityDetectionAlgorithm.DMID;
+			break;
+		case "slpa":
+			cdAlgo = CommunityDetectionAlgorithm.SLPA;
+			break;
+		default:
+		case "wt":
+			cdAlgo = CommunityDetectionAlgorithm.WALKTRAP;
+			break;
+		}
+		wtSteps = cf.getInt("cd.walktrap.steps", 2);
 	}
 
 	@Override
 	protected void initModel() throws Exception {
 		super.initModel();
-	}
-
-	@Override
-	protected void buildModel() throws Exception {
+		
 		Y = new DenseMatrix(numItems, numFactors);
 		Y.init(initMean, initStd);
 
@@ -98,34 +129,19 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 		Logs.info("{}{} build user and item graphs ...", new Object[] { algoName, foldInfo });
 		GraphBuilder gb = new GraphBuilder();
 		gb.setRatingData(trainMatrix);
-		gb.setK(10);
-		gb.setSimilarityMeasure(SimilarityMeasure.COSINE_SIMILARITY);
+		gb.setK(knn);
+		gb.setSimilarityMeasure(sim);
 		gb.buildGraphs();
 		SparseMatrix userMatrix = gb.getUserAdjacencyMatrix();
 		SparseMatrix itemMatrix = gb.getItemAdjacencyMatrix();
+		gb = null;
 		
 		// detect communities
 		Logs.info("{}{} detect communities ...", new Object[] { algoName, foldInfo });
 		CommunityDetector cd = new CommunityDetector();
-		switch(cf.getString("cd.algo", "dmid").toLowerCase()){
-		default:
-		case "walktrap":
-			cd.setAlgorithm(CommunityDetectionAlgorithm.WALKTRAP);
-			cd.setWalktrapParameters(cf.getInt("cd.walktrap.steps", 2));
-			break;
-		case "dmid":
-			cd.setAlgorithm(CommunityDetectionAlgorithm.DMID);
-			cd.setDmidParameters(cf.getInt("cd.dmid.iter", 1000),
-								cf.getDouble("cd.dmid.prec", 0.001),
-								cf.getDouble("cd.dmid.proficiency", 0.1));
-			break;
-		case "slpa":
-			cd.setAlgorithm(CommunityDetectionAlgorithm.SLPA);
-			cd.setSlpaParameters(cf.getDouble("cd.slpa.prob", 0.15),
-								cf.getInt("cd.slpa.memory", 100));
-			break;
-		}
-		
+		cd.setAlgorithm(cdAlgo);
+		if (cdAlgo == CommunityDetectionAlgorithm.WALKTRAP)
+			cd.setWalktrapParameters(wtSteps);
 		cd.setGraph(userMatrix);
 		cd.detectCommunities();
 		userMemberships = cd.getMemberships();
@@ -136,10 +152,14 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 		itemMemberships = cd.getMemberships();
 		itemCommunitiesCache = itemMemberships.rowColumnsCache(cacheSpec);
 		
+		userMatrix = null;
+		itemMatrix = null;
+		cd = null;
+		
 		numUserCommunities = userMemberships.numColumns();
 		numItemCommunities = itemMemberships.numColumns(); 
 		
-		debugCommunityInfo();
+		logCommunityInfo();
 		
 		userComBias = new DenseVector(numUserCommunities);
 		userComBias.init(initMean, initStd);
@@ -161,14 +181,18 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 
 		Oci = new DenseMatrix(numItemCommunities, numFactors);
 		Oci.init(initMean, initStd);
+	}
 
-		// iteratively learn the model parameters
+	@Override
+	protected void buildModel() throws Exception {
 		Logs.info("{}{} learn model parameters ...", new Object[] { algoName, foldInfo });
 		for (int iter = 1; iter <= numIters; iter++) {
 
 			loss = 0;
+			int count = 0;
 			for (MatrixEntry me : trainMatrix) {
-
+				if (count >= 500) break;
+				count++;
 				int u = me.row(); // user
 				int j = me.column(); // item
 				double ruj = me.get();
@@ -447,7 +471,7 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 		return bias;
 	}
 	
-	private void debugCommunityInfo() {
+	private void logCommunityInfo() {
 		int userMemSize = userMemberships.size();
 		int itemMemSize = itemMemberships.size();
 		double upc = (double) userMemSize / numUserCommunities;

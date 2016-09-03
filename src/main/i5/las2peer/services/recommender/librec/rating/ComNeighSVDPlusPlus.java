@@ -187,12 +187,8 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 	protected void buildModel() throws Exception {
 		Logs.info("{}{} learn model parameters ...", new Object[] { algoName, foldInfo });
 		for (int iter = 1; iter <= numIters; iter++) {
-
 			loss = 0;
-			int count = 0;
 			for (MatrixEntry me : trainMatrix) {
-				if (count >= 500) break;
-				count++;
 				int u = me.row(); // user
 				int j = me.column(); // item
 				double ruj = me.get();

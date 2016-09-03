@@ -470,15 +470,60 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 	private void logCommunityInfo() {
 		int userMemSize = userMemberships.size();
 		int itemMemSize = itemMemberships.size();
-		double upc = (double) userMemSize / numUserCommunities;
-		double cpu = (double) userMemSize / numUsers;
-		double ipc = (double) itemMemSize / numItemCommunities;
-		double cpi = (double) itemMemSize / numItems;
 		
-		Logs.info("{}{} user communites: {}, users per community: {}, communities per user: {}",
-				new Object[] { algoName, foldInfo, numUserCommunities, upc, cpu });
-		Logs.info("{}{} item communites: {}, items per community: {}, communities per item: {}",
-				new Object[] { algoName, foldInfo, numItemCommunities, ipc, cpi });
+		// users per community
+		double avgupc = (double) userMemSize / numUserCommunities;
+		int minupc = Integer.MAX_VALUE;
+		int maxupc = Integer.MIN_VALUE;
+		for (int c = 0; c < numUserCommunities; c++){
+			int upc = userMemberships.columnSize(c);
+			if (upc < minupc)
+				minupc = upc;
+			if (upc > maxupc)
+				maxupc = upc;
+		}
+		
+		// communities per user
+		double avgcpu = (double) userMemSize / numUsers;
+		int mincpu = Integer.MAX_VALUE;
+		int maxcpu = Integer.MIN_VALUE;
+		for (int u = 0; u < numUsers; u++){
+			int cpu = userMemberships.rowSize(u);
+			if (cpu < mincpu)
+				mincpu = cpu;
+			if (cpu > maxcpu)
+				maxcpu = cpu;
+		}
+		
+		
+		// items per community
+		double avgipc = (double) itemMemSize / numItemCommunities;
+		int minipc = Integer.MAX_VALUE;
+		int maxipc = Integer.MIN_VALUE;
+		for (int c = 0; c < numItemCommunities; c++){
+			int ipc = itemMemberships.columnSize(c);
+			if (ipc < minipc)
+				minipc = ipc;
+			if (ipc > maxipc)
+				maxipc = ipc;
+		}
+		
+		// communities per item
+		double avgcpi = (double) itemMemSize / numItems;
+		int mincpi = Integer.MAX_VALUE;
+		int maxcpi = Integer.MIN_VALUE;
+		for (int i = 0; i < numItems; i++){
+			int cpi = itemMemberships.rowSize(i);
+			if (cpi < mincpi)
+				mincpi = cpi;
+			if (cpi > maxcpi)
+				maxcpi = cpi;
+		}
+		
+		Logs.info("{}{} user communites: {}, [min, max, avg] users per community: [{}, {}, {}], [min, max, avg] communities per user: [{}, {}, {}]",
+				new Object[] { algoName, foldInfo, numUserCommunities, minupc, maxupc, avgupc, mincpu, maxcpu, avgcpu });
+		Logs.info("{}{} item communites: {}, [min, max, avg] items per community: [{}, {}, {}], [min, max, avg] communities per item: [{}, {}, {}]",
+				new Object[] { algoName, foldInfo, numItemCommunities, minipc, maxipc, avgipc, mincpi, maxcpi, avgcpi });
 	}
 	
 	@Override

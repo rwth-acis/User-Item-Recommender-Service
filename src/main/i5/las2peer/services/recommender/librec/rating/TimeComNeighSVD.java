@@ -501,6 +501,7 @@ public class TimeComNeighSVD extends IterativeRecommender {
 	
 	@Override
 	protected void buildModel() throws Exception {
+		Logs.info("{}{} learn model parameters ...", new Object[] { algoName, foldInfo });
 		for (int iter = 1; iter <= numIters; iter++) {
 			loss = 0;
 			

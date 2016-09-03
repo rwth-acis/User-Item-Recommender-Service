@@ -504,12 +504,7 @@ public class TimeComNeighSVD extends IterativeRecommender {
 		for (int iter = 1; iter <= numIters; iter++) {
 			loss = 0;
 			
-			int cnt = 0;
 			for (MatrixEntry me : trainMatrix) {
-				if(cnt >= 500)
-					break;
-				cnt++;
-				
 				int u = me.row();
 				int i = me.column();
 				double rui = me.get();
@@ -803,15 +798,11 @@ public class TimeComNeighSVD extends IterativeRecommender {
 					sgd_psi += eui * wc * (-1 * diff) * e * ((rcuj - buj) * dij);
 				}
 				double psi = Psi.get(u);
-				if(psi < 0) System.out.println(String.format("psi(%d) = %f", u, psi));
 				sgd_psi += regCN * psi;
 				// do not let psi become negative
 				double delta_psi = (lRateMu * sgd_psi > psi) ? (psi / 2.0) : (lRateMu * sgd_psi);
 				Psi.add(u, -delta_psi);
 				loss += regCN * psi * psi;
-				if(loss > 10000){
-					System.out.println(String.format("loss: %f", loss));
-				}
 			}
 
 			loss *= 0.5;

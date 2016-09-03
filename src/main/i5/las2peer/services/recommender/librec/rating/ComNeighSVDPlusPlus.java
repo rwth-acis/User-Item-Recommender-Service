@@ -316,14 +316,14 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 					
 					for (int c : userCommunities){
 						double ocuf = Ocu.get(c, f);
-						double delta_ocu = euj * userMemberships.get(u, c) * (qjf + sum_ocis[f]) - regCF + ocuf;
+						double delta_ocu = euj * userMemberships.get(u, c) * (qjf + sum_ocis[f]) - regCF * ocuf;
 						Ocu.add(c, f, lRateCF * delta_ocu);
 						loss += regCF * ocuf * ocuf;
 					}
 					
 					for (int c : itemCommunities){
 						double ocif = Oci.get(c, f);
-						double delta_oci = euj * itemMemberships.get(j, c) * (puf + sum_ocus[f] + sum_ys[f] + sum_zs[f]) - regCF + ocif;
+						double delta_oci = euj * itemMemberships.get(j, c) * (puf + sum_ocus[f] + sum_ys[f] + sum_zs[f]) - regCF * ocif;
 						Oci.add(c, f, lRateCF * delta_oci);
 						loss += regCF * ocif * ocif;
 					}

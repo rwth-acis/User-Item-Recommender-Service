@@ -50,12 +50,20 @@ import i5.las2peer.services.recommender.librec.util.Strings;
  * @author guoguibing
  * 
  */
-@Configuration("factors, lRate, lRateN, lRateF, lRateMu, maxLRate, regB, regN, regU, regI, iters, boldDriver, beta, numBins")
+@Configuration("factors, lRate, lRateN, lRateF, lRateC, lRateCN, lRateCF, lRateMu, maxLRate, regB, regN, regU, regI, regC, regCN,"
+		+ " regCF, iters, boldDriver, beta, numBins, numCBins")
 public class TimeComNeighSVD extends IterativeRecommender {
 
-	// the span of days of rating timestamps
-	private static int numDays;
+	// the span of days of training timestamps
+	private int numDays;
+	
+	// the minimum/maximum training timestamp
+	private long minTrainTimestamp;
+	private long maxTrainTimestamp;
 
+	// global mean rating date
+	private double globalMeanDate;
+	
 	// {user, mean date}
 	private DenseVector userMeanDate;
 
@@ -132,6 +140,12 @@ public class TimeComNeighSVD extends IterativeRecommender {
 	
 	// Average ratings given by each user's communities (numUsers x numItems) for each bin
 	private SparseMatrix[] userCommunitiesRatingsMatrix;
+	
+	// Average ratings given by the members of each community (numUserCommunities x numItems) for each bin
+	private SparseMatrix[] communityTimeMatrix;
+	
+	// Average ratings given by each user's communities (numUsers x numItems) for each bin
+	private SparseMatrix[] userCommunitiesTimeMatrix;
 	
 	// User/item communities caches for each bin
 	private List<LoadingCache<Integer, List<Integer>>> userCommunitiesCache, itemCommunitiesCache, userCommunitiesItemsCache;
@@ -212,8 +226,17 @@ public class TimeComNeighSVD extends IterativeRecommender {
 	protected void initModel() throws Exception {
 		super.initModel();
 
-		numDays = days(maxTimestamp, minTimestamp) + 1;
-
+		minTrainTimestamp = Long.MAX_VALUE;
+		maxTrainTimestamp = Long.MIN_VALUE;
+		for (MatrixEntry e : trainMatrix){
+			long t = (long) timeMatrix.get(e.row(), e.column());
+			if (t < minTrainTimestamp)
+				minTrainTimestamp = t;
+			if (t > maxTrainTimestamp)
+				maxTrainTimestamp = t;
+		}
+		numDays = days(maxTrainTimestamp, minTrainTimestamp) + 1;
+		
 		userBias = new DenseVector(numUsers);
 		userBias.init(initMean, initStd);
 
@@ -233,6 +256,7 @@ public class TimeComNeighSVD extends IterativeRecommender {
 		Auk.init(initMean, initStd);
 
 		But = HashBasedTable.create();
+		
 		Pukt = new HashMap<>();
 
 		Cu = new DenseVector(numUsers);
@@ -264,12 +288,12 @@ public class TimeComNeighSVD extends IterativeRecommender {
 			if (rui <= 0)
 				continue;
 
-			sum += days((long) timeMatrix.get(u, i), minTimestamp);
+			sum += days((long) timeMatrix.get(u, i), minTrainTimestamp);
 			cnt++;
 		}
-		double globalMeanDate = sum / cnt;
+		globalMeanDate = sum / cnt;
 
-		// compute user's mean of rating timestamps
+		// compute users' mean rating timestamps
 		userMeanDate = new DenseVector(numUsers);
 		List<Integer> Ru = null;
 		for (int u = 0; u < numUsers; u++) {
@@ -277,14 +301,13 @@ public class TimeComNeighSVD extends IterativeRecommender {
 			sum = 0;
 			Ru = userItemsCache.get(u);
 			for (int i : Ru) {
-				sum += days((long) timeMatrix.get(u, i), minTimestamp);
+				sum += days((long) timeMatrix.get(u, i), minTrainTimestamp);
 			}
 
 			double mean = (Ru.size() > 0) ? (sum + 0.0) / Ru.size() : globalMeanDate;
 			userMeanDate.set(u, mean);
 		}
 		
-		// compute static community structure over all ratings
 		// build user and item graphs
 		Logs.info("{}{} build user and item graphs ...", new Object[] { algoName, foldInfo });
 		SparseMatrix[] userMatrix = new SparseMatrix[numCBins + 1];
@@ -297,8 +320,9 @@ public class TimeComNeighSVD extends IterativeRecommender {
 		userMatrix[0] = gb.getUserAdjacencyMatrix();
 		itemMatrix[0] = gb.getItemAdjacencyMatrix();
 		if (numCBins > 1){
+			SparseMatrix[] trainMatrixCBin = trainDataCBins();
 			for (int cbin = 1; cbin <= numCBins; cbin++){
-				gb.setRatingData(trainMatrix);  // TODO: get ratings according to bin
+				gb.setRatingData(trainMatrixCBin[cbin - 1]);
 				gb.buildGraphs();
 				userMatrix[cbin] = gb.getUserAdjacencyMatrix();
 				itemMatrix[cbin] = gb.getItemAdjacencyMatrix();
@@ -341,17 +365,19 @@ public class TimeComNeighSVD extends IterativeRecommender {
 		itemMatrix = null;
 		cd = null;
 		
-//		debugCommunityInfo();
+		logCommunityInfo();
 
 		// compute user communities' average ratings for each item
 		communityRatingsMatrix = new SparseMatrix[numCBins + 1];
+		communityTimeMatrix = new SparseMatrix[numCBins + 1];
 		communityMeanDate = new DenseVector[numCBins + 1];
 		for (int cbin = 0; cbin <= numCBins; cbin++){
 			communityMeanDate[cbin] = new DenseVector(numUserCommunities[cbin]);
 			Table<Integer, Integer, Double> communityRatingsTable = HashBasedTable.create();
+			Table<Integer, Integer, Double> communityTimeTable = HashBasedTable.create();
 			for (int community = 0; community < numUserCommunities[cbin]; community++){
 				// each user's membership level for the community
-				SparseVector communityUsersVector = userMemberships[cbin].column(community); 
+				SparseVector communityUsersVector = userMemberships[cbin].column(community);
 				// build set of items that have been rated by members of the community
 				HashSet<Integer> items = new HashSet<Integer> ();
 				for (VectorEntry e : communityUsersVector){
@@ -361,33 +387,40 @@ public class TimeComNeighSVD extends IterativeRecommender {
 						items.add(item);
 				}
 				// to compute mean rating times for each community keep track of time and number of ratings given
-				double timeSum = 0;
+				double communityTimeSum = 0;
 				int ratingsCount = 0;
 				for (int item : items){
 					// Sum of ratings given by users of the community to the item, weighted by the users community membership levels
 					double ratingsSum = 0;
-					double membershipsSum = 0;  // For normalization
-					SparseVector itemUsersVector = trainMatrix.column(item);  // Contains each users rating for the item
+					double communityItemTimeSum = 0;
+					double membershipsSum = 0;
+					// Each user's rating for the item
+					SparseVector itemUsersVector = trainMatrix.column(item);
 					for (VectorEntry e : communityUsersVector){
 						int user = e.index();
-						if (itemUsersVector.contains(user)){  // Only consider users that are part of the community and have rated the item
-							double userMembership = communityUsersVector.get(user);
-							double userRating = itemUsersVector.get(user);
-							ratingsSum += userRating * userMembership;
-							membershipsSum += userMembership;
-							timeSum += days((long) timeMatrix.get(user, item), minTimestamp);
+						if (itemUsersVector.contains(user)){
+							double muc = userMemberships[cbin].get(user, community);
+							double rui = itemUsersVector.get(user);
+							double tui = timeMatrix.get(user, item);
+							ratingsSum += rui * muc;
+							communityItemTimeSum += tui * muc;
+							membershipsSum += muc;
+							communityTimeSum += days((long) timeMatrix.get(user, item), minTrainTimestamp);
 							ratingsCount++;
 						}
 					}
 					if (membershipsSum > 0){
 						double communityRating = ratingsSum / membershipsSum;
+						double communityTime = communityItemTimeSum / membershipsSum;
 						communityRatingsTable.put(community, item, communityRating);
+						communityTimeTable.put(community, item, communityTime);
 					}
-					double meanTime = (ratingsCount > 0) ? (timeSum) / ratingsCount : globalMeanDate;
+					double meanTime = (ratingsCount > 0) ? (communityTimeSum) / ratingsCount : globalMeanDate;
 					communityMeanDate[cbin].set(community, meanTime);
 				}
 			}
 			communityRatingsMatrix[cbin] = new SparseMatrix(numUserCommunities[cbin], numItems, communityRatingsTable);
+			communityTimeMatrix[cbin] = new SparseMatrix(numUserCommunities[cbin], numItems, communityTimeTable);
 			int numRatingsPerCommunity = communityRatingsMatrix[cbin].size() / communityRatingsMatrix[cbin].numRows();
 			Logs.info("{}{} Community Ratings: Number of communities: {}, Avg. number of ratings per community: {}",
 					algoName, foldInfo, communityRatingsMatrix[cbin].numRows(), numRatingsPerCommunity);
@@ -395,28 +428,36 @@ public class TimeComNeighSVD extends IterativeRecommender {
 		
 		// compute each user's communities' average rating for each item
 		userCommunitiesRatingsMatrix = new SparseMatrix[numCBins + 1];
+		userCommunitiesTimeMatrix = new SparseMatrix[numCBins + 1];
 		userCommunitiesItemsCache = new ArrayList<LoadingCache<Integer, List<Integer>>>(numCBins + 1);
 		for (int cbin = 0; cbin <= numCBins; cbin++){
 		    Table<Integer, Integer, Double> userCommunitiesRatingsTable = HashBasedTable.create();
+		    Table<Integer, Integer, Double> userCommunitiesTimeTable = HashBasedTable.create();
 			for (int user = 0; user < numUsers; user++){
 				List<Integer> userCommunities;
 				userCommunities = userCommunitiesCache.get(cbin).get(user);
 				for (int item = 0; item < numItems; item++){
 					double ratingsSum = 0;
+					double timeSum = 0;
 					double membershipsSum = 0;
 					for (int community : userCommunities){
 						double communityRating = communityRatingsMatrix[cbin].get(community, item);
+						double communityTime = communityTimeMatrix[cbin].get(community, item);
 						double userMembership = userMemberships[cbin].get(user, community);
 						ratingsSum += communityRating * userMembership;
+						timeSum += communityTime * userMembership;
 						membershipsSum += userMembership;
 					}
 					if (ratingsSum > 0){
 						double userCommunitiesRating = ratingsSum / membershipsSum;
+						double userCommunitiesTime = timeSum / membershipsSum;
 						userCommunitiesRatingsTable.put(user, item, userCommunitiesRating);
+						userCommunitiesTimeTable.put(user, item, userCommunitiesTime);
 					}
 				}
 			}
 			userCommunitiesRatingsMatrix[cbin] = new SparseMatrix(numUsers, numItems, userCommunitiesRatingsTable);
+			userCommunitiesTimeMatrix[cbin] = new SparseMatrix(numUsers, numItems, userCommunitiesTimeTable);
 			userCommunitiesItemsCache.add(cbin, userCommunitiesRatingsMatrix[cbin].rowColumnsCache(cacheSpec));
 			int numRatingsPerUser = userCommunitiesRatingsMatrix[cbin].size() / userCommunitiesRatingsMatrix[cbin].numRows();
 			Logs.info("{}{} User Communities Ratings: Number of users: {}, Avg. number of community ratings per user: {}",
@@ -429,7 +470,7 @@ public class TimeComNeighSVD extends IterativeRecommender {
 		D = new DenseMatrix(numItems, numItems);
 		D.init(initMean, initStd);
 		Psi = new DenseVector(numUsers);
-		Psi.init(initMean, initStd);
+		Psi.init(0.01);
 		
 		BCu = new DenseVector[numCBins + 1];
 		BCut = new ArrayList<Table<Integer, Integer, Double>>(numCBins + 1);
@@ -463,14 +504,19 @@ public class TimeComNeighSVD extends IterativeRecommender {
 		for (int iter = 1; iter <= numIters; iter++) {
 			loss = 0;
 			
+			int cnt = 0;
 			for (MatrixEntry me : trainMatrix) {
+				if(cnt >= 500)
+					break;
+				cnt++;
+				
 				int u = me.row();
 				int i = me.column();
 				double rui = me.get();
 
 				long timestamp = (long) timeMatrix.get(u, i);
 				// day t
-				int t = days(timestamp, minTimestamp);
+				int t = days(timestamp, minTrainTimestamp);
 				int bin = bin(t);
 				double dev_ut = dev(u, t);
 				
@@ -489,19 +535,23 @@ public class TimeComNeighSVD extends IterativeRecommender {
 				// lazy initialization
 				if (!But.contains(u, t))
 					But.put(u, t, Randoms.gaussian(initMean, initStd));
+				if (!Pukt.containsKey(u))
+					Pukt.put(u, HashBasedTable.create());
 				for (int k = 0; k < numFactors; k++)
 					if (!Pukt.get(u).contains(k, t))
 						Pukt.get(u).put(k, t, Randoms.gaussian(initMean, initStd));
 				for (int c : userCommunities){
 					if (!BCut.get(cbin).contains(c, t))
 						BCut.get(cbin).put(c, t, Randoms.gaussian(initMean, initStd));
+					if (!OCut.get(cbin).containsKey(c))
+						OCut.get(cbin).put(c, HashBasedTable.create());
 					for (int k = 0; k < numFactors; k++)
 						if (!OCut.get(cbin).get(c).contains(k, t))
 							OCut.get(cbin).get(c).put(k, t, Randoms.gaussian(initMean, initStd));
 				}
 				
 				double pui = predict(u, i);
-
+				
 				double eui = pui - rui;
 				loss += eui * eui;
 				
@@ -514,7 +564,7 @@ public class TimeComNeighSVD extends IterativeRecommender {
 				double bit = Bit.get(i, bin);
 				double bu = userBias.get(u);
 				double but = But.get(u, t);
-				double au = Alpha.get(u); // alpha_u
+				double au = Alpha.get(u);
 
 				// update bi
 				double sgd = eui * (cu + cut) + regB * bi;
@@ -554,7 +604,7 @@ public class TimeComNeighSVD extends IterativeRecommender {
 				// update bcu, bcut
 				for (int c : userCommunities){
 					double bcu = BCu[cbin].get(c);
-					double bcut = BCut.get(cbin).get(cdAlgo, t);
+					double bcut = BCut.get(cbin).get(c, t);
 					double muc = userMemberships[cbin].get(u, c);
 					
 					sgd = eui * muc + regC * bcu;
@@ -729,7 +779,7 @@ public class TimeComNeighSVD extends IterativeRecommender {
 					loss += regI * cij * cij;
 					
 					// update phi
-					int diff = Math.abs(t - days((long) timeMatrix.get(u, j), minTimestamp));
+					int diff = Math.abs(t - days((long) timeMatrix.get(u, j), minTrainTimestamp));
 					sgd_phi = eui * wi * (-1 * diff) * e * ((ruj - buj) * wij + cij);
 				}
 				double phi = Phi.get(u);
@@ -741,21 +791,27 @@ public class TimeComNeighSVD extends IterativeRecommender {
 				double sgd_psi = 0;
 				for (int j : Icu){
 					double dij = D.get(i, j);
-					double e = cdecay(u, j, t);
+					double e = cdecay(u, j, t, cbin);
 					double rcuj = userCommunitiesRatingsMatrix[cbin].get(u, j);
 					double buj = bias(u, j, t, userStaticCommunities, userCommunities, itemCommunities);
 					sgd = eui * wc + e * (rcuj - buj) + regCN * dij;
 					D.add(i, j, -lRateCN * sgd);
 					loss += regCN * dij * dij;
 					
-					int tj = days((long) timeMatrix.get(u, j), minTimestamp);
+					int tj = days((long) timeMatrix.get(u, j), minTrainTimestamp);
 					int diff = Math.abs(t - tj);
-					sgd_psi = eui * wc * (-1 * diff) * e * ((rcuj - buj) * dij);
+					sgd_psi += eui * wc * (-1 * diff) * e * ((rcuj - buj) * dij);
 				}
 				double psi = Psi.get(u);
+				if(psi < 0) System.out.println(String.format("psi(%d) = %f", u, psi));
 				sgd_psi += regCN * psi;
-				Psi.add(u, -lRateMu * sgd_psi);
-				loss = regCN * psi * psi;
+				// do not let psi become negative
+				double delta_psi = (lRateMu * sgd_psi > psi) ? (psi / 2.0) : (lRateMu * sgd_psi);
+				Psi.add(u, -delta_psi);
+				loss += regCN * psi * psi;
+				if(loss > 10000){
+					System.out.println(String.format("loss: %f", loss));
+				}
 			}
 
 			loss *= 0.5;
@@ -768,8 +824,8 @@ public class TimeComNeighSVD extends IterativeRecommender {
 	@Override
 	protected double predict(int u, int i) throws Exception {
 		// retrieve the test rating timestamp
-		long timestamp = (long) testTimeMatrix.get(u, i);
-		int t = days(timestamp, minTimestamp);
+		long timestamp = (long) timeMatrix.get(u, i);
+		int t = days(timestamp, minTrainTimestamp);
 		double dev_ut = dev(u, t);
 		
 		List<Integer> Iu = userItemsCache.get(u);
@@ -832,7 +888,7 @@ public class TimeComNeighSVD extends IterativeRecommender {
 		// we use phi instead of beta since beta is already used for the time deviation in the baseline model
 		for (int j : Iu){
 			double e = decay(u, j, t);
-			double ruj = trainMatrix.get(u, j);
+			double ruj = rateMatrix.get(u, j);
 			double buj = bias(u, j, t, userStaticCommunities, userCommunities, itemCommunities);
 
 			pred += e * ((ruj - buj) * W.get(i, j) + C.get(i, j)) * wi;
@@ -840,7 +896,7 @@ public class TimeComNeighSVD extends IterativeRecommender {
 		
 		// e^(-psi_u * |t-tj|)(rCuj - buj) * dij)
 		for (int j : Icu){
-			double e = cdecay(u, j, t);
+			double e = cdecay(u, j, t, cbin);
 			double rcuj = userCommunitiesRatingsMatrix[cbin].get(u, j);
 			double buj = bias(u, j, t, userStaticCommunities, userCommunities, itemCommunities);
 			double dij = D.get(i,j);
@@ -853,8 +909,8 @@ public class TimeComNeighSVD extends IterativeRecommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { numFactors, initLRate, initLRateN, initLRateF, initLRateMu, maxLRate, regB, regN, regU, regI, numIters,
-				isBoldDriver, beta, numBins});
+		return Strings.toString(new Object[] { numFactors, initLRate, initLRateN, initLRateF, initLRateC, initLRateCN, initLRateCF, 
+				initLRateMu, maxLRate, regB, regN, regU, regI, regC, regCN, regCF, numIters, isBoldDriver, beta, numBins, numCBins});
 	}
 
 	/***************************************************************** Functional Methods *******************************************/
@@ -874,7 +930,7 @@ public class TimeComNeighSVD extends IterativeRecommender {
 	 * @return the rating decay for user u rating item j w.r.t. timestamp (number of days) t, i.e. e^(-beta_u * |t-tj|) from eq. (16)
 	 */
 	protected double decay(int u, int j, int t) {
-		int tj = days((long) timeMatrix.get(u, j), minTimestamp);
+		int tj = days((long) timeMatrix.get(u, j), minTrainTimestamp);
 
 		// date difference in days
 		int diff = Math.abs(t - tj);
@@ -883,10 +939,17 @@ public class TimeComNeighSVD extends IterativeRecommender {
 	}
 
 	/**
-	 * @return the bin number (starting from 0..numBins-1) for a specific timestamp t;
+	 * @return the bin number (starting from 0..numBins-1) for a specific day;
 	 */
 	protected int bin(int day) {
-		return (int) (day / (numDays + 0.0) * numBins);
+		int bin = (int) (day / (numDays + 0.0) * numBins);
+		
+		if (bin < 0)
+			return 1;
+		if (bin >= numBins)
+			return numBins - 1;
+
+		return bin;
 	}
 
 	/**
@@ -915,8 +978,12 @@ public class TimeComNeighSVD extends IterativeRecommender {
 		int cbin = cbin(t);
 
 		// bi(t): eq. (12)
-		bias += (itemBias.get(i) + Bit.get(i, bin)) * (Cu.get(u) + Cut.get(u, t));
-
+		double bi = itemBias.get(i);
+		double bit = Bit.get(i, bin);
+		double cu = Cu.get(u);
+		double cut = (t >= 0 && t < numDays) ? Cut.get(u, t) : 0;
+		bias = (bi + bit) * (cu + cut);
+		
 		// bu(t): eq. (9)
 		double but = But.contains(u, t) ? But.get(u, t) : 0;
 		bias += userBias.get(u) + Alpha.get(u) * dev_ut + but;
@@ -948,6 +1015,42 @@ public class TimeComNeighSVD extends IterativeRecommender {
 	/******************************************************* Community-related Methods **********************************************/
 	
 	/**
+	 * @return an array of size numCBins containing the rating matrices for each cbin (bins are numbered from 0 to numCBins-1)
+	 */
+	private SparseMatrix[] trainDataCBins() {
+		Logs.info("{}{} split training data into bins for dynamic community structure detection ...", algoName, foldInfo);
+		Logs.info("{}{} number of days: {}, global mean rating day: {}", algoName, foldInfo, numDays, (int) globalMeanDate);
+		
+		List<Table<Integer, Integer, Double>> table = new ArrayList<Table<Integer, Integer, Double>>(numCBins);
+		SparseMatrix[] matrix = new SparseMatrix[numCBins];
+		
+		for (int cbin = 0; cbin < numCBins; cbin++){
+			table.add(cbin, HashBasedTable.create());
+			int fromDay = numDays / numCBins * cbin;
+			int toDay = numDays / numCBins * (cbin + 1) - 1;
+			Logs.info("{}{} community bin {}: from day {} to day {}", algoName, foldInfo, cbin, fromDay, toDay);
+		}
+		
+		for (MatrixEntry e : trainMatrix){
+			int user = e.row();
+			int item = e.column();
+			double rating = e.get();
+			long time = (long) timeMatrix.get(user, item);
+			int days = days(time, minTrainTimestamp);
+			
+			int cbin = cbin(days);
+			table.get(cbin-1).put(user, item, rating);
+		}
+		
+		for (int cbin = 0; cbin < numCBins; cbin++){
+			matrix[cbin] = new SparseMatrix(numUsers, numItems, table.get(cbin));
+			Logs.info("{}{} trainMatrix cbin {}: {} ratings", algoName, foldInfo, cbin, matrix[cbin].size());
+		}
+		
+		return matrix;
+	}
+
+	/**
 	 * @return the time deviation for a specific timestamp (number of days) t w.r.t the community mean date tc
 	 */
 	protected double devc(int c, int t) {
@@ -960,10 +1063,17 @@ public class TimeComNeighSVD extends IterativeRecommender {
 	}
 
 	/**
-	 * @return the community bin number (starting from 1..numCBins) for a specific timestamp t;
+	 * @return the community bin number (starting from 1..numCBins) for a specific day t (number of days after trainMinTimestamp);
 	 */
 	protected int cbin(int day) {
-		return (int) (day / (numDays + 0.0) * numCBins) + 1;
+		int cbin = (int) (day / (numDays + 0.0) * numCBins) + 1;
+		
+		if (cbin < 1)
+			return 1;
+		if (cbin > numCBins)
+			return numCBins;
+		
+		return cbin;
 	}
 
 	/**
@@ -972,13 +1082,80 @@ public class TimeComNeighSVD extends IterativeRecommender {
 	 * @param t time (day) of the rating that is to be predicted
 	 * @return the rating decay for user u rating item j w.r.t. timestamp (number of days) t, i.e. e^(-beta_u * |t-tj|) from eq. (16)
 	 */
-	protected double cdecay(int u, int j, int t) {
-		int tj = days((long) timeMatrix.get(u, j), minTimestamp);
+	protected double cdecay(int u, int j, int t, int cbin) {
+		int tj = days((long) userCommunitiesTimeMatrix[cbin].get(u, j), minTrainTimestamp);
 		
 		// date difference in days
 		int diff = Math.abs(t - tj);
 
 		return Math.pow(Math.E, -1.0 * Psi.get(u) * diff);
+	}
+	
+	private void logCommunityInfo() {
+		for (int cbin = 0; cbin <= numCBins; cbin++){
+			int userMemSize = userMemberships[cbin].size();
+			int itemMemSize = itemMemberships[cbin].size();
+			
+			// users per community
+			double avgupc = (double) userMemSize / numUserCommunities[cbin];
+			int minupc = Integer.MAX_VALUE;
+			int maxupc = Integer.MIN_VALUE;
+			for (int c = 0; c < numUserCommunities[cbin]; c++){
+				int upc = userMemberships[cbin].columnSize(c);
+				if (upc < minupc)
+					minupc = upc;
+				if (upc > maxupc)
+					maxupc = upc;
+			}
+			
+			// communities per user
+			double avgcpu = (double) userMemSize / numUsers;
+			int mincpu = Integer.MAX_VALUE;
+			int maxcpu = Integer.MIN_VALUE;
+			for (int u = 0; u < numUsers; u++){
+				int cpu = userMemberships[cbin].rowSize(u);
+				if (cpu < mincpu)
+					mincpu = cpu;
+				if (cpu > maxcpu)
+					maxcpu = cpu;
+			}
+			
+			
+			// items per community
+			double avgipc = (double) itemMemSize / numItemCommunities[cbin];
+			int minipc = Integer.MAX_VALUE;
+			int maxipc = Integer.MIN_VALUE;
+			for (int c = 0; c < numItemCommunities[cbin]; c++){
+				int ipc = itemMemberships[cbin].columnSize(c);
+				if (ipc < minipc)
+					minipc = ipc;
+				if (ipc > maxipc)
+					maxipc = ipc;
+			}
+			
+			// communities per item
+			double avgcpi = (double) itemMemSize / numItems;
+			int mincpi = Integer.MAX_VALUE;
+			int maxcpi = Integer.MIN_VALUE;
+			for (int i = 0; i < numItems; i++){
+				int cpi = itemMemberships[cbin].rowSize(i);
+				if (cpi < mincpi)
+					mincpi = cpi;
+				if (cpi > maxcpi)
+					maxcpi = cpi;
+			}
+
+			String cbinInfo = "";
+			if (cbin == 0)
+				cbinInfo = "static community structure";
+			else
+				cbinInfo = "dynamic community structure bin " + cbin;
+			
+			Logs.info("{}{} {} user communites: {}, [min, max, avg] users per community: [{}, {}, {}], [min, max, avg] communities per user: [{}, {}, {}]",
+					new Object[] { algoName, foldInfo, cbinInfo, numUserCommunities[cbin], minupc, maxupc, avgupc, mincpu, maxcpu, avgcpu });
+			Logs.info("{}{} {} item communites: {}, [min, max, avg] items per community: [{}, {}, {}], [min, max, avg] communities per item: [{}, {}, {}]",
+					new Object[] { algoName, foldInfo, cbinInfo, numItemCommunities[cbin], minipc, maxipc, avgipc, mincpi, maxcpi, avgcpi });
+		}
 	}
 
 }

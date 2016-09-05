@@ -14,6 +14,7 @@ import i5.las2peer.services.recommender.communities.webocd.CustomGraph;
 import i5.las2peer.services.recommender.communities.webocd.OcdAlgorithmException;
 import i5.las2peer.services.recommender.communities.webocd.RandomWalkLabelPropagationAlgorithm;
 import i5.las2peer.services.recommender.communities.webocd.SpeakerListenerLabelPropagationAlgorithm;
+import i5.las2peer.services.recommender.librec.data.DenseVector;
 import i5.las2peer.services.recommender.librec.data.MatrixEntry;
 import i5.las2peer.services.recommender.librec.data.SparseMatrix;
 import i5.las2peer.services.recommender.librec.util.Logs;
@@ -27,6 +28,9 @@ public class CommunityDetector {
 	private SparseMatrix graph;
 	
 	private SparseMatrix membershipsMatrix;
+	
+	// Community memberships vector, only set when using Walktrap, not when using OCD algorithms
+	private DenseVector membershipsVector;
 	
 	// DMID parameters
 	private int dmidLeadershipIterationBound = 1000;
@@ -94,6 +98,10 @@ public class CommunityDetector {
 	
 	public SparseMatrix getMemberships(){
 		return membershipsMatrix;
+	}
+	
+	public DenseVector getMembershipsVector(){
+		return membershipsVector;
 	}
 	
 	public int getComputationTime(){
@@ -170,7 +178,8 @@ public class CommunityDetector {
 		
 		igraph.setGraph(graph);
 		igraph.detectCommunitiesWalktrap(walktrapSteps);
-		membershipsMatrix = igraph.getMemberships();
+		membershipsMatrix = igraph.getMembershipsMatrix();
+		membershipsVector = igraph.getMembershipsVector();
 	}
 	
 }

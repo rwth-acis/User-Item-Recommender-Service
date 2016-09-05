@@ -8,6 +8,7 @@ import com.google.common.collect.Table;
 import i5.las2peer.services.recommender.communities.igraph.IgraphLibrary.igraph_matrix_t;
 import i5.las2peer.services.recommender.communities.igraph.IgraphLibrary.igraph_t;
 import i5.las2peer.services.recommender.communities.igraph.IgraphLibrary.igraph_vector_t;
+import i5.las2peer.services.recommender.librec.data.DenseVector;
 import i5.las2peer.services.recommender.librec.data.MatrixEntry;
 import i5.las2peer.services.recommender.librec.data.SparseMatrix;
 
@@ -76,7 +77,7 @@ public class Igraph {
 		igraph.igraph_add_edges(graph, edges, null);
 	}
 	
-	public SparseMatrix getMemberships() {
+	public SparseMatrix getMembershipsMatrix() {
 		// fill membership information into the memberships matrix
 		Table<Integer, Integer, Double> membershipsTable = HashBasedTable.create();
 		Multimap<Integer, Integer> membershipsColMap = HashMultimap.create();
@@ -94,6 +95,18 @@ public class Igraph {
 		membershipsMatrix = new SparseMatrix(numUsers, maxCommunity+1, membershipsTable, membershipsColMap);
 		
 		return membershipsMatrix;
+	}
+	
+	public DenseVector getMembershipsVector() {
+		// fill membership information into the memberships matrix
+		DenseVector memberships = new DenseVector(numUsers);
+		
+		for (int user = 0; user < numUsers; user++){
+			int community = (int) igraph.igraph_vector_e(membershipsVector, user);
+			memberships.set(user, community);
+		}
+		
+		return memberships;
 	}
 	
 	public void detectCommunitiesWalktrap(int steps){

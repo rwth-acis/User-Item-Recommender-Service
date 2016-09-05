@@ -675,7 +675,7 @@ public class TimeComNeighSVD extends IterativeRecommender {
 					double sum_ocik = 0;
 					for (int c : itemCommunities){
 						double mic = itemMemberships[cbin].get(i, c);
-						sum_ocik += OCi[cbin].get(cbin, k) * mic;
+						sum_ocik += OCi[cbin].get(c, k) * mic;
 					}
 					
 					// update qik

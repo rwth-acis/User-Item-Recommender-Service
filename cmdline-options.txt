@@ -1,0 +1,45 @@
+Example:
+bin/recommender_cli.sh --dataset-type movielens --ratings-file datasets/movielens/ratings-u10k.txt --eval-type timecv --eval-folds 1 --cd-algo DMID --rec-algo TCNSVD
+
+Options:
+--ratings-file <file>       File containing the rating information
+--tags-file <file>          File containing tagging information
+--dataset-type              Type of dataset (filmtrust, movielens, netflix)
+--rec-algo <algorithm>      Rating estimation algorithm (ItemKNN, WRMF, SVD, NSVD, TSVD, TNSVD, CNSVD, TCNSVD, CNSVDFast, TCNSVDFast)
+--cd-algo <algorithm>       Community detection algorithm (WT, DMID, SLPA)
+--cd-wt-steps <num>         Steps parameter for Walktrap community detection algorithm
+--cd-dmid-iter-bound <num>  Leadership iteration bound parameter for DMID community detection algorithm
+--cd-dmid-prec-fact <num>   Leadership precision factor parameter for DMID community detection algorithm
+--cd-dmid-prof-delta <num>  Profitability delta parameter for DMID community detection algorithm
+--graph-method <method>     Method to use for graph construction (knn or tags)
+--graph-knn-k <num>         Number of neighbors for k-nearest neighbor graph construction
+--graph-knn-sim <measure>   Similarity measure to use for k-nearest neighbor graph construction (cosine, pearson, ...)
+--rec-factors               Factor size for matrix factorization
+--rec-iters                 Number of iterations for iterative learning
+--rec-learn-rate            Learning rate gamma for iterative learning
+--rec-learn-rate-n          Learning rate gamma (neighborhood) for iterative learning
+--rec-learn-rate-f          Learning rate gamma (factors) for iterative learning
+--rec-learn-rate-c          Learning rate gamma (community baseline) for iterative learning
+--rec-learn-rate-cn         Learning rate gamma (community neighborhood) for iterative learning
+--rec-learn-rate-cf         Learning rate gamma (community factors) for iterative learning
+--rec-learn-rate-mu         Learning rate gamma (mu/phi/psi parameters) for iterative learning for time-aware models
+--rec-lambda                Regularization factor lambda for iterative learning
+--rec-lambda-b              Regularization factor lambda (baseline) for iterative learning
+--rec-lambda-n              Regularization factor lambda (neighborhood) for iterative learning
+--rec-lambda-f              Regularization factor lambda (factors) for iterative learning
+--rec-lambda-c              Regularization factor lambda (community baseline) for iterative learning
+--rec-lambda-cn             Regularization factor lambda (community neighborhood) for iterative learning
+--rec-lambda-cf             Regularization factor lambda (community factors) for iterative learning
+--rec-beta                  Parameter beta for time-aware recommendation models
+--rec-bins                  Number of time bins for time-aware recommendation models
+--rec-tcnsvd-cbins          Number of time bins for community detection, i.e. to capture community drift
+--rec-wrmf-alpha            Alpha parameter for WRMF algorithm
+--rec-knn-sim               Similarity measure to use for k-nearest neighbor recommendation algorithm
+--rec-knn-shrink            Shrink parameter for k-nearest neighbor recommendation algorithm
+--rec-knn-k                 Number of neighbors for k-nearest neighbor recommendation algorithm
+--eval-type                 Use k-fold cross validation or time-aware evaluation protocol (CV or TimeCV)
+--eval-folds                Number of folds used for cross validation and time-aware evaluation
+--eval-train-ratio          Ratio of training to testing data (number of days) to use for time-aware evaluation
+--eval-fold-size            Length of time range to use for each fold for time-aware evaluation relative to total dataset time range
+--eval-parallel             Perform evaluation of folds in parallel
+

@@ -211,6 +211,9 @@ public class RecommenderCLI {
 			librec.setParameter("eval.parallel", options.get("--eval-parallel"));
 		}
 		
+		if(options.containsKey("--eval-iter")){
+			librec.setParameter("eval.iter", options.get("--eval-iter"));
+		}
 	}
 	
 }

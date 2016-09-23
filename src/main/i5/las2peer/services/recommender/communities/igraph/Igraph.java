@@ -98,7 +98,7 @@ public class Igraph {
 	}
 	
 	public DenseVector getMembershipsVector() {
-		// fill membership information into the memberships matrix
+		// fill membership information into the memberships vector
 		DenseVector memberships = new DenseVector(numUsers);
 		
 		for (int user = 0; user < numUsers; user++){

@@ -18,10 +18,13 @@
 
 package i5.las2peer.services.recommender.librec.intf;
 
+import java.util.Map;
+
 import i5.las2peer.services.recommender.librec.data.Configuration;
 import i5.las2peer.services.recommender.librec.data.DenseMatrix;
 import i5.las2peer.services.recommender.librec.data.DenseVector;
 import i5.las2peer.services.recommender.librec.data.SparseMatrix;
+import i5.las2peer.services.recommender.librec.intf.Recommender.Measure;
 import i5.las2peer.services.recommender.librec.util.FileIO;
 import i5.las2peer.services.recommender.librec.util.LineConfiger;
 import i5.las2peer.services.recommender.librec.util.Logs;
@@ -55,6 +58,9 @@ public abstract class IterativeRecommender extends Recommender {
 
 	// indicator of static field initialization
 	public static boolean resetStatics = true;
+	
+	// perform evaluation on the test set after each learning iteration
+	protected static boolean isEvalIter = false;
 
 	/************************************ Recommender-specific parameters ****************************************/
 	// factorized user-factor matrix
@@ -125,6 +131,9 @@ public abstract class IterativeRecommender extends Recommender {
 		lRateCN = initLRateCN;
 		lRateCF = initLRateCF;
 		initByNorm = true;
+		
+		// evaluation after each learning iteration
+		isEvalIter = cf.isOn("eval.iter", false);
 	}
 
 	/**
@@ -185,9 +194,14 @@ public abstract class IterativeRecommender extends Recommender {
 				earlyStop = String.format(", %s = %.6f, delta_%s = %.6f", new Object[] { earlyStopMeasure,
 						(float) measure, earlyStopMeasure, delta_measure });
 			}
-
-			Logs.info("{}{} iter {}: loss = {}, delta_loss = {}{}{}", new Object[] { algoName, foldInfo, iter,
-					(float) loss, delta_loss, earlyStop, learnRate });
+			
+			String eval = "";
+			if (isEvalIter){
+				Map<Measure, Double> evalMeasures = evalRatings();
+				eval = String.format(", RMSE = %.6f", evalMeasures.get(Measure.RMSE));
+			}
+			Logs.info("{}{} iter {}: loss = {}, delta_loss = {}{}{}{}", new Object[] { algoName, foldInfo, iter,
+						(float) loss, delta_loss, earlyStop, learnRate, eval });
 		}
 
 		if (Double.isNaN(loss) || Double.isInfinite(loss)) {

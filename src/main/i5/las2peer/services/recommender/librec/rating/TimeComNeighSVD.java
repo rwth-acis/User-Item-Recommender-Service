@@ -504,7 +504,7 @@ public class TimeComNeighSVD extends IterativeRecommender {
 		Logs.info("{}{} learn model parameters ...", new Object[] { algoName, foldInfo });
 		for (int iter = 1; iter <= numIters; iter++) {
 			loss = 0;
-			
+
 			for (MatrixEntry me : trainMatrix) {
 				int u = me.row();
 				int i = me.column();
@@ -862,7 +862,7 @@ public class TimeComNeighSVD extends IterativeRecommender {
 				}
 			}
 			for (int c : userStaticCommunities){
-				double acuk = AlphaC.get(c);
+				double acuk = ACu.get(c, k);
 				double devcut = devc(c, t);
 				double muc = userMemberships[0].get(u, c);
 				
@@ -997,7 +997,7 @@ public class TimeComNeighSVD extends IterativeRecommender {
 		}
 		for (int c : userStaticCommunities){
 			double muc = userMemberships[0].get(u, c);
-			double alpha = Alpha.get(c);
+			double alpha = AlphaC.get(c);
 			double dev = devc(c, t);
 			bias += alpha * dev * muc;
 		}

@@ -31,6 +31,7 @@ import i5.las2peer.services.recommender.librec.data.DenseVector;
 import i5.las2peer.services.recommender.librec.data.MatrixEntry;
 import i5.las2peer.services.recommender.librec.data.SparseMatrix;
 import i5.las2peer.services.recommender.librec.intf.IterativeRecommender;
+import i5.las2peer.services.recommender.librec.util.Logs;
 import i5.las2peer.services.recommender.librec.util.Randoms;
 import i5.las2peer.services.recommender.librec.util.Strings;
 
@@ -176,6 +177,7 @@ public class TimeNeighSVD extends IterativeRecommender {
 
 	@Override
 	protected void buildModel() throws Exception {
+		Logs.info("{}{} learn model parameters ...", new Object[] { algoName, foldInfo });
 		for (int iter = 1; iter <= numIters; iter++) {
 			loss = 0;
 			

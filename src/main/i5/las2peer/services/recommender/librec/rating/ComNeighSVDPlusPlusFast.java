@@ -20,8 +20,6 @@ package i5.las2peer.services.recommender.librec.rating;
 
 import java.util.List;
 
-import com.google.common.cache.LoadingCache;
-
 import i5.las2peer.services.recommender.communities.CommunityDetector;
 import i5.las2peer.services.recommender.communities.CommunityDetector.CommunityDetectionAlgorithm;
 import i5.las2peer.services.recommender.graphs.GraphBuilder;
@@ -40,8 +38,7 @@ import i5.las2peer.services.recommender.librec.util.Strings;
  * @author guoguibing, martin
  * 
  */
-@Configuration("factors, lRate, lRateN, lRateF, lRateC, lRateCN, lRateCF, maxLRate,"
-		+ " regB, regN, regU, regI, regC, regCN, regCF, iters, boldDriver")
+@Configuration("factors, lRateC, lRateCN, lRateCF, maxLRate, regC, regCN, regCF, iters, boldDriver")
 public class ComNeighSVDPlusPlusFast extends BiasedMF {
 
 	protected DenseMatrix Y, Ocu, Oci;
@@ -50,11 +47,13 @@ public class ComNeighSVDPlusPlusFast extends BiasedMF {
 	protected int numUserCommunities;
 	protected int numItemCommunities;
 	
-	protected DenseVector userComBias, itemComBias;
+	protected DenseVector BCu, BCi;
 	
-	protected SparseMatrix userMemberships, itemMemberships; // Community membership matrices for users and items
+	// Community membership matrices for users and items
+	protected SparseMatrix userMembershipsMatrix, itemMembershipsMatrix;
 	
-	protected LoadingCache<Integer, List<Integer>> userCommunitiesCache, itemCommunitiesCache, userCommunitiesItemsCache;
+	// User/item community membership map
+	private DenseVector userMembershipsVector, itemMembershipsVector;
 	
 	public ComNeighSVDPlusPlusFast(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
@@ -65,10 +64,7 @@ public class ComNeighSVDPlusPlusFast extends BiasedMF {
 	@Override
 	protected void initModel() throws Exception {
 		super.initModel();
-	}
-
-	@Override
-	protected void buildModel() throws Exception {
+		
 		// build the user and item graphs
 		Logs.info("{}{} build user and item graphs ...", new Object[] { algoName, foldInfo });
 		GraphBuilder gb = new GraphBuilder();
@@ -88,33 +84,33 @@ public class ComNeighSVDPlusPlusFast extends BiasedMF {
 			cd.setAlgorithm(CommunityDetectionAlgorithm.WALKTRAP);
 			cd.setWalktrapParameters(cf.getInt("cd.walktrap.steps", 2));
 			break;
-		case "dmid":
-			cd.setAlgorithm(CommunityDetectionAlgorithm.DMID);
-			cd.setDmidParameters(cf.getInt("cd.dmid.iter", 1000),
-								cf.getDouble("cd.dmid.prec", 0.001),
-								cf.getDouble("cd.dmid.proficioncy", 0.1));
-			break;
-		case "slpa":
-			cd.setAlgorithm(CommunityDetectionAlgorithm.SLPA);
-			cd.setSlpaParameters(cf.getDouble("cd.slpa.prob", 0.15),
-								cf.getInt("cd.slpa.memory", 100));
-			break;
+//		case "dmid":
+//			cd.setAlgorithm(CommunityDetectionAlgorithm.DMID);
+//			cd.setDmidParameters(cf.getInt("cd.dmid.iter", 1000),
+//								cf.getDouble("cd.dmid.prec", 0.001),
+//								cf.getDouble("cd.dmid.proficioncy", 0.1));
+//			break;
+//		case "slpa":
+//			cd.setAlgorithm(CommunityDetectionAlgorithm.SLPA);
+//			cd.setSlpaParameters(cf.getDouble("cd.slpa.prob", 0.15),
+//								cf.getInt("cd.slpa.memory", 100));
+//			break;
 		}
 		
 		cd.setGraph(userMatrix);
 		cd.detectCommunities();
-		userMemberships = cd.getMemberships();
-		userCommunitiesCache = userMemberships.rowColumnsCache(cacheSpec);
+		userMembershipsMatrix = cd.getMemberships();
+		userMembershipsVector = cd.getMembershipsVector();
 		
 		cd.setGraph(itemMatrix);
 		cd.detectCommunities();
-		itemMemberships = cd.getMemberships();
-		itemCommunitiesCache = itemMemberships.rowColumnsCache(cacheSpec);
+		itemMembershipsMatrix = cd.getMemberships();
+		itemMembershipsVector = cd.getMembershipsVector();
 		
-		numUserCommunities = userMemberships.numColumns();
-		numItemCommunities = itemMemberships.numColumns(); 
+		numUserCommunities = userMembershipsMatrix.numColumns();
+		numItemCommunities = itemMembershipsMatrix.numColumns(); 
 		
-		debugCommunityInfo();
+		logCommunityInfo();
 		
 		Y = new DenseMatrix(numItemCommunities, numFactors);
 		Y.init(initMean, initStd);
@@ -127,199 +123,163 @@ public class ComNeighSVDPlusPlusFast extends BiasedMF {
 		
 		userItemsCache = trainMatrix.rowColumnsCache(cacheSpec);
 		
-		userComBias = new DenseVector(numUserCommunities);
-		userComBias.init(initMean, initStd);
+		BCu = new DenseVector(numUserCommunities);
+		BCu.init(initMean, initStd);
 		
-		itemComBias = new DenseVector(numItemCommunities);
-		itemComBias.init(initMean, initStd);
+		BCi = new DenseVector(numItemCommunities);
+		BCi.init(initMean, initStd);
 
 		Ocu = new DenseMatrix(numUserCommunities, numFactors);
 		Ocu.init(initMean, initStd);
 
 		Oci = new DenseMatrix(numItemCommunities, numFactors);
 		Oci.init(initMean, initStd);
+	}
 
+	@Override
+	protected void buildModel() throws Exception {
 		// iteratively learn the model parameters
 		Logs.info("{}{} learn model parameters ...", new Object[] { algoName, foldInfo });
 		for (int iter = 1; iter <= numIters; iter++) {
-
 			loss = 0;
 			for (MatrixEntry me : trainMatrix) {
-
 				int u = me.row(); // user
-				int j = me.column(); // item
-				double ruj = me.get();
+				int i = me.column(); // item
+				double rui = me.get();
+				
+				int cu = (int) userMembershipsVector.get(u);
+				int ci = (int) itemMembershipsVector.get(i);
 
-				double pred = predict(u, j);
-				double euj = ruj - pred;
+				double pred = predict(u, i);
+				double eui = rui - pred;
 
-				loss += euj * euj;
+				loss += eui * eui;
 
-				List<Integer> items = userItemsCache.get(u);
-				List<Integer> userCommunities = userCommunitiesCache.get(u);
-				List<Integer> itemCommunities = itemCommunitiesCache.get(j);
+				List<Integer> Iu = userItemsCache.get(u);
 
-				double w = Math.sqrt(items.size());
-
+				double wi = Math.sqrt(Iu.size());
+				
+				double sgd;
+				
 				// update baseline parameters
-				for (int cu : userCommunities){
-					double bc = userComBias.get(cu);
-					double sgd = euj * userMemberships.get(u, cu) - regC * bc;
-					userComBias.add(cu, lRateC * sgd);
-					loss += regC * bc * bc;
-				}
-				for (int ci : itemCommunities){
-					double bc = itemComBias.get(ci);
-					double sgd = euj * itemMemberships.get(j, ci) - regC * bc;
-					itemComBias.add(ci, lRateC * sgd);
-					loss += regC * bc * bc;
-				}
+				double bcu = BCu.get(cu);
+				sgd = eui - regC * bcu;
+				BCu.add(cu, lRateC * sgd);
+				loss += regC * bcu * bcu;
+
+				double bci = BCi.get(ci);
+				sgd = eui - regC * bci;
+				BCi.add(ci, lRateC * sgd);
+				loss += regC * bci * bci;
 
 				// update neighborhood model parameters
-				for (int k : items){
-					double ruk = trainMatrix.get(u, k);
-					double buk = getBias(u, k, userCommunities, itemCommunitiesCache.get(k));
-					List<Integer> kItemCommunities = itemCommunitiesCache.get(k);
-					for (int c : kItemCommunities){
-						double wjc = W.get(j, c);
-						double mjc = itemMemberships.get(j, c);
-						double sgd_w = euj * (ruk - buk) * mjc / w - regCN * wjc;
-						W.add(j, c, lRateCN * sgd_w);
-						loss += wjc * wjc;
-						
-						double cjc = C.get(j, c);
-						double sgd_c = euj * mjc / w - regCN * cjc;
-						C.add(j, c, lRateCN * sgd_c);
-						loss += cjc * cjc;
-					}
+				for (int j : Iu){
+					double ruj = trainMatrix.get(u, j);
+					double buj = bias(u, j);
+					int cj = (int) itemMembershipsVector.get(j);
+
+					double wic = W.get(i, cj);
+					sgd = eui * (ruj - buj) / wi - regCN * wic;
+					W.add(i, cj, lRateCN * sgd);
+					loss += regCN * wic * wic;
+					
+					double cic = C.get(i, cj);
+					sgd = eui / wi - regCN * cic;
+					C.add(i, cj, lRateCN * sgd);
+					loss += regCN * cic * cic;
 				}
 				
 				// update factor model parameters
 				double[] sum_ys = new double[numFactors];
-				for (int f = 0; f < numFactors; f++) {
-					double sum_f = 0;
-					for (int k : items){
-						List<Integer> kItemCommunities = itemCommunitiesCache.get(k);
-						for (int c : kItemCommunities){
-							double ycf = Y.get(c, f);
-							double mjc = itemMemberships.get(j, c);
-							sum_ys[f] += ycf * mjc;
-						}
+				for (int k = 0; k < numFactors; k++) {
+					for (int j : Iu){
+						int cj = (int) itemMembershipsVector.get(j);
+						double yck = Y.get(cj, k);
+						sum_ys[k] += yck;
 					}
-				}
-
-				double[] sum_ocus = new double[numFactors];
-				for (int f = 0; f < numFactors; f++) {
-					for (int c : userCommunities)
-						sum_ocus[f] += Ocu.get(c, f) * userMemberships.get(u, c);
 				}
 				
-				double[] sum_ocis = new double[numFactors];
-				for (int f = 0; f < numFactors; f++) {
-					for (int c : itemCommunities)
-						sum_ocis[f] += Oci.get(c, f) * itemMemberships.get(j, c);
-				}
-				
-				for (int f = 0; f < numFactors; f++) {
-					for (int c : userCommunities){
-						double ocuf = Ocu.get(c, f);
-						double muc = userMemberships.get(u, c);
-						double delta_ocu = euj * muc * sum_ocis[f] - regCF + ocuf;
-						Ocu.add(c, f, lRateCF * delta_ocu);
-						loss += regCF * ocuf * ocuf;
-					}
+				for (int k = 0; k < numFactors; k++){
+					double ocuk = Ocu.get(cu, k);
+					double ocik = Oci.get(ci, k);
 					
-					for (int c : itemCommunities){
-						double ocif = Oci.get(c, f);
-						double mic = itemMemberships.get(j, c);
-						double delta_oci = euj * mic * (sum_ocus[f] + sum_ys[f]) - regCF + ocif;
-						Oci.add(c, f, lRateCF * delta_oci);
-						loss += regCF * ocif * ocif;
-					}
+					sgd = eui * ocik - regCF * ocuk;
+					Ocu.add(cu, k, lRateCF * sgd);
+					loss += regCF * ocuk * ocuk;
 					
-					for (int k : items) {
-						List<Integer> kItemCommunities = itemCommunitiesCache.get(k);
-						for (int c : kItemCommunities){
-							double ycf = Y.get(c, f);
-							double delta_y = euj * sum_ocis[f] / w - regCF * ycf;
-							Y.add(c, f, lRateCF * delta_y);
-							loss += regCF * ycf * ycf;
-						}
+					sgd = eui * (ocuk + sum_ys[k] / wi) - regCF * ocik;
+					Oci.add(ci, k, lRateCF * sgd);
+					loss += regCF * ocik * ocik;
+					
+					for (int j : Iu) {
+						int cj = (int) itemMembershipsVector.get(j);
+						double ycjk = Y.get(cj, k);
+						sgd = eui * ocik / wi - regCF * ycjk;
+						Y.add(cj, k, lRateCF * sgd);
+						loss += regCF * ycjk * ycjk;
 					}
 				}
 			}
 
 			loss *= 0.5;
-
+			
 			if (isConverged(iter))
 				break;
-
 		}// end of training
 
 	}
 
 	@Override
-	protected double predict(int u, int j) throws Exception {
-		List<Integer> items = userItemsCache.get(u);
-		List<Integer> userCommunities = userCommunitiesCache.get(u);
-		List<Integer> itemCommunities = itemCommunitiesCache.get(j);
+	protected double predict(int u, int i) throws Exception {
+		List<Integer> Iu = userItemsCache.get(u);
 		
-		double w = Math.sqrt(items.size());
+		int cu = (int) userMembershipsVector.get(u);
+		int ci = (int) itemMembershipsVector.get(i);
+		
+		double wi = Math.sqrt(Iu.size());
 
 		// baseline prediction
-		double pred = getBias(u, j, userCommunities, itemCommunities);
+		double pred = bias(u, i);
 		
 		// neighborhood model prediction
-		for (int k : items){
-			double ruk = trainMatrix.get(u, k);
-			double buk = getBias(u,k, userCommunities, itemCommunitiesCache.get(k));
-			List<Integer> kItemCommunities = itemCommunitiesCache.get(k);
-			for (int c : kItemCommunities){
-				double wjc = W.get(j, c);
-				double cjc = C.get(j, c);
-				double mjc = itemMemberships.get(j, c);
-				pred += ((ruk - buk) * wjc + cjc) * mjc / w;
-			}
+		for (int j : Iu){
+			double ruj = trainMatrix.get(u, j);
+			double buj = bias(u, j);
+			int cj = (int) itemMembershipsVector.get(j);
+			double wic = W.get(i, cj);
+			double cic = C.get(i, cj);
+			pred += ((ruj - buj) * wic + cic) / wi;
 		}
 		
 		// factor model prediction
-		DenseVector userFactor = new DenseVector(numFactors);
-		DenseVector itemFactor = new DenseVector(numFactors);
-		for (int c : userCommunities){
-			userFactor.add(Ocu.row(c).scale(userMemberships.get(u, c)));
+		DenseVector itemFactor = Oci.row(ci);
+		
+		DenseVector userFactor = Ocu.row(cu);
+		for (int j : Iu){
+			int cj = (int) itemMembershipsVector.get(j);
+			DenseVector ycj = Y.row(cj).scale(1.0 / wi);
+			userFactor.add(ycj);
 		}
-		for (int k : items){
-			List<Integer> kItemCommunities = itemCommunitiesCache.get(k);
-			for (int c : kItemCommunities){
-				userFactor.add(Y.row(c).scale(itemMemberships.get(k, c)));
-			}
-		}
-		for (int c : itemCommunities){
-			itemFactor.add(Oci.row(c).scale(itemMemberships.get(j, c)));
-		}
+		
 		pred += itemFactor.inner(userFactor);
 
 		return pred;
 	}
 
-	private double getBias(int u, int j, List<Integer> userCommunities, List<Integer> itemCommunities){
-		double bias = globalMean;
-		for (int cu : userCommunities){
-			double bc = userComBias.get(cu);
-			double muc = userMemberships.get(u, cu);  // community membership weight
-			bias += bc * muc;
-		}
-		for (int ci : itemCommunities){
-			double bc = itemComBias.get(ci);
-			double mic = itemMemberships.get(j, ci);  // community membership weight
-			bias += bc * mic;
-		}
+	private double bias(int u, int i){
+		int cu = (int) userMembershipsVector.get(u);
+		int ci = (int) itemMembershipsVector.get(i);
+		
+		double bcu = BCu.get(cu);
+		double bci = BCi.get(ci);
+		double bias = globalMean + bcu + bci;
+		
 		return bias;
 	}
 	
-	private void debugCommunityInfo() {
-		int userMemSize = userMemberships.size();
-		int itemMemSize = itemMemberships.size();
+	private void logCommunityInfo() {
+		int userMemSize = userMembershipsMatrix.size();
+		int itemMemSize = itemMembershipsMatrix.size();
 		double upc = (double) userMemSize / numUserCommunities;
 		double cpu = (double) userMemSize / numUsers;
 		double ipc = (double) itemMemSize / numItemCommunities;
@@ -337,5 +297,4 @@ public class ComNeighSVDPlusPlusFast extends BiasedMF {
 				initLRateC, initLRateCN, initLRateCF, maxLRate,
 				regC, regCN, regCF, numIters, isBoldDriver});
 	}
-	
 }

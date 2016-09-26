@@ -40,6 +40,7 @@ import i5.las2peer.services.recommender.librec.data.SparseMatrix;
 import i5.las2peer.services.recommender.librec.data.SparseVector;
 import i5.las2peer.services.recommender.librec.data.VectorEntry;
 import i5.las2peer.services.recommender.librec.intf.IterativeRecommender;
+import i5.las2peer.services.recommender.librec.util.Communities;
 import i5.las2peer.services.recommender.librec.util.Logs;
 import i5.las2peer.services.recommender.librec.util.Randoms;
 import i5.las2peer.services.recommender.librec.util.Strings;
@@ -120,10 +121,16 @@ public class TimeComNeighSVD extends IterativeRecommender {
 	// Steps parameter for the Walktrap algorithm
 	private int wtSteps;
 	
-	// ---Community information---
+	// Maximum number of (overlapping) communities per user/item
+	private int maxOC;
 	
 	// number of community structures to compute (to capture community drift over time) 
 	private int numCBins;
+	
+	// maximum number of items to consider from the user's communities
+	private int communitiesItemsK;
+	
+	// ---Community information---
 	
 	// Number of user/item communities for each bin
 	private int[] numUserCommunities;
@@ -197,6 +204,7 @@ public class TimeComNeighSVD extends IterativeRecommender {
 		beta = algoOptions.getFloat("-beta");
 		numBins = algoOptions.getInt("-bins");
 		numCBins = algoOptions.getInt("-cbins");
+		communitiesItemsK = algoOptions.getInt("-k", -1);
 		knn = cf.getInt("graph.knn.k", 10);
 		switch (cf.getString("graph.knn.sim", "cosine").toLowerCase()){
 		case "pearson":
@@ -220,6 +228,7 @@ public class TimeComNeighSVD extends IterativeRecommender {
 			break;
 		}
 		wtSteps = cf.getInt("cd.walktrap.steps", 2);
+		maxOC = cf.getInt("cd.max.oc", -1);
 	}
 
 	@Override
@@ -356,6 +365,11 @@ public class TimeComNeighSVD extends IterativeRecommender {
 				cd.detectCommunities();
 				itemMemberships[cbin] = cd.getMemberships();
 			}
+			if (maxOC > 0){
+				Logs.info("{}{} reduce community memberships to max. {} communities per user/item ...", new Object[] { algoName, foldInfo, maxOC });
+				userMemberships[cbin] = Communities.limitOverlappingCommunities(userMemberships[cbin], maxOC);
+				itemMemberships[cbin] = Communities.limitOverlappingCommunities(itemMemberships[cbin], maxOC);
+			}
 			userCommunitiesCache.add(cbin, userMemberships[cbin].rowColumnsCache(cacheSpec));
 			numUserCommunities[cbin] = userMemberships[cbin].numColumns();
 			itemCommunitiesCache.add(cbin, itemMemberships[cbin].rowColumnsCache(cacheSpec));
@@ -436,6 +450,19 @@ public class TimeComNeighSVD extends IterativeRecommender {
 			for (int user = 0; user < numUsers; user++){
 				List<Integer> userCommunities;
 				userCommunities = userCommunitiesCache.get(cbin).get(user);
+				
+				int[] topKItems = new int[communitiesItemsK];
+				double[] topKItemsMemberships = new double[communitiesItemsK];
+				double[] topKItemsRatings = new double[communitiesItemsK];
+				double[] topKItemsTime = new double[communitiesItemsK];
+				for (int i = 0; i < communitiesItemsK; i++){
+					topKItems[i] = -1;
+				}
+				// position of the item with the lowest membership level in the top-k array
+				int minItemPos = 0;
+				// membership level of that item
+				double minMembership = 0;
+
 				for (int item = 0; item < numItems; item++){
 					double ratingsSum = 0;
 					double timeSum = 0;
@@ -448,9 +475,27 @@ public class TimeComNeighSVD extends IterativeRecommender {
 						timeSum += communityTime * userMembership;
 						membershipsSum += userMembership;
 					}
-					if (ratingsSum > 0){
-						double userCommunitiesRating = ratingsSum / membershipsSum;
-						double userCommunitiesTime = timeSum / membershipsSum;
+					if (ratingsSum > 0 && membershipsSum > minMembership){
+						topKItems[minItemPos] = item;
+						topKItemsMemberships[minItemPos] = membershipsSum;
+						topKItemsRatings[minItemPos] = ratingsSum;
+						topKItemsTime[minItemPos] = timeSum;
+						// find item with lowest membership level in the array
+						minMembership = membershipsSum;
+						for (int i = 0; i < communitiesItemsK; i++){
+							if (topKItemsMemberships[i] < minMembership){
+								minItemPos = i;
+								minMembership = topKItemsMemberships[i];
+							}
+						}
+					}
+				}
+				// fill top-k items into table
+				for (int i = 0; i < communitiesItemsK; i++){
+					if (topKItems[i] >= 0){
+						int item = topKItems[i];
+						double userCommunitiesRating = topKItemsRatings[i] / topKItemsMemberships[i];
+						double userCommunitiesTime = topKItemsTime[i] / topKItemsMemberships[i];
 						userCommunitiesRatingsTable.put(user, item, userCommunitiesRating);
 						userCommunitiesTimeTable.put(user, item, userCommunitiesTime);
 					}
@@ -788,15 +833,13 @@ public class TimeComNeighSVD extends IterativeRecommender {
 				for (int j : Icu){
 					double dij = D.get(i, j);
 					double e = cdecay(u, j, t, cbin);
-					double rcuj = userCommunitiesRatingsMatrix[cbin].get(u, j);
-					double buj = bias(u, j, t, userStaticCommunities, userCommunities, itemCommunities);
-					sgd = eui * wc + e * (rcuj - buj) + regCN * dij;
+					sgd = eui * wc + e + regCN * dij;
 					D.add(i, j, -lRateCN * sgd);
 					loss += regCN * dij * dij;
 					
 					int tj = days((long) timeMatrix.get(u, j), minTrainTimestamp);
 					int diff = Math.abs(t - tj);
-					sgd_psi += eui * wc * (-1 * diff) * e * ((rcuj - buj) * dij);
+					sgd_psi += eui * wc * (-1 * diff) * e * dij;
 				}
 				double psi = Psi.get(u);
 				sgd_psi += regCN * psi;
@@ -889,11 +932,9 @@ public class TimeComNeighSVD extends IterativeRecommender {
 		// e^(-psi_u * |t-tj|)(rCuj - buj) * dij)
 		for (int j : Icu){
 			double e = cdecay(u, j, t, cbin);
-			double rcuj = userCommunitiesRatingsMatrix[cbin].get(u, j);
-			double buj = bias(u, j, t, userStaticCommunities, userCommunities, itemCommunities);
 			double dij = D.get(i,j);
 			
-			pred += e * (rcuj - buj) * dij * wc;
+			pred += e * dij * wc;
 		}
 
 		return pred;
@@ -1149,5 +1190,4 @@ public class TimeComNeighSVD extends IterativeRecommender {
 					new Object[] { algoName, foldInfo, cbinInfo, numItemCommunities[cbin], minipc, maxipc, avgipc, mincpi, maxcpi, avgcpi });
 		}
 	}
-
 }

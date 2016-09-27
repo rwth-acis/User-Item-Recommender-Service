@@ -663,7 +663,7 @@ public class TimeComNeighSVD extends IterativeRecommender {
 					double devct = devc(c, t);
 					double muc = userMemberships[0].get(u, c);
 					
-					sgd = eui * devct * muc - regC * alphac;
+					sgd = eui * devct * muc + regC * alphac;
 					AlphaC.add(c, -lRateC * sgd);
 					loss += regC * alphac * alphac;
 				}

@@ -204,7 +204,7 @@ public class TimeComNeighSVD extends IterativeRecommender {
 		beta = algoOptions.getFloat("-beta");
 		numBins = algoOptions.getInt("-bins");
 		numCBins = algoOptions.getInt("-cbins");
-		communitiesItemsK = algoOptions.getInt("-k", -1);
+		communitiesItemsK = algoOptions.getInt("-k", 200);
 		knn = cf.getInt("graph.knn.k", 10);
 		switch (cf.getString("graph.knn.sim", "cosine").toLowerCase()){
 		case "pearson":
@@ -228,7 +228,7 @@ public class TimeComNeighSVD extends IterativeRecommender {
 			break;
 		}
 		wtSteps = cf.getInt("cd.walktrap.steps", 2);
-		maxOC = cf.getInt("cd.max.oc", -1);
+		maxOC = cf.getInt("cd.max.oc", 10);
 	}
 
 	@Override

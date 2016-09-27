@@ -103,7 +103,7 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 			break;
 		}
 		wtSteps = cf.getInt("cd.walktrap.steps", 2);
-		maxOC = cf.getInt("cd.max.oc", -1);
+		maxOC = cf.getInt("cd.max.oc", 10);
 	}
 
 	@Override

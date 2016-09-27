@@ -18,12 +18,9 @@
 
 package i5.las2peer.services.recommender.librec.rating;
 
-import java.util.HashSet;
 import java.util.List;
 
 import com.google.common.cache.LoadingCache;
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.Table;
 
 import i5.las2peer.services.recommender.communities.CommunityDetector;
 import i5.las2peer.services.recommender.communities.CommunityDetector.CommunityDetectionAlgorithm;
@@ -34,8 +31,7 @@ import i5.las2peer.services.recommender.librec.data.DenseMatrix;
 import i5.las2peer.services.recommender.librec.data.DenseVector;
 import i5.las2peer.services.recommender.librec.data.MatrixEntry;
 import i5.las2peer.services.recommender.librec.data.SparseMatrix;
-import i5.las2peer.services.recommender.librec.data.SparseVector;
-import i5.las2peer.services.recommender.librec.data.VectorEntry;
+import i5.las2peer.services.recommender.librec.util.Communities;
 import i5.las2peer.services.recommender.librec.util.Logs;
 import i5.las2peer.services.recommender.librec.util.Strings;
 
@@ -53,6 +49,8 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 	protected DenseMatrix W, C, D; // weighting factors for neighborhood model
 	
 	// ---Community-related algorithm parameters
+	// maximum number of items to consider from the user's communities
+	private int communitiesItemsK;
 	// k parameter for the k-nn graph construction
 	private int knn;
 	// Similarity measure for the k-nn graph construction
@@ -61,6 +59,8 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 	private CommunityDetectionAlgorithm cdAlgo;
 	// Steps parameter for the Walktrap algorithm
 	private int wtSteps;
+	// Maximum number of (overlapping) communities per user/item
+	private int maxOC;
 
 	protected int numUserCommunities;
 	protected int numItemCommunities;
@@ -70,6 +70,7 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 	protected SparseMatrix userMemberships, itemMemberships; // Community membership matrices for users and items
 	protected SparseMatrix communityRatingsMatrix;  // Average ratings given by the members of each community (numUserCommunities x numItems)
 	protected SparseMatrix userCommunitiesRatingsMatrix;  // Average ratings given by each user's communities (numUsers x numItems)
+	protected SparseMatrix itemCommunityNeighborsMatrix;
 	
 	protected LoadingCache<Integer, List<Integer>> userCommunitiesCache, itemCommunitiesCache, userCommunitiesItemsCache;
 	
@@ -78,6 +79,7 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 
 		setAlgoName("ComNeighSVD++");
 		
+		communitiesItemsK = algoOptions.getInt("-k", 200);
 		knn = cf.getInt("graph.knn.k", 10);
 		switch (cf.getString("graph.knn.sim", "cosine").toLowerCase()){
 		case "pearson":
@@ -101,6 +103,7 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 			break;
 		}
 		wtSteps = cf.getInt("cd.walktrap.steps", 2);
+		maxOC = cf.getInt("cd.max.oc", -1);
 	}
 
 	@Override
@@ -145,11 +148,18 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 		cd.setGraph(userMatrix);
 		cd.detectCommunities();
 		userMemberships = cd.getMemberships();
-		userCommunitiesCache = userMemberships.rowColumnsCache(cacheSpec);
 		
 		cd.setGraph(itemMatrix);
 		cd.detectCommunities();
 		itemMemberships = cd.getMemberships();
+		
+		if (maxOC > 0){
+			Logs.info("{}{} reduce community memberships to max. {} communities per user/item ...", new Object[] { algoName, foldInfo, maxOC });
+			userMemberships = Communities.limitOverlappingCommunities(userMemberships, maxOC);
+			itemMemberships = Communities.limitOverlappingCommunities(itemMemberships, maxOC);
+		}
+		
+		userCommunitiesCache = userMemberships.rowColumnsCache(cacheSpec);
 		itemCommunitiesCache = itemMemberships.rowColumnsCache(cacheSpec);
 		
 		userMatrix = null;
@@ -167,14 +177,13 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 		itemComBias = new DenseVector(numItemCommunities);
 		itemComBias.init(initMean, initStd);
 
-		Logs.info("{}{} compute community ratings ...", new Object[] { algoName, foldInfo });
-		communityRatingsMatrix = getCommunityRatings();
-		
 		Logs.info("{}{} compute community ratings per user ...", new Object[] { algoName, foldInfo });
-		userCommunitiesRatingsMatrix = getUserCommunitiesRatings();
+		userCommunitiesRatingsMatrix = Communities.userCommunitiesRatings(userMemberships, trainMatrix, communitiesItemsK);
 		userCommunitiesItemsCache = userCommunitiesRatingsMatrix.rowColumnsCache(cacheSpec);
-		Logs.info("{}{} userCommunitiesRatings: Total number of entries: {}, Avg. entries per user: {}",
-				algoName, foldInfo, userCommunitiesRatingsMatrix.size(), (double) userCommunitiesRatingsMatrix.size() / numUsers);
+		
+		Logs.info("{}{} Item neighborhood sizes (avg per user/item):"
+				+ " [user co-rated, user communities co-rated] = [{}, {}, {}]", algoName, foldInfo,
+				(rateMatrix.size() / numUsers), (userCommunitiesRatingsMatrix.size() / numUsers));
 		
 		Ocu = new DenseMatrix(numUserCommunities, numFactors);
 		Ocu.init(initMean, initStd);
@@ -231,11 +240,11 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 					itemComBias.add(ci, lRateC * sgd);
 					loss += regC * bc * bc;
 				}
-
+				
 				// update neighborhood model parameters
 				for (int k : items){	// to reduce complexity we can reduce the list of items to the nearest neighbors of item k
 					double ruk = trainMatrix.get(u, k);
-					double buk = getBias(u,k, userCommunities, itemCommunitiesCache.get(k));
+					double buk = bias(u,k, userCommunities, itemCommunitiesCache.get(k));
 					double wjk = W.get(j, k);
 					sgd = euj * (ruk - buk) / w - regN * wjk;
 					W.add(j, k, lRateN * sgd);
@@ -248,9 +257,7 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 				}
 				for (int k : userCommunitiesItems){
 					double djk = D.get(j, k);
-					double rcuk = userCommunitiesRatingsMatrix.get(u, k);
-					double buk = getBias(u,k, userCommunities, itemCommunitiesCache.get(k));
-					sgd = euj / cw * (rcuk - buk) - regCN * djk;
+					sgd = euj / cw - regCN * djk;
 					D.add(j, k , lRateCN * sgd);
 					loss += regCN * djk * djk;
 				}
@@ -327,10 +334,9 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 			}
 
 			loss *= 0.5;
-
+			
 			if (isConverged(iter))
 				break;
-
 		}// end of training
 
 	}
@@ -341,26 +347,24 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 		List<Integer> userCommunities = userCommunitiesCache.get(u);
 		List<Integer> itemCommunities = itemCommunitiesCache.get(j);
 		List<Integer> userCommunitiesItems = userCommunitiesItemsCache.get(u);  // items that have been rated by u's community co-members
-		
+
 		double w = Math.sqrt(items.size());
 		double cw = Math.sqrt(userCommunitiesItems.size());  // used for normalizing over the user's communities
-
+		
 		// baseline prediction
-		double pred = getBias(u, j, userCommunities, itemCommunities);
+		double pred = bias(u, j, userCommunities, itemCommunities);
 		
 		// neighborhood model prediction
 		for (int k : items){
-			double buk = getBias(u,k, userCommunities, itemCommunitiesCache.get(k));
+			double buk = bias(u,k, userCommunities, itemCommunitiesCache.get(k));
 			double ruk = trainMatrix.get(u, k);
 			double wjk = W.get(j, k);
 			double cjk = C.get(j, k);
 			pred += ((ruk - buk) * wjk + cjk) / w;
 		}
 		for (int k : userCommunitiesItems){
-			double rcuk = userCommunitiesRatingsMatrix.get(u, k);
-			double buk = getBias(u,k, userCommunities, itemCommunitiesCache.get(k));
 			double djk = D.get(j, k);
-			pred += (rcuk - buk) * djk / cw;
+			pred += djk / cw;
 		}
 		
 		// factor model prediction
@@ -377,82 +381,11 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 			itemFactor.add(Oci.row(c).scale(itemMemberships.get(j, c)));
 		}
 		pred += itemFactor.inner(userFactor);
-
+		
 		return pred;
 	}
 
-	private SparseMatrix getCommunityRatings() throws Exception {
-		// Get the average community ratings for each item
-		Table<Integer, Integer, Double> communityRatingsTable = HashBasedTable.create();
-		for (int community = 0; community < numUserCommunities; community++){
-			// each user's membership level for the community
-			SparseVector communityUsersVector = userMemberships.column(community);
-			// build set of items that have been rated by members of the community
-			HashSet<Integer> items = new HashSet<Integer> ();
-			for (VectorEntry e : communityUsersVector){
-				int user = e.index();
-				List<Integer> userItems = userItemsCache.get(user);
-				for (int item : userItems)
-					items.add(item);
-			}
-			for (int item : items){
-				// Sum of ratings given by users of the community to item, weighted by the users community membership levels
-				double ratingsSum = 0;
-				// sum of membership levels of the users that have rated the item, used for normalization
-				double membershipsSum = 0;
-				// each user's rating for the item
-				SparseVector itemUsersVector = trainMatrix.column(item);
-				for (VectorEntry e : communityUsersVector){
-					int user = e.index();
-					if (itemUsersVector.contains(user)){
-						double userMembership = communityUsersVector.get(user);
-						double userRating = itemUsersVector.get(user);
-						ratingsSum += userRating * userMembership;
-						membershipsSum += userMembership;
-					}
-				}
-				if (membershipsSum > 0){
-					double communityRating = ratingsSum / membershipsSum;
-					communityRatingsTable.put(community, item, communityRating);
-				}
-			}
-		}
-		SparseMatrix matrix = new SparseMatrix(numUserCommunities, numItems, communityRatingsTable);
-		Logs.info("{}{} Community Ratings: Number of communities: {}, Avg. number of ratings per community: {}",
-				algoName, foldInfo, matrix.numRows(), matrix.size() / matrix.numRows());
-		return matrix;
-	}
-		
-	private SparseMatrix getUserCommunitiesRatings() throws Exception {
-		// Get each user's community ratings, i.e. the weighted average rating of the user's communities for each item
-		// The resulting matrix has dimensions numUsers x numItems
-		
-	    Table<Integer, Integer, Double> userCommunitiesRatingsTable = HashBasedTable.create();
-		
-		for (int user = 0; user < numUsers; user++){
-			List<Integer> userCommunities = userCommunitiesCache.get(user);
-			for (int item = 0; item < numItems; item++){
-				double ratingsSum = 0;
-				double membershipsSum = 0;
-				for (int community : userCommunities){
-					double communityRating = communityRatingsMatrix.get(community, item);
-					double userMembership = userMemberships.get(user, community);
-					ratingsSum += communityRating * userMembership;
-					membershipsSum += userMembership;
-				}
-				if (ratingsSum > 0){
-					double userCommunitiesRating = ratingsSum / membershipsSum;
-					userCommunitiesRatingsTable.put(user, item, userCommunitiesRating);
-				}
-			}
-		}
-		SparseMatrix matrix = new SparseMatrix(numUsers, numItems, userCommunitiesRatingsTable);
-		Logs.info("{}{} User Communities Ratings: Number of users: {}, Avg. number of community ratings per user: {}",
-				algoName, foldInfo, matrix.numRows(), matrix.size() / matrix.numRows());
-		return matrix;
-	}
-	
-	private double getBias(int u, int j, List<Integer> userCommunities, List<Integer> itemCommunities){
+	private double bias(int u, int j, List<Integer> userCommunities, List<Integer> itemCommunities){
 		double bias = globalMean + userBias.get(u) + itemBias.get(j);
 		for (int cu : userCommunities){
 			double bc = userComBias.get(cu);

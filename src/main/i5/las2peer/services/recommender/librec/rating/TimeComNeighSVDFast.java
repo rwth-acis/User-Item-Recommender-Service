@@ -510,9 +510,6 @@ public class TimeComNeighSVDFast extends IterativeRecommender {
 
 			if (isConverged(iter))
 				break;
-
-			Map<Measure, Double> evalMeasures = evalRatings();
-			Logs.info("{}{} RMSE: {}", algoName, foldInfo, evalMeasures.get(Measure.RMSE));
 		}
 	}
 

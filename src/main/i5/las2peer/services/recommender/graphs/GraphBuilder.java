@@ -1,5 +1,6 @@
 package i5.las2peer.services.recommender.graphs;
 
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Stopwatch;
@@ -13,14 +14,20 @@ import i5.las2peer.services.recommender.librec.data.SparseMatrix;
 public class GraphBuilder {
 	private int k = 10;
 	private int mu = 300;
+	private GraphConstructionMethod method = GraphConstructionMethod.RATINGS;
 	private SimilarityMeasure similarity = SimilarityMeasure.COSINE_SIMILARITY;
 	private SparseMatrix ratingsMatrix;
-	private SparseMatrix taggingsMatrix;
+	public Table<Integer, Integer, Set<Long>> userTagTable;
+	public Table<Integer, Integer, Set<Long>> itemTagTable;
 	int numUsers;
 	int numItems;
 	private SparseMatrix userAdjMatrix;
 	private SparseMatrix itemAdjMatrix;
 	private int graphConstrTime;
+	
+	public enum GraphConstructionMethod{
+		RATINGS, TAGS
+	}
 	
 	public enum SimilarityMeasure{
 		PEARSON_CORRELATION, COSINE_SIMILARITY
@@ -34,25 +41,28 @@ public class GraphBuilder {
 		similarity = sim;
 	}
 	
+	public void setMethod(GraphConstructionMethod m){
+		method = m;
+	}
+	
 	public void setRatingData(SparseMatrix ratingsMatrix){
 		this.ratingsMatrix = ratingsMatrix;
 		numUsers = ratingsMatrix.numRows();
 		numItems = ratingsMatrix.numColumns();
 	}
 	
-	public void setTaggingData(SparseMatrix taggingsMatrix){
-		this.taggingsMatrix = taggingsMatrix;
-		numUsers = ratingsMatrix.numRows();
-		numItems = ratingsMatrix.numColumns();
+	public void setTaggingData(Table<Integer, Integer, Set<Long>> userTagTable, Table<Integer, Integer, Set<Long>> itemTagTable){
+		this.userTagTable = userTagTable;
+		this.itemTagTable = itemTagTable;
 	}
 	
 	public void buildGraphs(){
 		Stopwatch sw = Stopwatch.createStarted();
 		
-		if(taggingsMatrix != null){
+		if (method == GraphConstructionMethod.TAGS){
 			buildGraphsFromTaggings();
 		}
-		else if (ratingsMatrix != null){
+		else{
 			buildGraphsFromRatings();
 		}
 		
@@ -130,11 +140,45 @@ public class GraphBuilder {
 		
 		userAdjMatrix = new SparseMatrix(numUsers, numUsers, userAdjTable, userAdjColMap);
 		itemAdjMatrix = new SparseMatrix(numItems, numItems, itemAdjTable, itemAdjColMap);
-		
 	}
 	
 	private void buildGraphsFromTaggings() {
-		// TODO Auto-generated method stub
+		Table<Integer, Integer, Double> userAdjTable = HashBasedTable.create();
+		Table<Integer, Integer, Double> itemAdjTable = HashBasedTable.create();
+		Multimap<Integer, Integer> userAdjColMap = HashMultimap.create();
+		Multimap<Integer, Integer> itemAdjColMap = HashMultimap.create();
+		
+		for (int u1 = 0; u1 < numUsers; u1++){
+			Set<Integer> tags = userTagTable.row(u1).keySet();
+			for (int tag : tags){
+				Set<Integer> tagUsers = userTagTable.column(tag).keySet();
+				for (int u2 : tagUsers){
+					if (u1 < u2){
+						userAdjTable.put(u1, u2, 1.0);
+						userAdjColMap.put(u2, u1);
+						userAdjTable.put(u2, u1, 1.0);
+						userAdjColMap.put(u1, u2);
+					}
+				}
+			}
+		}
+		for (int i1 = 0; i1 < numItems; i1++){
+			Set<Integer> tags = itemTagTable.row(i1).keySet();
+			for (int tag : tags){
+				Set<Integer> tagItems = itemTagTable.column(tag).keySet();
+				for (int i2 : tagItems){
+					if (i1 < i2){
+						itemAdjTable.put(i1, i2, 1.0);
+						itemAdjColMap.put(i2, i1);
+						itemAdjTable.put(i2, i1, 1.0);
+						itemAdjColMap.put(i1, i2);
+					}
+				}
+			}
+		}
+
+		userAdjMatrix = new SparseMatrix(numUsers, numUsers, userAdjTable, userAdjColMap);
+		itemAdjMatrix = new SparseMatrix(numItems, numItems, itemAdjTable, itemAdjColMap);
 	}
 
 }

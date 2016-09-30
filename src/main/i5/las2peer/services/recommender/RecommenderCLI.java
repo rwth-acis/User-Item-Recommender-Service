@@ -39,6 +39,19 @@ public class RecommenderCLI {
 			return;
 		}
 		
+		// Read tag data from file
+		if (options.containsKey("--tags-file")){
+			String taggingsFile = options.get("--tags-file"); 
+			try {
+				librec.readTaggingsFromFile(taggingsFile);
+			} catch (Exception e) {
+				Logs.error("Error reading from tag file " + taggingsFile);
+				Logs.error(e.getMessage());
+				e.printStackTrace();
+				return;
+			}
+		}
+		
 		try {
 			librec.printDatasetSpecifications();
 		} catch (Exception e) {
@@ -50,7 +63,7 @@ public class RecommenderCLI {
 		
 		try {
 			librec.evaluate();
-		} catch (InterruptedException e) {
+		} catch (Exception e) {
 			Logs.error("Error during evaluation");
 			Logs.error(e.getMessage());
 			e.printStackTrace();
@@ -76,7 +89,7 @@ public class RecommenderCLI {
 	private static void setParameters() {
 		
 		if(options.containsKey("--rec-tcnsvd-cbins")){
-			librec.setParameter("timeComNeighSVD++", "-beta 0.04 -bins 30 -cbins " + options.get("--rec-tcnsvd-cbins"));
+			librec.setParameter("timeComNeighSVD++", "-beta 0.04 -bins 30 -cbins " + options.get("--rec-tcnsvd-cbins") + " -k 200");
 		}
 		
 		if(options.containsKey("--cd-algo")){

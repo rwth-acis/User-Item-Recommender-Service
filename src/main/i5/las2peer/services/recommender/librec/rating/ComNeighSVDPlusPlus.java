@@ -25,6 +25,7 @@ import com.google.common.cache.LoadingCache;
 import i5.las2peer.services.recommender.communities.CommunityDetector;
 import i5.las2peer.services.recommender.communities.CommunityDetector.CommunityDetectionAlgorithm;
 import i5.las2peer.services.recommender.graphs.GraphBuilder;
+import i5.las2peer.services.recommender.graphs.GraphBuilder.GraphConstructionMethod;
 import i5.las2peer.services.recommender.graphs.GraphBuilder.SimilarityMeasure;
 import i5.las2peer.services.recommender.librec.data.Configuration;
 import i5.las2peer.services.recommender.librec.data.DenseMatrix;
@@ -51,6 +52,8 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 	// ---Community-related algorithm parameters
 	// maximum number of items to consider from the user's communities
 	private int communitiesItemsK;
+	// graph construction method
+	private GraphConstructionMethod graphMethod;
 	// k parameter for the k-nn graph construction
 	private int knn;
 	// Similarity measure for the k-nn graph construction
@@ -81,6 +84,15 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 		
 		communitiesItemsK = algoOptions.getInt("-k", 200);
 		knn = cf.getInt("graph.knn.k", 10);
+		switch (cf.getString("graph.method", "ratings").toLowerCase()){
+		case "tags":
+			graphMethod = GraphConstructionMethod.TAGS;
+			break;
+		default:
+		case "ratings":
+			graphMethod = GraphConstructionMethod.RATINGS;
+			break;
+		}
 		switch (cf.getString("graph.knn.sim", "cosine").toLowerCase()){
 		case "pearson":
 			sim = SimilarityMeasure.PEARSON_CORRELATION;
@@ -131,7 +143,9 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 		// build the user and item graphs
 		Logs.info("{}{} build user and item graphs ...", new Object[] { algoName, foldInfo });
 		GraphBuilder gb = new GraphBuilder();
+		gb.setMethod(graphMethod);
 		gb.setRatingData(trainMatrix);
+		gb.setTaggingData(userTagTable, itemTagTable);
 		gb.setK(knn);
 		gb.setSimilarityMeasure(sim);
 		gb.buildGraphs();

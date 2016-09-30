@@ -31,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.Table;
 
 import i5.las2peer.services.recommender.librec.data.AddConfiguration;
 import i5.las2peer.services.recommender.librec.data.Configuration;
@@ -161,6 +162,9 @@ public abstract class Recommender implements Runnable {
 	// rating matrix for training, validation and test
 	protected SparseMatrix trainMatrix, validationMatrix, testMatrix;
 
+	// tables containing user and item taggins
+	public Table<Integer, Integer, Set<Long>> userTagTable, itemTagTable;
+	
 	// upper symmetric matrix of item-item correlations
 	protected SymmMatrix corrs;
 

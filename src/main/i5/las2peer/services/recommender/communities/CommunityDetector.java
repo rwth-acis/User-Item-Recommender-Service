@@ -6,7 +6,11 @@ import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.HashBiMap;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Table;
 
 import i5.las2peer.services.recommender.communities.igraph.Igraph;
 import i5.las2peer.services.recommender.communities.webocd.Cover;
@@ -17,6 +21,8 @@ import i5.las2peer.services.recommender.communities.webocd.SpeakerListenerLabelP
 import i5.las2peer.services.recommender.librec.data.DenseVector;
 import i5.las2peer.services.recommender.librec.data.MatrixEntry;
 import i5.las2peer.services.recommender.librec.data.SparseMatrix;
+import i5.las2peer.services.recommender.librec.data.SparseVector;
+import i5.las2peer.services.recommender.librec.data.VectorEntry;
 import i5.las2peer.services.recommender.librec.util.Logs;
 import y.base.Edge;
 import y.base.Node;
@@ -25,6 +31,8 @@ public class CommunityDetector {
 	
 	private CommunityDetectionAlgorithm algorithm;
 	
+	private boolean overlapping = true;
+
 	private SparseMatrix graph;
 	
 	private SparseMatrix membershipsMatrix;
@@ -75,6 +83,10 @@ public class CommunityDetector {
 		slpaMemorySize = memorySize;
 	}
 	
+	public void setOverlapping(boolean overlapping){
+		this.overlapping = overlapping;
+	}
+	
 	public void detectCommunities() throws OcdAlgorithmException, InterruptedException{
 		Stopwatch sw = Stopwatch.createStarted();
 
@@ -104,6 +116,10 @@ public class CommunityDetector {
 		return membershipsVector;
 	}
 	
+	public int getNumCommunities(){
+		return membershipsMatrix.numColumns();
+	}
+	
 	public int getComputationTime(){
 		return communityDetectionTime;
 	}
@@ -124,6 +140,9 @@ public class CommunityDetector {
 		Cover cover = dmidAlgo.detectOverlappingCommunities(customGraph);
 		
 		membershipsMatrix = cover.getMemberships();
+		if (!overlapping)
+			makeNonOverlapping();
+		membershipsVector = computeMembershipsVector();
 	}
 	
 	private void detectSlpa() throws OcdAlgorithmException, InterruptedException {
@@ -141,6 +160,9 @@ public class CommunityDetector {
 		Cover cover = slpaAlgo.detectOverlappingCommunities(customGraph);
 		
 		membershipsMatrix = cover.getMemberships();
+		if (!overlapping)
+			makeNonOverlapping();
+		membershipsVector = computeMembershipsVector();
 	}
 	
 	private CustomGraph getWebOCDCustomGraph() {
@@ -171,6 +193,54 @@ public class CommunityDetector {
 		return customGraph;
 	}
 	
+	private void makeNonOverlapping() {
+		int numNodes = membershipsMatrix.numRows();
+		int numCommunities = membershipsMatrix.numColumns();
+		
+		Table<Integer, Integer, Double> membershipsTable = HashBasedTable.create();
+		Multimap<Integer, Integer> membershipsColMap = HashMultimap.create();
+
+		for (int node = 0; node < numNodes; node++){
+			// get community with highest membership level and store in vector
+			SparseVector communitiesVector = membershipsMatrix.row(node);
+			double maxLevel = 0;
+			int community = 0;
+			for (VectorEntry e : communitiesVector){
+				double level = e.get();
+				if (level > maxLevel){
+					maxLevel = level;
+					community = e.index();
+				}
+			}
+			membershipsTable.put(node, community, 1.0);
+			membershipsColMap.put(community, node);
+		}
+		membershipsMatrix = new SparseMatrix(numNodes, numCommunities, membershipsTable, membershipsColMap);
+	}
+
+	private DenseVector computeMembershipsVector(){
+		int numNodes = membershipsMatrix.numRows();
+		
+		DenseVector vector = new DenseVector(numNodes);
+		
+		for (int node = 0; node < numNodes; node++){
+			// get community with highest membership level and store in vector
+			SparseVector communitiesVector = membershipsMatrix.row(node);
+			double maxLevel = 0;
+			int community = 0;
+			for (VectorEntry e : communitiesVector){
+				double level = e.get();
+				if (level > maxLevel){
+					maxLevel = level;
+					community = e.index();
+				}
+			}
+			vector.set(node, community);
+		}
+		
+		return vector;
+	}
+
 	private void detectWalktrap() {
 		Logs.info(String.format("Walktrap: [steps] = [%s]", walktrapSteps));
 		
@@ -181,5 +251,4 @@ public class CommunityDetector {
 		membershipsMatrix = igraph.getMembershipsMatrix();
 		membershipsVector = igraph.getMembershipsVector();
 	}
-	
 }

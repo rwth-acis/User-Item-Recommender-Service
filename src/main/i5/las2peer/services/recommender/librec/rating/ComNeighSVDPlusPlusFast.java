@@ -23,6 +23,7 @@ import java.util.List;
 import i5.las2peer.services.recommender.communities.CommunityDetector;
 import i5.las2peer.services.recommender.communities.CommunityDetector.CommunityDetectionAlgorithm;
 import i5.las2peer.services.recommender.graphs.GraphBuilder;
+import i5.las2peer.services.recommender.graphs.GraphBuilder.GraphConstructionMethod;
 import i5.las2peer.services.recommender.graphs.GraphBuilder.SimilarityMeasure;
 import i5.las2peer.services.recommender.librec.data.Configuration;
 import i5.las2peer.services.recommender.librec.data.DenseMatrix;
@@ -44,13 +45,26 @@ public class ComNeighSVDPlusPlusFast extends BiasedMF {
 	protected DenseMatrix Y, Ocu, Oci;
 	protected DenseMatrix W, C; // weighting factors for neighborhood model
 	
+	// ---Community-related algorithm parameters
+	// graph construction method
+	private GraphConstructionMethod graphMethod;
+	// k parameter for the k-nn graph construction
+	private int knn;
+	// Similarity measure for the k-nn graph construction
+	private SimilarityMeasure sim;
+	// Community detection algorithm
+	private CommunityDetectionAlgorithm cdAlgo;
+	// Steps parameter for the Walktrap algorithm
+	private int wtSteps;
+	// Maximum number of (overlapping) communities per user/item
+
 	protected int numUserCommunities;
 	protected int numItemCommunities;
 	
 	protected DenseVector BCu, BCi;
 	
 	// Community membership matrices for users and items
-	protected SparseMatrix userMembershipsMatrix, itemMembershipsMatrix;
+//	protected SparseMatrix userMembershipsMatrix, itemMembershipsMatrix;
 	
 	// User/item community membership map
 	private DenseVector userMembershipsVector, itemMembershipsVector;
@@ -59,6 +73,39 @@ public class ComNeighSVDPlusPlusFast extends BiasedMF {
 		super(trainMatrix, testMatrix, fold);
 
 		setAlgoName("ComNeighSVD++Fast");
+		
+		knn = cf.getInt("graph.knn.k", 10);
+		switch (cf.getString("graph.method", "ratings").toLowerCase()){
+		case "tags":
+			graphMethod = GraphConstructionMethod.TAGS;
+			break;
+		default:
+		case "ratings":
+			graphMethod = GraphConstructionMethod.RATINGS;
+			break;
+		}
+		switch (cf.getString("graph.knn.sim", "cosine").toLowerCase()){
+		case "pearson":
+			sim = SimilarityMeasure.PEARSON_CORRELATION;
+			break;
+		default:
+		case "cosine":
+			sim = SimilarityMeasure.COSINE_SIMILARITY;
+			break;
+		}
+		switch (cf.getString("cd.algo", "wt").toLowerCase()){
+		case "dmid":
+			cdAlgo = CommunityDetectionAlgorithm.DMID;
+			break;
+		case "slpa":
+			cdAlgo = CommunityDetectionAlgorithm.SLPA;
+			break;
+		default:
+		case "wt":
+			cdAlgo = CommunityDetectionAlgorithm.WALKTRAP;
+			break;
+		}
+		wtSteps = cf.getInt("cd.walktrap.steps", 2);
 	}
 
 	@Override
@@ -68,9 +115,11 @@ public class ComNeighSVDPlusPlusFast extends BiasedMF {
 		// build the user and item graphs
 		Logs.info("{}{} build user and item graphs ...", new Object[] { algoName, foldInfo });
 		GraphBuilder gb = new GraphBuilder();
+		gb.setMethod(graphMethod);
 		gb.setRatingData(trainMatrix);
-		gb.setK(10);
-		gb.setSimilarityMeasure(SimilarityMeasure.COSINE_SIMILARITY);
+		gb.setTaggingData(userTagTable, itemTagTable);
+		gb.setK(knn);
+		gb.setSimilarityMeasure(sim);
 		gb.buildGraphs();
 		SparseMatrix userMatrix = gb.getUserAdjacencyMatrix();
 		SparseMatrix itemMatrix = gb.getItemAdjacencyMatrix();
@@ -78,37 +127,19 @@ public class ComNeighSVDPlusPlusFast extends BiasedMF {
 		// detect communities
 		Logs.info("{}{} detect communities ...", new Object[] { algoName, foldInfo });
 		CommunityDetector cd = new CommunityDetector();
-		switch(cf.getString("cd.algo", "dmid").toLowerCase()){
-		default:
-		case "walktrap":
-			cd.setAlgorithm(CommunityDetectionAlgorithm.WALKTRAP);
-			cd.setWalktrapParameters(cf.getInt("cd.walktrap.steps", 2));
-			break;
-//		case "dmid":
-//			cd.setAlgorithm(CommunityDetectionAlgorithm.DMID);
-//			cd.setDmidParameters(cf.getInt("cd.dmid.iter", 1000),
-//								cf.getDouble("cd.dmid.prec", 0.001),
-//								cf.getDouble("cd.dmid.proficioncy", 0.1));
-//			break;
-//		case "slpa":
-//			cd.setAlgorithm(CommunityDetectionAlgorithm.SLPA);
-//			cd.setSlpaParameters(cf.getDouble("cd.slpa.prob", 0.15),
-//								cf.getInt("cd.slpa.memory", 100));
-//			break;
-		}
+		cd.setAlgorithm(cdAlgo);
+		if (cdAlgo == CommunityDetectionAlgorithm.WALKTRAP)
+			cd.setWalktrapParameters(wtSteps);
 		
 		cd.setGraph(userMatrix);
 		cd.detectCommunities();
-		userMembershipsMatrix = cd.getMemberships();
 		userMembershipsVector = cd.getMembershipsVector();
+		numUserCommunities = cd.getNumCommunities();
 		
 		cd.setGraph(itemMatrix);
 		cd.detectCommunities();
-		itemMembershipsMatrix = cd.getMemberships();
 		itemMembershipsVector = cd.getMembershipsVector();
-		
-		numUserCommunities = userMembershipsMatrix.numColumns();
-		numItemCommunities = itemMembershipsMatrix.numColumns(); 
+		numItemCommunities = cd.getNumCommunities();
 		
 		logCommunityInfo();
 		
@@ -278,17 +309,13 @@ public class ComNeighSVDPlusPlusFast extends BiasedMF {
 	}
 	
 	private void logCommunityInfo() {
-		int userMemSize = userMembershipsMatrix.size();
-		int itemMemSize = itemMembershipsMatrix.size();
-		double upc = (double) userMemSize / numUserCommunities;
-		double cpu = (double) userMemSize / numUsers;
-		double ipc = (double) itemMemSize / numItemCommunities;
-		double cpi = (double) itemMemSize / numItems;
+		double upc = (double) numUsers / numUserCommunities;
+		double ipc = (double) numItems / numItemCommunities;
 		
-		Logs.info("{}{} user communites: {}, users per community: {}, communities per user: {}",
-				new Object[] { algoName, foldInfo, numUserCommunities, upc, cpu });
-		Logs.info("{}{} item communites: {}, items per community: {}, communities per item: {}",
-				new Object[] { algoName, foldInfo, numItemCommunities, ipc, cpi });
+		Logs.info("{}{} user communites: {}, users per community: {}",
+				new Object[] { algoName, foldInfo, numUserCommunities, upc });
+		Logs.info("{}{} item communites: {}, items per community: {}",
+				new Object[] { algoName, foldInfo, numItemCommunities, ipc });
 	}
 	
 	@Override

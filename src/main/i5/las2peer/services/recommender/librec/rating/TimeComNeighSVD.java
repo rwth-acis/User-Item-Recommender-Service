@@ -22,15 +22,18 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
+import com.google.common.collect.Table.Cell;
 
 import i5.las2peer.services.recommender.communities.CommunityDetector;
 import i5.las2peer.services.recommender.communities.CommunityDetector.CommunityDetectionAlgorithm;
 import i5.las2peer.services.recommender.graphs.GraphBuilder;
+import i5.las2peer.services.recommender.graphs.GraphBuilder.GraphConstructionMethod;
 import i5.las2peer.services.recommender.graphs.GraphBuilder.SimilarityMeasure;
 import i5.las2peer.services.recommender.librec.data.Configuration;
 import i5.las2peer.services.recommender.librec.data.DenseMatrix;
@@ -108,6 +111,9 @@ public class TimeComNeighSVD extends IterativeRecommender {
 	private DenseVector Phi;
 	
 	// ---Community-related algorithm parameters
+	
+	// graph construction method
+	private GraphConstructionMethod graphMethod;
 	
 	// k parameter for the k-nn graph construction
 	private int knn;
@@ -206,6 +212,15 @@ public class TimeComNeighSVD extends IterativeRecommender {
 		numCBins = algoOptions.getInt("-cbins");
 		communitiesItemsK = algoOptions.getInt("-k", 200);
 		knn = cf.getInt("graph.knn.k", 10);
+		switch (cf.getString("graph.method", "ratings").toLowerCase()){
+		case "tags":
+			graphMethod = GraphConstructionMethod.TAGS;
+			break;
+		default:
+		case "ratings":
+			graphMethod = GraphConstructionMethod.RATINGS;
+			break;
+		}
 		switch (cf.getString("graph.knn.sim", "cosine").toLowerCase()){
 		case "pearson":
 			sim = SimilarityMeasure.PEARSON_CORRELATION;
@@ -322,16 +337,28 @@ public class TimeComNeighSVD extends IterativeRecommender {
 		SparseMatrix[] userMatrix = new SparseMatrix[numCBins + 1];
 		SparseMatrix[] itemMatrix = new SparseMatrix[numCBins + 1];
 		GraphBuilder gb = new GraphBuilder();
+		gb.setMethod(graphMethod);
 		gb.setK(knn);
 		gb.setSimilarityMeasure(sim);
+		
+		gb.setTaggingData(userTagTable, itemTagTable);
 		gb.setRatingData(trainMatrix);
 		gb.buildGraphs();
 		userMatrix[0] = gb.getUserAdjacencyMatrix();
 		itemMatrix[0] = gb.getItemAdjacencyMatrix();
+		
 		if (numCBins > 1){
 			SparseMatrix[] trainMatrixCBin = trainDataCBins();
+			List<Table<Integer, Integer, Set<Long>>> userTagTableCBin = tagDataCBins(userTagTable);
+			List<Table<Integer, Integer, Set<Long>>> itemTagTableCBin = tagDataCBins(itemTagTable);
+			
 			for (int cbin = 1; cbin <= numCBins; cbin++){
-				gb.setRatingData(trainMatrixCBin[cbin - 1]);
+				if (graphMethod == GraphConstructionMethod.TAGS){
+					gb.setTaggingData(userTagTableCBin.get(cbin - 1), itemTagTableCBin.get(cbin -1));
+				}
+				else{
+					gb.setRatingData(trainMatrixCBin[cbin - 1]);
+				}
 				gb.buildGraphs();
 				userMatrix[cbin] = gb.getUserAdjacencyMatrix();
 				itemMatrix[cbin] = gb.getItemAdjacencyMatrix();
@@ -429,9 +456,9 @@ public class TimeComNeighSVD extends IterativeRecommender {
 						communityRatingsTable.put(community, item, communityRating);
 						communityTimeTable.put(community, item, communityTime);
 					}
-					double meanTime = (ratingsCount > 0) ? (communityTimeSum) / ratingsCount : globalMeanDate;
-					communityMeanDate[cbin].set(community, meanTime);
 				}
+				double meanTime = (ratingsCount > 0) ? (communityTimeSum) / ratingsCount : globalMeanDate;
+				communityMeanDate[cbin].set(community, meanTime);
 			}
 			communityRatingsMatrix[cbin] = new SparseMatrix(numUserCommunities[cbin], numItems, communityRatingsTable);
 			communityTimeMatrix[cbin] = new SparseMatrix(numUserCommunities[cbin], numItems, communityTimeTable);
@@ -1084,6 +1111,40 @@ public class TimeComNeighSVD extends IterativeRecommender {
 	}
 
 	/**
+	 * @return a list of length numCBins containing the tagging data that falls into each cbin (bins are numbered from 0 to numCBins-1)
+	 */
+	private List<Table<Integer, Integer, Set<Long>>> tagDataCBins(Table<Integer, Integer, Set<Long>> tagTable) {
+		Logs.info("{}{} split tagging data into bins for dynamic community structure detection ...", algoName, foldInfo);
+		
+		List<Table<Integer, Integer, Set<Long>>> tagTableList = new ArrayList<Table<Integer, Integer, Set<Long>>>(numCBins);
+		
+		for (int cbin = 0; cbin < numCBins; cbin++){
+			tagTableList.add(cbin, HashBasedTable.create());
+		}
+		
+		for (Cell<Integer, Integer, Set<Long>> c : tagTable.cellSet()){
+			int useritem = c.getRowKey(); // may be user or item
+			int tag = c.getColumnKey();
+			Set<Long> times = c.getValue();
+			for (long time : times){
+				int days = days(time, minTrainTimestamp);
+				int cbin = cbin(days);  // cbins are numbered 1..numCBins
+				
+				if (!tagTableList.get(cbin-1).contains(useritem, tag)){
+					tagTableList.get(cbin-1).put(useritem, tag, new HashSet<Long>());
+				}
+				tagTableList.get(cbin-1).get(useritem, tag).add(time);
+			}
+		}
+
+		for (int cbin = 0; cbin < numCBins; cbin++){
+			Logs.info("{}{} tagging data cbin {} contains {} tagging instances", algoName, foldInfo, cbin, tagTableList.get(cbin).size());
+		}
+
+		return tagTableList;
+	}
+
+	/**
 	 * @return the time deviation for a specific timestamp (number of days) t w.r.t the community mean date tc
 	 */
 	protected double devc(int c, int t) {
@@ -1096,7 +1157,7 @@ public class TimeComNeighSVD extends IterativeRecommender {
 	}
 
 	/**
-	 * @return the community bin number (starting from 1..numCBins) for a specific day t (number of days after trainMinTimestamp);
+	 * @return the community bin number (numbered 1..numCBins) for a specific day t (number of days after trainMinTimestamp);
 	 */
 	protected int cbin(int day) {
 		int cbin = (int) (day / (numDays + 0.0) * numCBins) + 1;

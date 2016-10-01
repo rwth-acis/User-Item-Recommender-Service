@@ -23,13 +23,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import com.google.common.cache.LoadingCache;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 
 import i5.las2peer.services.recommender.communities.CommunityDetector;
 import i5.las2peer.services.recommender.communities.CommunityDetector.CommunityDetectionAlgorithm;
 import i5.las2peer.services.recommender.graphs.GraphBuilder;
+import i5.las2peer.services.recommender.graphs.GraphBuilder.GraphConstructionMethod;
 import i5.las2peer.services.recommender.graphs.GraphBuilder.SimilarityMeasure;
 import i5.las2peer.services.recommender.librec.data.Configuration;
 import i5.las2peer.services.recommender.librec.data.DenseMatrix;
@@ -74,6 +74,9 @@ public class TimeComNeighSVDFast extends IterativeRecommender {
 
 	// ---Community-related algorithm parameters
 	
+	// graph construction method
+	private GraphConstructionMethod graphMethod;
+
 	// k parameter for the k-nn graph construction
 	private int knn;
 	
@@ -103,11 +106,6 @@ public class TimeComNeighSVDFast extends IterativeRecommender {
 	
 	// Average ratings given by the members of each community (numUserCommunities x numItems)
 	private SparseMatrix communityTimeMatrix;
-	
-	// Communities of items that each user has rated (numUsers x numItemCommunities)
-	private SparseMatrix userItemCommunities;
-	
-	protected LoadingCache<Integer, List<Integer>> userItemCommunitiesCache;
 	
 	// ---Community-related model parameters---
 	
@@ -159,6 +157,15 @@ public class TimeComNeighSVDFast extends IterativeRecommender {
 		beta = algoOptions.getFloat("-beta");
 		numBins = algoOptions.getInt("-bins");
 		knn = cf.getInt("graph.knn.k", 10);
+		switch (cf.getString("graph.method", "ratings").toLowerCase()){
+		case "tags":
+			graphMethod = GraphConstructionMethod.TAGS;
+			break;
+		default:
+		case "ratings":
+			graphMethod = GraphConstructionMethod.RATINGS;
+			break;
+		}
 		switch (cf.getString("graph.knn.sim", "cosine").toLowerCase()){
 		case "pearson":
 			sim = SimilarityMeasure.PEARSON_CORRELATION;
@@ -169,12 +176,12 @@ public class TimeComNeighSVDFast extends IterativeRecommender {
 			break;
 		}
 		switch (cf.getString("cd.algo", "wt").toLowerCase()){
-//		case "dmid":
-//			cdAlgo = CommunityDetectionAlgorithm.DMID;
-//			break;
-//		case "slpa":
-//			cdAlgo = CommunityDetectionAlgorithm.SLPA;
-//			break;
+		case "dmid":
+			cdAlgo = CommunityDetectionAlgorithm.DMID;
+			break;
+		case "slpa":
+			cdAlgo = CommunityDetectionAlgorithm.SLPA;
+			break;
 		default:
 		case "wt":
 			cdAlgo = CommunityDetectionAlgorithm.WALKTRAP;
@@ -235,9 +242,11 @@ public class TimeComNeighSVDFast extends IterativeRecommender {
 		// build user and item graphs
 		Logs.info("{}{} build user and item graphs ...", new Object[] { algoName, foldInfo });
 		GraphBuilder gb = new GraphBuilder();
+		gb.setMethod(graphMethod);
 		gb.setK(knn);
 		gb.setSimilarityMeasure(sim);
 		gb.setRatingData(trainMatrix);
+		gb.setTaggingData(userTagTable, itemTagTable);
 		gb.buildGraphs();
 		SparseMatrix userMatrix = gb.getUserAdjacencyMatrix();
 		SparseMatrix itemMatrix = gb.getItemAdjacencyMatrix();
@@ -250,30 +259,21 @@ public class TimeComNeighSVDFast extends IterativeRecommender {
 		Logs.info("{}{} detect communities ...", new Object[] { algoName, foldInfo });
 		CommunityDetector cd = new CommunityDetector();
 		cd.setAlgorithm(cdAlgo);
+		cd.setOverlapping(false);
 		if (cdAlgo == CommunityDetectionAlgorithm.WALKTRAP)
 			cd.setWalktrapParameters(wtSteps);
+		
 		cd.setGraph(userMatrix);
 		cd.detectCommunities();
 		userMembershipsMatrix = cd.getMemberships();
 		userMembershipsVector = cd.getMembershipsVector();
+		numUserCommunities = cd.getNumCommunities();
+		
 		cd.setGraph(itemMatrix);
 		cd.detectCommunities();
 		itemMembershipsMatrix = cd.getMemberships();
-		itemMembershipsVector = cd.getMembershipsVector();
-		
-		numUserCommunities = userMembershipsMatrix.numColumns();
-		numItemCommunities = itemMembershipsMatrix.numColumns();
-		
-		Table<Integer, Integer, Double> userItemCommunitiesTable = HashBasedTable.create();
-		for (int u = 0; u < numUsers; u++){
-			List<Integer> Iu = userItemsCache.get(u);
-			for (int i : Iu){
-				int c = (int) itemMembershipsVector.get(i);
-				userItemCommunitiesTable.put(u, c, 1.0);
-			}
-		}
-		userItemCommunities = new SparseMatrix(numUsers, numItemCommunities, userItemCommunitiesTable);
-		userItemCommunitiesCache = userItemCommunities.rowColumnsCache(cacheSpec);
+        itemMembershipsVector = cd.getMembershipsVector();
+		numItemCommunities = cd.getNumCommunities();
 		
 		userMatrix = null;
 		itemMatrix = null;
@@ -281,11 +281,12 @@ public class TimeComNeighSVDFast extends IterativeRecommender {
 		
 		logCommunityInfo();
 
-		// compute user communities' average rating time for each item
+		// compute user communities' mean rating times overall and per item
 		communityMeanDate = new DenseVector(numUserCommunities);
 		Table<Integer, Integer, Double> communityTimeTable = HashBasedTable.create();
+		
 		for (int community = 0; community < numUserCommunities; community++){
-			// each user's membership level for the community
+			// vector of users that belong to the community
 			SparseVector communityUsersVector = userMembershipsMatrix.column(community);
 			// build set of items that have been rated by members of the community
 			HashSet<Integer> items = new HashSet<Integer> ();
@@ -295,33 +296,32 @@ public class TimeComNeighSVDFast extends IterativeRecommender {
 				for (int item : userItems)
 					items.add(item);
 			}
-			// to compute mean rating times for each community keep track of time and number of ratings given
+			// to compute communities' overall mean rating times keep track of time and number of ratings given
 			double communityTimeSum = 0;
 			int ratingsCount = 0;
 			for (int item : items){
-				// Sum of ratings given by users of the community to the item, weighted by the users community membership levels
+				// to compute communities' per item mean rating times keep track of time and number of ratings given to each item
 				double communityItemTimeSum = 0;
-				double membershipsSum = 0;
-				// Each user's rating for the item
+				int itemRatingsCount = 0;
+				// vector containing all user's ratings for the item
 				SparseVector itemUsersVector = trainMatrix.column(item);
 				for (VectorEntry e : communityUsersVector){
 					int user = e.index();
 					if (itemUsersVector.contains(user)){
-						double muc = userMembershipsMatrix.get(user, community);
 						double tui = timeMatrix.get(user, item);
-						communityItemTimeSum += tui * muc;
-						membershipsSum += muc;
+						communityItemTimeSum += tui;
 						communityTimeSum += days((long) timeMatrix.get(user, item), minTrainTimestamp);
 						ratingsCount++;
+						itemRatingsCount++;
 					}
 				}
-				if (membershipsSum > 0){
-					double communityTime = communityItemTimeSum / membershipsSum;
+				if (itemRatingsCount > 0){
+					double communityTime = communityItemTimeSum / itemRatingsCount;
 					communityTimeTable.put(community, item, communityTime);
 				}
-				double meanTime = (ratingsCount > 0) ? (communityTimeSum) / ratingsCount : globalMeanDate;
-				communityMeanDate.set(community, meanTime);
 			}
+			double meanDate = (ratingsCount > 0) ? (communityTimeSum) / ratingsCount : globalMeanDate;
+			communityMeanDate.set(community, meanDate);
 		}
 		communityTimeMatrix = new SparseMatrix(numUserCommunities, numItems, communityTimeTable);
 		

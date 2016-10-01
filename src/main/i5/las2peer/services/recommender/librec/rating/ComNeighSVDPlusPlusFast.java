@@ -123,6 +123,7 @@ public class ComNeighSVDPlusPlusFast extends BiasedMF {
 		gb.buildGraphs();
 		SparseMatrix userMatrix = gb.getUserAdjacencyMatrix();
 		SparseMatrix itemMatrix = gb.getItemAdjacencyMatrix();
+		gb = null;
 		
 		// detect communities
 		Logs.info("{}{} detect communities ...", new Object[] { algoName, foldInfo });
@@ -141,6 +142,10 @@ public class ComNeighSVDPlusPlusFast extends BiasedMF {
 		itemMembershipsVector = cd.getMembershipsVector();
 		numItemCommunities = cd.getNumCommunities();
 		
+		userMatrix = null;
+		itemMatrix = null;
+		cd = null;
+
 		logCommunityInfo();
 		
 		Y = new DenseMatrix(numItemCommunities, numFactors);

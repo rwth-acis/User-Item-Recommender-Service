@@ -357,22 +357,23 @@ public class LibRec {
 				// TODO: Maybe not only compute average, but also mean and variance. Should do that if we use SLPA.
 			}
 		}
+		
+		String ratingResult = Recommender.getRatingEvalInfo(evalMeasures);
+		String rankingResult = Recommender.getRankingEvalInfo(evalMeasures);
+		
+		String algoName = models[0].algoName;
+		
+		String algoConfigInfo = algoName + " configuration: " + models[0].toString();
+		String evalTimeInfo = algoName + " time measurements: [TrainTime,TestTime] = ["
+				+ Dates.parse(evalMeasures.get(Measure.TrainTime).longValue()) + ","
+				+ Dates.parse(evalMeasures.get(Measure.TestTime).longValue()) + "]";
+		String evalRatingInfo = algoName + " rating evaluation measurements: " + ratingResult;
+		String evalRankingInfo = algoName + " ranking evaluation measurements: " + rankingResult;
 
-		String result = Recommender.getEvalInfo(evalMeasures);
-		// we add quota symbol to indicate the textual format of time 
-		String time = String.format("'%s','%s'", Dates.parse(evalMeasures.get(Measure.TrainTime).longValue()),
-				Dates.parse(evalMeasures.get(Measure.TestTime).longValue()));
-
-		// double commas as the separation of results and configuration
-		StringBuilder sb = new StringBuilder();
-		String config = models[0].toString();
-		sb.append(models[0].algoName).append(",").append(result).append(",,");
-		if (!config.isEmpty())
-			sb.append(config).append(",");
-		sb.append(time).append("\n");
-
-		String evalInfo = sb.toString();
-		Logs.info(evalInfo);
+		Logs.info(algoConfigInfo);
+		Logs.info(evalTimeInfo);
+		Logs.info(evalRatingInfo);
+		Logs.info(evalRankingInfo);
 	}
 	
 	public double getEvalResult(Measure measure){

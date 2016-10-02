@@ -50,7 +50,7 @@ import i5.las2peer.services.recommender.librec.util.Strings;
  * 
  */
 @Configuration("factors, lRate, lRateN, lRateF, lRateC, lRateCN, lRateCF, lRateMu, maxLRate, regB, regN, regU, regI, regC, regCN,"
-		+ " regCF, iters, boldDriver, beta, numBins")
+		+ " regCF, iters, boldDriver, beta, numBins, graphMethod, graphKNN, similarity, cdAlgo, wtSteps")
 public class TimeComNeighSVDFast extends IterativeRecommender {
 
 	// the span of days of training timestamps
@@ -564,7 +564,8 @@ public class TimeComNeighSVDFast extends IterativeRecommender {
 	@Override
 	public String toString() {
 		return Strings.toString(new Object[] { numFactors, initLRate, initLRateN, initLRateF, initLRateC, initLRateCN, initLRateCF, 
-				initLRateMu, maxLRate, regB, regN, regU, regI, regC, regCN, regCF, numIters, isBoldDriver, beta, numBins});
+				initLRateMu, maxLRate, regB, regN, regU, regI, regC, regCN, regCF, numIters, isBoldDriver, beta, numBins,
+				graphMethod, knn, sim, cdAlgo, wtSteps});
 	}
 
 	/***************************************************************** Functional Methods *******************************************/

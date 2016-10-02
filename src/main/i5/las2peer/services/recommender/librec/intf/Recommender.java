@@ -351,9 +351,10 @@ public abstract class Recommender implements Runnable {
 		if (isEvaluate){
 			if (verbose)
 				Logs.debug("{}{} evaluate test data ... ", algoName, foldInfo);
-			// TODO: to predict ratings only, or do item recommendations only
-			measures = isRankingPred ? evalRankings() : evalRatings();
-			String measurements = getEvalInfo(measures);
+//			measures = isRankingPred ? evalRankings() : evalRatings();
+			measures = evalAll();
+			String ratingMeasurements = getRatingEvalInfo(measures);
+			String rankingMeasurements = getRankingEvalInfo(measures);
 			sw.stop();
 			long testTime = sw.elapsed(TimeUnit.MILLISECONDS) - trainTime;
 	
@@ -361,14 +362,19 @@ public abstract class Recommender implements Runnable {
 			measures.put(Measure.TrainTime, (double) trainTime);
 			measures.put(Measure.TestTime, (double) testTime);
 	
-			String evalInfo = algoName + foldInfo + ": " + measurements + "\tTime: "
-					+ Dates.parse(measures.get(Measure.TrainTime).longValue()) + ", "
-					+ Dates.parse(measures.get(Measure.TestTime).longValue());
-			if (!isRankingPred)
-				evalInfo += "\tView: " + view;
+			String evalRatingInfo = algoName + foldInfo + " rating evaluation measurements: " + ratingMeasurements;
+			String evalRankingInfo = algoName + foldInfo + " ranking evaluation measurements: " + rankingMeasurements + " View: " + view;
+			String evalTimeInfo = algoName + foldInfo + " time measurements: [TrainTime,TestTime] = ["
+					+ Dates.parse(measures.get(Measure.TrainTime).longValue()) + ","
+					+ Dates.parse(measures.get(Measure.TestTime).longValue()) + "]";
+//			if (!isRankingPred)
+//				evalInfo += "\tView: " + view;
 	
-			if (fold > 0)
-				Logs.info(evalInfo);
+			if (fold > 0){
+				Logs.info(evalRatingInfo);
+				Logs.info(evalRankingInfo);
+				Logs.info(evalTimeInfo);
+			}
 		}
 
 		if (isSaveModel)
@@ -420,28 +426,53 @@ public abstract class Recommender implements Runnable {
 		String evalInfo = null;
 		if (isRankingPred) {
 			if (isDiverseUsed)
-				evalInfo = String.format("%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f",
+				evalInfo = String.format("[Pre5,Pre10,Rec5,Rec10,AUC,MAP,NDCG,MRR,D5,D10] = [%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f]",
 						measures.get(Measure.Pre5), measures.get(Measure.Pre10), measures.get(Measure.Rec5),
 						measures.get(Measure.Rec10), measures.get(Measure.AUC), measures.get(Measure.MAP),
 						measures.get(Measure.NDCG), measures.get(Measure.MRR), measures.get(Measure.D5),
 						measures.get(Measure.D10));
 			else
-				evalInfo = String.format("%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f", measures.get(Measure.Pre5),
-						measures.get(Measure.Pre10), measures.get(Measure.Rec5), measures.get(Measure.Rec10),
-						measures.get(Measure.AUC), measures.get(Measure.MAP), measures.get(Measure.NDCG),
-						measures.get(Measure.MRR));
+				evalInfo = String.format("[Pre10,Rec5,Rec10,AUC,MAP,NDCG,MRR] = [%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f]",
+						measures.get(Measure.Pre5), measures.get(Measure.Pre10), measures.get(Measure.Rec5),
+						measures.get(Measure.Rec10), measures.get(Measure.AUC), measures.get(Measure.MAP),
+						measures.get(Measure.NDCG), measures.get(Measure.MRR));
 
 		} else {
-			evalInfo = String.format("%.6f,%.6f,%.6f,%.6f,%.6f,%.6f", measures.get(Measure.MAE),
-					measures.get(Measure.RMSE), measures.get(Measure.NMAE), measures.get(Measure.rMAE),
-					measures.get(Measure.rRMSE), measures.get(Measure.MPE));
+			evalInfo = String.format("[MAE,RMSE,NMAE,rMAE,rRMSE,MPE] = [%.6f,%.6f,%.6f,%.6f,%.6f,%.6f]",
+					measures.get(Measure.MAE), measures.get(Measure.RMSE), measures.get(Measure.NMAE),
+					measures.get(Measure.rMAE), measures.get(Measure.rRMSE), measures.get(Measure.MPE));
 
 			// for some graphic models
 			if (measures.containsKey(Measure.Perplexity)) {
-				evalInfo += String.format(",%.6f", measures.get(Measure.Perplexity));
+				evalInfo += String.format(", [Perplexity] = [%.6f]", measures.get(Measure.Perplexity));
 			}
 		}
 
+		return evalInfo;
+	}
+
+	/**
+	 * @return the evaluation information of a recommend
+	 */
+	public static String getRatingEvalInfo(Map<Measure, Double> measures) {
+		String evalInfo = String.format("[MAE,RMSE,NMAE,rMAE,rRMSE,MPE] = [%.6f,%.6f,%.6f,%.6f,%.6f,%.6f]",
+				measures.get(Measure.MAE), measures.get(Measure.RMSE), measures.get(Measure.NMAE),
+				measures.get(Measure.rMAE), measures.get(Measure.rRMSE), measures.get(Measure.MPE));
+
+		return evalInfo;
+	}
+
+	/**
+	 * @return the evaluation information of a recommend
+	 */
+	public static String getRankingEvalInfo(Map<Measure, Double> measures) {
+		String evalInfo = String.format("[Pre5,Pre10,Rec5,Rec10,AUC,MAP,NDCG,MRR,D5,D10] = "
+				+ "[%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f]",
+				measures.get(Measure.Pre5), measures.get(Measure.Pre10), measures.get(Measure.Rec5),
+				measures.get(Measure.Rec10), measures.get(Measure.AUC), measures.get(Measure.MAP),
+				measures.get(Measure.NDCG), measures.get(Measure.MRR), measures.get(Measure.D5),
+				measures.get(Measure.D10));
+		
 		return evalInfo;
 	}
 
@@ -601,6 +632,20 @@ public abstract class Recommender implements Runnable {
 		}
 	}
 
+	/**
+	 * @return the evaluation results of rating and ranking predictions
+	 */
+	protected Map<Measure, Double> evalAll() throws Exception {
+		Map<Measure, Double> ratingsMeasures = evalRatings();
+		Map<Measure, Double> rankingMeasures = evalRankings();
+		
+		Map<Measure, Double> allMeasures = new HashMap<>();
+		allMeasures.putAll(ratingsMeasures);
+		allMeasures.putAll(rankingMeasures);
+		
+		return allMeasures;
+	}
+	
 	/**
 	 * @return the evaluation results of rating predictions
 	 */

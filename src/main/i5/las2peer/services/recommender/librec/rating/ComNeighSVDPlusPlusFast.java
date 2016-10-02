@@ -39,7 +39,7 @@ import i5.las2peer.services.recommender.librec.util.Strings;
  * @author guoguibing, martin
  * 
  */
-@Configuration("factors, lRateC, lRateCN, lRateCF, maxLRate, regC, regCN, regCF, iters, boldDriver")
+@Configuration("factors, lRateC, lRateCN, lRateCF, maxLRate, regC, regCN, regCF, iters, boldDriver, graphMethod, graphKNN, similarity, cdAlgo, wtSteps")
 public class ComNeighSVDPlusPlusFast extends BiasedMF {
 
 	protected DenseMatrix Y, Ocu, Oci;
@@ -324,6 +324,6 @@ public class ComNeighSVDPlusPlusFast extends BiasedMF {
 	public String toString() {
 		return Strings.toString(new Object[] { numFactors,
 				initLRateC, initLRateCN, initLRateCF, maxLRate,
-				regC, regCN, regCF, numIters, isBoldDriver});
+				regC, regCN, regCF, numIters, isBoldDriver, graphMethod, knn, sim, cdAlgo, wtSteps});
 	}
 }

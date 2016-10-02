@@ -63,9 +63,6 @@ public class ComNeighSVDPlusPlusFast extends BiasedMF {
 	
 	protected DenseVector BCu, BCi;
 	
-	// Community membership matrices for users and items
-//	protected SparseMatrix userMembershipsMatrix, itemMembershipsMatrix;
-	
 	// User/item community membership map
 	private DenseVector userMembershipsVector, itemMembershipsVector;
 	

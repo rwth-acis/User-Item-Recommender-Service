@@ -195,10 +195,6 @@ public class ComNeighSVDPlusPlus extends BiasedMF {
 		userCommunitiesRatingsMatrix = Communities.userCommunitiesRatings(userMemberships, trainMatrix, communitiesItemsK);
 		userCommunitiesItemsCache = userCommunitiesRatingsMatrix.rowColumnsCache(cacheSpec);
 		
-		Logs.info("{}{} Item neighborhood sizes (avg per user/item):"
-				+ " [user co-rated, user communities co-rated] = [{}, {}, {}]", algoName, foldInfo,
-				(rateMatrix.size() / numUsers), (userCommunitiesRatingsMatrix.size() / numUsers));
-		
 		Ocu = new DenseMatrix(numUserCommunities, numFactors);
 		Ocu.init(initMean, initStd);
 

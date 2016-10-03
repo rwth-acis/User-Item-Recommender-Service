@@ -18,11 +18,13 @@
 package i5.las2peer.services.recommender.librec.rating;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.cache.LoadingCache;
@@ -82,10 +84,16 @@ public class TimeComNeighSVD extends IterativeRecommender {
 
 	// {item, bin(t)} bias matrix
 	private DenseMatrix Bit;
+	
+	// {item, period(t)} bias matrix (period: day of week)
+	private DenseMatrix Bipt;
 
 	// {user, day, bias} table
 	private Table<Integer, Integer, Double> But;
 
+	// {user, period(t)} bias matrix (period: day of week)
+	private DenseMatrix Bupt;
+	
 	// user bias weight parameters
 	private DenseVector Alpha;
 
@@ -201,6 +209,11 @@ public class TimeComNeighSVD extends IterativeRecommender {
 	// decay parameter psi
 	private DenseVector Psi;
 	
+	// --- others ---
+	
+	// Calendar object used to retrieve the period (day of week) represented by a timestamp
+	Calendar cal;
+	
 	
 	public TimeComNeighSVD(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
@@ -244,6 +257,8 @@ public class TimeComNeighSVD extends IterativeRecommender {
 		}
 		wtSteps = cf.getInt("cd.walktrap.steps", 2);
 		maxOC = cf.getInt("cd.max.oc", 10);
+		
+		cal = Calendar.getInstance(TimeZone.getTimeZone("UTC-06:00"));
 	}
 
 	@Override
@@ -273,6 +288,9 @@ public class TimeComNeighSVD extends IterativeRecommender {
 		Bit = new DenseMatrix(numItems, numBins);
 		Bit.init(initMean, initStd);
 
+		Bipt = new DenseMatrix(numItems, 7);
+		Bipt.init(initMean, initStd);
+
 		Y = new DenseMatrix(numItems, numFactors);
 		Y.init(initMean, initStd);
 
@@ -281,6 +299,9 @@ public class TimeComNeighSVD extends IterativeRecommender {
 
 		But = HashBasedTable.create();
 		
+		Bupt = new DenseMatrix(numUsers, 7);
+		Bupt.init(initMean, initStd);
+
 		Pukt = new HashMap<>();
 
 		Cu = new DenseVector(numUsers);
@@ -585,6 +606,7 @@ public class TimeComNeighSVD extends IterativeRecommender {
 				long timestamp = (long) timeMatrix.get(u, i);
 				// day t
 				int t = days(timestamp, minTrainTimestamp);
+				int period = period(timestamp);
 				int bin = bin(t);
 				double dev_ut = dev(u, t);
 				
@@ -630,8 +652,10 @@ public class TimeComNeighSVD extends IterativeRecommender {
 				double cu = Cu.get(u);
 				double cut = Cut.get(u, t);
 				double bit = Bit.get(i, bin);
+				double bipt = Bipt.get(i, period);
 				double bu = userBias.get(u);
 				double but = But.get(u, t);
+				double bupt = Bupt.get(u, period);
 				double au = Alpha.get(u);
 
 				// update bi
@@ -644,13 +668,18 @@ public class TimeComNeighSVD extends IterativeRecommender {
 				Bit.add(i, bin, -lRate * sgd);
 				loss += regB * bit * bit;
 
+				// update bi,period(t)
+				sgd = eui * (cu + cut) + regB * bipt;
+				Bipt.add(i, period, -lRate * sgd);
+				loss += regB * bipt * bipt;
+
 				// update cu
-				sgd = eui * (bi + bit) + regB * cu;
+				sgd = eui * (bi + bit + bipt) + regB * cu;
 				Cu.add(u, -lRate * sgd);
 				loss += regB * cu * cu;
 
 				// update cut
-				sgd = eui * (bi + bit) + regB * cut;
+				sgd = eui * (bi + bit + bipt) + regB * cut;
 				Cut.add(u, t, -lRate * sgd);
 				loss += regB * cut * cut;
 
@@ -668,6 +697,11 @@ public class TimeComNeighSVD extends IterativeRecommender {
 				sgd = eui + regB * but;
 				But.put(u, t, but - lRate * sgd);
 				loss += regB * but * but;
+				
+				// update bu,period(t)
+				sgd = eui + regB * bupt;
+				Bupt.add(u, period, -lRate * sgd);
+				loss += regB * bupt * bupt;
 				
 				// update bcu, bcut
 				for (int c : userCommunities){
@@ -830,7 +864,7 @@ public class TimeComNeighSVD extends IterativeRecommender {
 				for (int j : Iu){
 					double e = decay(u, j, t);
 					double ruj = trainMatrix.get(u, j);
-					double buj = (itemBias.get(i) + Bit.get(i, bin)) * (Cu.get(u) + Cut.get(u, t));
+					double buj = buj(u, j, timestamp);
 					buj += userBias.get(u) + Alpha.get(u) * dev_ut;
 					buj += But.contains(u, t) ? But.get(u, t) : 0;
 					
@@ -902,7 +936,7 @@ public class TimeComNeighSVD extends IterativeRecommender {
 		double wc = Icu.size() > 0 ? Math.pow(Icu.size(), -0.5) : 0;
 
 		// baseline / bias
-		double pred = bias(u, i, t, userStaticCommunities, userCommunities, itemCommunities);
+		double pred = bias(u, i, timestamp, userStaticCommunities, userCommunities, itemCommunities);
 		
 		// qi * pu(t)
 		for (int k = 0; k < numFactors; k++) {
@@ -951,7 +985,7 @@ public class TimeComNeighSVD extends IterativeRecommender {
 		for (int j : Iu){
 			double e = decay(u, j, t);
 			double ruj = rateMatrix.get(u, j);
-			double buj = bias(u, j, t, userStaticCommunities, userCommunities, itemCommunities);
+			double buj = buj(u, j, timestamp);
 
 			pred += e * ((ruj - buj) * W.get(i, j) + C.get(i, j)) * wi;
 		}
@@ -1014,6 +1048,15 @@ public class TimeComNeighSVD extends IterativeRecommender {
 	}
 
 	/**
+	 * @return the period (day of week) for a specific day;
+	 */
+	protected int period(long timestamp) {
+		cal.setTimeInMillis(timestamp);
+		
+		return cal.get(Calendar.DAY_OF_WEEK) % 7;
+	}
+
+	/**
 	 * @return number of days for a given time difference
 	 */
 	protected static int days(long diff) {
@@ -1030,10 +1073,40 @@ public class TimeComNeighSVD extends IterativeRecommender {
 	/******************************************************* Prediction Methods *****************************************************/
 	
 	/**
-	 * @return bias for given user and item
+	 * @return user and item bias for given user and item
 	 */
-	private double bias(int u, int i, int t, List<Integer> userStaticCommunities, List<Integer> userCommunities, List<Integer> itemCommunities){
+	private double buj(int u, int j, long timestamp){
+		double buj = globalMean;
+		int t = days(timestamp, minTrainTimestamp);
+		int period = period(timestamp);
+		int bin = bin(t);
+		double dev_ut = dev(u, t);
+
+		// bi(t): eq. (12)
+		double bi = itemBias.get(j);
+		double bit = Bit.get(j, bin);
+		double bipt = Bipt.get(j, period);
+		double cu = Cu.get(u);
+		double cut = (t >= 0 && t < numDays) ? Cut.get(u, t) : 0;
+		buj = (bi + bit + bipt) * (cu + cut);
+		
+		// bu(t): eq. (9)
+		double bu = userBias.get(u);
+		double aut = Alpha.get(u) * dev_ut;
+		double but = But.contains(u, t) ? But.get(u, t) : 0;
+		double bupt = Bupt.get(u, period);
+		buj += bu + aut + but + bupt;
+		
+		return buj;
+	}
+	
+	/**
+	 * @return user, item and community bias for given user and item
+	 */
+	private double bias(int u, int i, long timestamp, List<Integer> userStaticCommunities, List<Integer> userCommunities, List<Integer> itemCommunities){
 		double bias = globalMean;
+		int t = days(timestamp, minTrainTimestamp);
+		int period = period(timestamp);
 		int bin = bin(t);
 		double dev_ut = dev(u, t);
 		int cbin = cbin(t);
@@ -1041,14 +1114,18 @@ public class TimeComNeighSVD extends IterativeRecommender {
 		// bi(t): eq. (12)
 		double bi = itemBias.get(i);
 		double bit = Bit.get(i, bin);
+		double bipt = Bipt.get(i, period);
 		double cu = Cu.get(u);
 		double cut = (t >= 0 && t < numDays) ? Cut.get(u, t) : 0;
-		bias = (bi + bit) * (cu + cut);
+		bias = (bi + bit + bipt) * (cu + cut);
 		
 		// bu(t): eq. (9)
+		double bu = userBias.get(u);
+		double aut = Alpha.get(u) * dev_ut;
 		double but = But.contains(u, t) ? But.get(u, t) : 0;
-		bias += userBias.get(u) + Alpha.get(u) * dev_ut + but;
-		
+		double bupt = Bupt.get(u, period);
+		bias += bu + aut + but + bupt;
+
 		// bci(t)
 		for (int c : itemCommunities){
 			double mic = itemMemberships[cbin].get(i, c);

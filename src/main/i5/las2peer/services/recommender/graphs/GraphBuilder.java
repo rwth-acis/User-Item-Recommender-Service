@@ -30,7 +30,7 @@ public class GraphBuilder {
 	}
 	
 	public enum SimilarityMeasure{
-		PEARSON_CORRELATION, COSINE_SIMILARITY
+		PEARSON_CORRELATION, COSINE_SIMILARITY, MEAN_SQUARED_DISTANCE
 	}
 	
 	public void setK(int k){
@@ -108,6 +108,18 @@ public class GraphBuilder {
 		}
 		
 		// Call the graph construction algorithm, storing the resulting graphs in userKnnGraph and itemKnnGraph
+		switch(similarity){
+		case PEARSON_CORRELATION:
+			GreedyFiltering.setSimilarity("pearson");
+			break;
+		case MEAN_SQUARED_DISTANCE:
+			GreedyFiltering.setSimilarity("msd");
+			break;
+		default:
+		case COSINE_SIMILARITY:
+			GreedyFiltering.setSimilarity("cosine");
+			break;
+		}
 		GreedyFiltering.kNNGraphConstruction(userTfidfMatrix, userKnnGraph, k, mu);
 		GreedyFiltering.kNNGraphConstruction(itemTfidfMatrix, itemKnnGraph, k, mu);
 		

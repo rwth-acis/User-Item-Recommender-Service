@@ -238,6 +238,9 @@ public class TimeComNeighSVD extends IterativeRecommender {
 		case "pearson":
 			sim = SimilarityMeasure.PEARSON_CORRELATION;
 			break;
+		case "msd":
+			sim = SimilarityMeasure.MEAN_SQUARED_DISTANCE;
+			break;
 		default:
 		case "cosine":
 			sim = SimilarityMeasure.COSINE_SIMILARITY;

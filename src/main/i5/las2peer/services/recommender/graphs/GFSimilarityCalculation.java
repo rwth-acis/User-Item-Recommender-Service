@@ -1,7 +1,6 @@
 package i5.las2peer.services.recommender.graphs;
 
 public class GFSimilarityCalculation {
-//	private static int temp = 0;	
 	
 	public static void calculateCosineSim(GFSparseMatrix inputMatrix, double[][] kNNGraph, int k, int m, int n) {
 		// Note: We can calculate cosine similarity faster than this version
@@ -24,6 +23,96 @@ public class GFSimilarityCalculation {
 				break;
 			}
 		}
+
+		updatekNNGraph(kNNGraph, m, n, sim, k);
+		updatekNNGraph(kNNGraph, n, m, sim, k);
+	}
+	
+	public static void calculateMSDSim(GFSparseMatrix inputMatrix, double[][] kNNGraph, int k, int m, int n) {
+		// Calculate Mean Squared Distance
+		// Ricci, Rokach, Shapira, Kantor - Recommender Systems Handbook, eq. (4.22)
+		
+		int i = inputMatrix.vectorIndex[n];
+		int j = inputMatrix.vectorIndex[m];		
+		
+		int numEntries = 0;
+		double msd = 0;
+		
+		while (true) {
+			if (inputMatrix.dimension[i] == inputMatrix.dimension[j]) {
+				msd += (inputMatrix.value[i] - inputMatrix.value[j]) * (inputMatrix.value[i] - inputMatrix.value[j]);
+				numEntries++;
+				i++;
+				j++;
+			}
+			else if (inputMatrix.dimension[i] < inputMatrix.dimension[j]) i++;
+			else j++;
+			
+			if (i >= inputMatrix.vectorIndex[n+1] || j >= inputMatrix.vectorIndex[m+1]) {
+				break;
+			}
+		}
+		
+		double sim = (msd > 0) ? numEntries / msd : 0;
+		
+		updatekNNGraph(kNNGraph, m, n, sim, k);
+		updatekNNGraph(kNNGraph, n, m, sim, k);
+	}
+	
+	public static void calculatePearsonSim(GFSparseMatrix inputMatrix, double[][] kNNGraph, int k, int m, int n) {
+		// Calculate Pearson correlation coefficient
+		// Ricci, Rokach, Shapira, Kantor - Recommender Systems Handbook, eq. (4.20), (4.21)
+		double sim = 0.0;
+		
+		// calculate means on vector entries that are part of both vectors
+		int i = inputMatrix.vectorIndex[n];
+		int j = inputMatrix.vectorIndex[m];		
+		
+		double nMean = 0;
+		double mMean = 0;
+		int numEntries = 0;
+		
+		while (true) {
+			if (inputMatrix.dimension[i] == inputMatrix.dimension[j]) {
+				nMean += (double) inputMatrix.value[i];
+				mMean += (double) inputMatrix.value[j];
+				numEntries++;
+				i++;
+				j++;
+			}
+			else if (inputMatrix.dimension[i] < inputMatrix.dimension[j]) i++;
+			else j++;
+			
+			if (i >= inputMatrix.vectorIndex[n+1] || j >= inputMatrix.vectorIndex[m+1]) {
+				break;
+			}
+		}
+		nMean = (numEntries > 0) ? nMean / numEntries : 0;
+		mMean = (numEntries > 0) ? mMean / numEntries : 0;
+		
+		// calculate variances and Pearson correlation coefficient
+		i = inputMatrix.vectorIndex[n];
+		j = inputMatrix.vectorIndex[m];		
+
+		double nVar = 0;
+		double mVar = 0;
+		
+		while (true) {
+			if (inputMatrix.dimension[i] == inputMatrix.dimension[j]) {
+				sim += (inputMatrix.value[i] - nMean) * (inputMatrix.value[j] - mMean);
+				nVar += (inputMatrix.value[i] - nMean) * (inputMatrix.value[i] - nMean);
+				mVar += (inputMatrix.value[j] - mMean) * (inputMatrix.value[j] - mMean);
+				i++;
+				j++;
+			}
+			else if (inputMatrix.dimension[i] < inputMatrix.dimension[j]) i++;
+			else j++;
+			
+			if (i >= inputMatrix.vectorIndex[n+1] || j >= inputMatrix.vectorIndex[m+1]) {
+				break;
+			}
+		}
+		sim = (mVar > 0 && nVar > 0) ? sim / Math.sqrt(mVar * nVar) : 0;
 
 		updatekNNGraph(kNNGraph, m, n, sim, k);
 		updatekNNGraph(kNNGraph, n, m, sim, k);

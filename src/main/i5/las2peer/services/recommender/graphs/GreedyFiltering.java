@@ -4,7 +4,12 @@ import java.util.*;
 
 public class GreedyFiltering {
 //	private static int numCandidates;
-
+	private static String similarity = "cosine";
+	
+	public static void setSimilarity(String sim){
+		similarity = sim;
+	}
+	
 	public static void bucketJoin(GFSparseMatrix inputMatrix, Vector<Integer> bucket, double[][] kNNGraph, int k) {
 		for (int i=1; i<bucket.size(); i++) {
 			int m = bucket.get(i);
@@ -12,7 +17,18 @@ public class GreedyFiltering {
 			for (int j=0; j<i; j++) {				
 				int n = bucket.get(j);
 				
-				GFSimilarityCalculation.calculateCosineSim(inputMatrix, kNNGraph, k, m, n);				
+				switch (similarity){
+				case "pearson":
+					GFSimilarityCalculation.calculatePearsonSim(inputMatrix, kNNGraph, k, m, n);
+					break;
+				case "msd":
+					GFSimilarityCalculation.calculateMSDSim(inputMatrix, kNNGraph, k, m, n);
+					break;
+				default:
+				case "cosine":
+					GFSimilarityCalculation.calculateCosineSim(inputMatrix, kNNGraph, k, m, n);
+					break;
+				}
 //				numCandidates++;			
 			}
 		}

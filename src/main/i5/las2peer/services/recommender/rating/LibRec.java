@@ -366,6 +366,8 @@ public class LibRec {
 		String algoConfigInfo = algoName + " configuration: " + models[0].toString();
 		String evalTimeInfo = algoName + " time measurements: [TrainTime,TestTime] = ["
 				+ Dates.parse(evalMeasures.get(Measure.TrainTime).longValue()) + ","
+				+ Dates.parse(evalMeasures.get(Measure.InitTime).longValue()) + ","
+				+ Dates.parse(evalMeasures.get(Measure.LearnTime).longValue()) + ","
 				+ Dates.parse(evalMeasures.get(Measure.TestTime).longValue()) + "]";
 		String evalRatingInfo = algoName + " rating evaluation measurements: " + ratingResult;
 		String evalRankingInfo = algoName + " ranking evaluation measurements: " + rankingResult;

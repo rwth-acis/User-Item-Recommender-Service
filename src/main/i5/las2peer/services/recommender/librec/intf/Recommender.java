@@ -183,7 +183,7 @@ public abstract class Recommender implements Runnable {
 		/* ranking-based measures */
 		D5, D10, Pre5, Pre10, Rec5, Rec10, MAP, MRR, NDCG, AUC,
 		/* execution time */
-		TrainTime, TestTime,
+		TrainTime, InitTime, LearnTime, TestTime,
 		/* loss value */
 		Loss
 	}
@@ -319,15 +319,20 @@ public abstract class Recommender implements Runnable {
 	public void execute() throws Exception {
 
 		Stopwatch sw = Stopwatch.createStarted();
+		long initTime = 0;
+		long learnTime = 0;
+		
 		if (Debug.ON) {
 			// learn a recommender model
 			initModel();
+			initTime = sw.elapsed(TimeUnit.MILLISECONDS);
 
 			// show algorithm's configuration
 			printAlgoConfig();
 
 			// build the model
 			buildModel();
+			learnTime = sw.elapsed(TimeUnit.MILLISECONDS) - initTime;
 
 			// post-processing after building a model, e.g., release intermediate memory to avoid memory leak
 			postModel();
@@ -360,12 +365,16 @@ public abstract class Recommender implements Runnable {
 	
 			// collecting results
 			measures.put(Measure.TrainTime, (double) trainTime);
+			measures.put(Measure.InitTime, (double) initTime);
+			measures.put(Measure.LearnTime, (double) learnTime);
 			measures.put(Measure.TestTime, (double) testTime);
 	
 			String evalRatingInfo = algoName + foldInfo + " rating evaluation measurements: " + ratingMeasurements;
 			String evalRankingInfo = algoName + foldInfo + " ranking evaluation measurements: " + rankingMeasurements + " View: " + view;
-			String evalTimeInfo = algoName + foldInfo + " time measurements: [TrainTime,TestTime] = ["
+			String evalTimeInfo = algoName + foldInfo + " time measurements: [TrainTime,InitTime,LearnTime,TestTime] = ["
 					+ Dates.parse(measures.get(Measure.TrainTime).longValue()) + ","
+					+ Dates.parse(measures.get(Measure.InitTime).longValue()) + ","
+					+ Dates.parse(measures.get(Measure.LearnTime).longValue()) + ","
 					+ Dates.parse(measures.get(Measure.TestTime).longValue()) + "]";
 //			if (!isRankingPred)
 //				evalInfo += "\tView: " + view;

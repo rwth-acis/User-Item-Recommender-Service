@@ -10,6 +10,8 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Table;
 
 import i5.las2peer.services.recommender.librec.data.SparseMatrix;
+import i5.las2peer.services.recommender.librec.data.SparseVector;
+import i5.las2peer.services.recommender.librec.util.Logs;
 
 public class GraphBuilder {
 	private int k = 10;
@@ -152,6 +154,8 @@ public class GraphBuilder {
 		
 		userAdjMatrix = new SparseMatrix(numUsers, numUsers, userAdjTable, userAdjColMap);
 		itemAdjMatrix = new SparseMatrix(numItems, numItems, itemAdjTable, itemAdjColMap);
+		
+		logAdjMatrixInfo();
 	}
 	
 	private void buildGraphsFromTaggings() {
@@ -191,6 +195,44 @@ public class GraphBuilder {
 
 		userAdjMatrix = new SparseMatrix(numUsers, numUsers, userAdjTable, userAdjColMap);
 		itemAdjMatrix = new SparseMatrix(numItems, numItems, itemAdjTable, itemAdjColMap);
+		
+		logAdjMatrixInfo();
 	}
 
+	private void logAdjMatrixInfo() {
+		int minUserNeighbors = Integer.MAX_VALUE;
+		int maxUserNeighbors = Integer.MIN_VALUE;
+		double avgUserNeighbors = 0;
+		int numMaxUsers = 0;
+		int numMinUsers = 0;
+		for (int user = 0; user < numUsers; user++){
+			SparseVector userVector = userAdjMatrix.row(user);
+			int numNeighbors = userVector.getCount();
+			if (numNeighbors < minUserNeighbors) minUserNeighbors = numNeighbors;
+			if (numNeighbors > maxUserNeighbors) maxUserNeighbors = numNeighbors;
+			avgUserNeighbors += (double) numNeighbors / numUsers;
+			if (numNeighbors == k) numMaxUsers++;
+			if (numNeighbors == 0) numMinUsers++;
+		}
+		int minItemNeighbors = Integer.MAX_VALUE;
+		int maxItemNeighbors = Integer.MIN_VALUE;
+		double avgItemNeighbors = 0;
+		int numMaxItems = 0;
+		int numMinItems = 0;
+		for (int item = 0; item < numItems; item++){
+			SparseVector itemVector = itemAdjMatrix.row(item);
+			int numNeighbors = itemVector.getCount();
+			if (numNeighbors < minItemNeighbors) minItemNeighbors = numNeighbors;
+			if (numNeighbors > maxItemNeighbors) maxItemNeighbors = numNeighbors;
+			avgItemNeighbors += (double) numNeighbors / numItems;
+			if (numNeighbors == k) numMaxItems++;
+			if (numNeighbors == 0) numMinItems++;
+		}
+		
+		Logs.info("Graph construction: User neighbors [min, avg, max] = [{}, {}, {}], number of users with [0, {}] neighbors = [{}, {}]",
+				minUserNeighbors, avgUserNeighbors, maxUserNeighbors, k, numMinUsers, numMaxUsers);
+		Logs.info("Graph construction: Item neighbors [min, avg, max] = [{}, {}, {}], number of items with [0, {}] neighbors = [{}, {}]",
+				minItemNeighbors, avgItemNeighbors, maxItemNeighbors, k, numMinItems, numMaxItems);
+	}
 }
+

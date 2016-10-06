@@ -24,7 +24,6 @@ import i5.las2peer.services.recommender.librec.data.Configuration;
 import i5.las2peer.services.recommender.librec.data.DenseMatrix;
 import i5.las2peer.services.recommender.librec.data.DenseVector;
 import i5.las2peer.services.recommender.librec.data.SparseMatrix;
-import i5.las2peer.services.recommender.librec.intf.Recommender.Measure;
 import i5.las2peer.services.recommender.librec.util.FileIO;
 import i5.las2peer.services.recommender.librec.util.LineConfiger;
 import i5.las2peer.services.recommender.librec.util.Logs;
@@ -195,17 +194,11 @@ public abstract class IterativeRecommender extends Recommender {
 						(float) measure, earlyStopMeasure, delta_measure });
 			}
 			
-			String eval = "";
-			if (isEvalIter){
-				Map<Measure, Double> evalMeasures = evalRatings();
-				eval = String.format(", RMSE = %.6f", evalMeasures.get(Measure.RMSE));
-			}
-			Logs.info("{}{} iter {}: loss = {}, delta_loss = {}{}{}{}", new Object[] { algoName, foldInfo, iter,
-						(float) loss, delta_loss, earlyStop, learnRate, eval });
+			Logs.info("{}{} iter {}: loss = {}, delta_loss = {}{}{}", new Object[] { algoName, foldInfo, iter,
+						(float) loss, delta_loss, earlyStop, learnRate });
 		}
 
 		if (Double.isNaN(loss) || Double.isInfinite(loss)) {
-//			Logs.error("Loss = NaN or Infinity: current settings does not fit the recommender! Change the settings and try again!");
 			Logs.error("Loss = {}: current settings does not fit the recommender! Change the settings and try again!", loss);
 			System.exit(-1);
 		}

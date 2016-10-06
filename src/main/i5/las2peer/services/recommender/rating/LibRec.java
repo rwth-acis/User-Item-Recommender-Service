@@ -72,7 +72,7 @@ public class LibRec {
 		
 		// Common options
 		configuration.setProperty("item.ranking", "off -topN -1 -ignore -1");
-		configuration.setProperty("evaluation.setup", "--test-view all");
+		configuration.setProperty("evaluation.setup", "--test-view all --early-stop RMSE");
 		configuration.setProperty("output.setup", "off");
 		configuration.setProperty("num.factors", "10");
 		configuration.setProperty("num.max.iter", "30");
@@ -364,7 +364,7 @@ public class LibRec {
 		String algoName = models[0].algoName;
 		
 		String algoConfigInfo = algoName + " configuration: " + models[0].toString();
-		String evalTimeInfo = algoName + " time measurements: [TrainTime,TestTime] = ["
+		String evalTimeInfo = algoName + " time measurements: [TrainTime,InitTime,LearnTime,TestTime] = ["
 				+ Dates.parse(evalMeasures.get(Measure.TrainTime).longValue()) + ","
 				+ Dates.parse(evalMeasures.get(Measure.InitTime).longValue()) + ","
 				+ Dates.parse(evalMeasures.get(Measure.LearnTime).longValue()) + ","

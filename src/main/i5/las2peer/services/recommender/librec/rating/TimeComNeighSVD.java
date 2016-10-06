@@ -373,8 +373,12 @@ public class TimeComNeighSVD extends IterativeRecommender {
 		
 		if (numCBins > 1){
 			SparseMatrix[] trainMatrixCBin = trainDataCBins();
-			List<Table<Integer, Integer, Set<Long>>> userTagTableCBin = tagDataCBins(userTagTable);
-			List<Table<Integer, Integer, Set<Long>>> itemTagTableCBin = tagDataCBins(itemTagTable);
+			List<Table<Integer, Integer, Set<Long>>> userTagTableCBin = null;
+			List<Table<Integer, Integer, Set<Long>>> itemTagTableCBin = null;
+			if (graphMethod == GraphConstructionMethod.TAGS){
+				userTagTableCBin = tagDataCBins(userTagTable);
+				itemTagTableCBin = tagDataCBins(itemTagTable);
+			}
 			
 			for (int cbin = 1; cbin <= numCBins; cbin++){
 				if (graphMethod == GraphConstructionMethod.TAGS){

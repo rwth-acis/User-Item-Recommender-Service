@@ -18,8 +18,6 @@
 
 package i5.las2peer.services.recommender.librec.intf;
 
-import java.util.Map;
-
 import i5.las2peer.services.recommender.librec.data.Configuration;
 import i5.las2peer.services.recommender.librec.data.DenseMatrix;
 import i5.las2peer.services.recommender.librec.data.DenseVector;

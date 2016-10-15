@@ -59,6 +59,55 @@ public class GFSimilarityCalculation {
 		updatekNNGraph(kNNGraph, n, m, sim, k);
 	}
 	
+	public static void calculateJMSDSim(GFSparseMatrix inputMatrix, double[][] kNNGraph, int k, int m, int n) {
+		// Calculate Jaccards Mean Squared Distance
+		// Bobadilla, Serradilla, Bernal - A new collaborative filtering metric that improves the behavior of recommender systems
+		
+		int i = inputMatrix.vectorIndex[n];
+		int j = inputMatrix.vectorIndex[m];		
+		
+		int numCommonEntries = 0;
+		int numNonCommonEntries = 0;
+		double msd = 0;
+		
+		while (true) {
+			if (i >= inputMatrix.vectorIndex[n+1] && j >= inputMatrix.vectorIndex[m+1]) {
+				break;
+			}
+			
+			if (i >= inputMatrix.vectorIndex[n+1]){
+				numNonCommonEntries++;
+				j++;
+			}
+			else if (j >= inputMatrix.vectorIndex[m+1]){
+				numNonCommonEntries++;
+				i++;
+			}
+			else if (inputMatrix.dimension[i] == inputMatrix.dimension[j]) {
+				msd += (inputMatrix.value[i] - inputMatrix.value[j]) * (inputMatrix.value[i] - inputMatrix.value[j]);
+				numCommonEntries++;
+				i++;
+				j++;
+			}
+			else if (inputMatrix.dimension[i] < inputMatrix.dimension[j]){
+				numNonCommonEntries++;
+				i++;
+			}
+			else{
+				numNonCommonEntries++;
+				j++;
+			}
+		}
+		
+		msd = msd / numCommonEntries;
+		
+		double jacc = numCommonEntries > 0 ? (numCommonEntries + numNonCommonEntries) / numCommonEntries : 0;
+		double sim = jacc * (1-msd);
+		
+		updatekNNGraph(kNNGraph, m, n, sim, k);
+		updatekNNGraph(kNNGraph, n, m, sim, k);
+	}
+	
 	public static void calculatePearsonSim(GFSparseMatrix inputMatrix, double[][] kNNGraph, int k, int m, int n) {
 		// Calculate Pearson correlation coefficient
 		// Ricci, Rokach, Shapira, Kantor - Recommender Systems Handbook, eq. (4.20), (4.21)

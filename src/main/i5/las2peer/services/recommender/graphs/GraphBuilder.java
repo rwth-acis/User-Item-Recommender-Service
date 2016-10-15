@@ -32,7 +32,7 @@ public class GraphBuilder {
 	}
 	
 	public enum SimilarityMeasure{
-		PEARSON_CORRELATION, COSINE_SIMILARITY, MEAN_SQUARED_DISTANCE
+		PEARSON_CORRELATION, COSINE_SIMILARITY, MEAN_SQUARED_DISTANCE, JACCARD_MEAN_SQUARED_DISTANCE
 	}
 	
 	public void setK(int k){
@@ -116,6 +116,9 @@ public class GraphBuilder {
 			break;
 		case MEAN_SQUARED_DISTANCE:
 			GreedyFiltering.setSimilarity("msd");
+			break;
+		case JACCARD_MEAN_SQUARED_DISTANCE:
+			GreedyFiltering.setSimilarity("jmsd");
 			break;
 		default:
 		case COSINE_SIMILARITY:

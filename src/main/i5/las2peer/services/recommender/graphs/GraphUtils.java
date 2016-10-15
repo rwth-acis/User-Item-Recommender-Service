@@ -34,6 +34,7 @@ public class GraphUtils {
 		
 		// Compute TF-IDF values and store in tfidfMatrix
 		int elementIdx = 0;
+		double maxTfidfValue = 0;
 		
 		for (int vectorIdx = 0; vectorIdx < numVectors; vectorIdx++){
 			tfidfMatrix.setVectorIndex(vectorIdx, elementIdx);
@@ -55,16 +56,23 @@ public class GraphUtils {
 				
 				double tfidfValue = (0.5 + (0.5 * value / maxValue)) * Math.log((double) numDimensions / (double) frequencies[dimension]);
 				
+				if (tfidfValue > maxTfidfValue) maxTfidfValue = tfidfValue;
+				
 				tfidfMatrix.setDimension(elementIdx, dimension);
 				tfidfMatrix.setValue(elementIdx, tfidfValue);
 				
 				elementIdx++;
 			}
-
 		}
 		
 		tfidfMatrix.setVectorIndex(numVectors, elementIdx);
 
+		// normalize to [0..1]
+		for (int i = 0; i < tfidfMatrix.value.length; i++){
+			double tfidfNormValue = tfidfMatrix.getValue(i) / maxTfidfValue;
+			tfidfMatrix.setValue(i, tfidfNormValue);
+		}
+		
 		// Sort each vector by value as required by the knn graph construction algorithm
 		GFSorting.sortByValue(tfidfMatrix);
 

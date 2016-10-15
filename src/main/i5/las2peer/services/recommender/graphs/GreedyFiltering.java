@@ -24,6 +24,9 @@ public class GreedyFiltering {
 				case "msd":
 					GFSimilarityCalculation.calculateMSDSim(inputMatrix, kNNGraph, k, m, n);
 					break;
+				case "jmsd":
+					GFSimilarityCalculation.calculateJMSDSim(inputMatrix, kNNGraph, k, m, n);
+					break;
 				default:
 				case "cosine":
 					GFSimilarityCalculation.calculateCosineSim(inputMatrix, kNNGraph, k, m, n);

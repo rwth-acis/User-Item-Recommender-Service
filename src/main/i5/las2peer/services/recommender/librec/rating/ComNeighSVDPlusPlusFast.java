@@ -88,6 +88,9 @@ public class ComNeighSVDPlusPlusFast extends BiasedMF {
 		case "msd":
 			sim = SimilarityMeasure.MEAN_SQUARED_DISTANCE;
 			break;
+		case "jmsd":
+			sim = SimilarityMeasure.JACCARD_MEAN_SQUARED_DISTANCE;
+			break;
 		default:
 		case "cosine":
 			sim = SimilarityMeasure.COSINE_SIMILARITY;

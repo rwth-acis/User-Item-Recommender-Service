@@ -59,7 +59,7 @@ public class LibRec {
 	public enum Algorithm {
 		ItemKNN, WRMF, SVDPlusPlus, TimeSVDPlusPlus,
 		NeighSVDPlusPlus, TimeNeighSVDPlusPlus,
-		ComNeighSVDPlusPlus, ComNeighSVDPlusPlus2, ComNeighSVDPlusPlusFast,
+		ComNeighSVDPlusPlus, ComNeighSVDPlusPlusFast,
 		TimeComNeighSVDPlusPlus, TimeComNeighSVDPlusPlusFast
 	}
 	
@@ -86,9 +86,9 @@ public class LibRec {
 			break;
 		case "wrmf":
 			this.algorithm = Algorithm.WRMF;
-			configuration.setProperty("learn.rate", "0.001 -max -1 -bold-driver");
-			configuration.setProperty("reg.lambda", "0.1 -u 0.001 -i 0.001 -b 0.001");
-			configuration.setProperty("WRMF", "-alpha 1");
+			configuration.setProperty("learn.rate", "0.001 -max -1 -decay 0.95");
+			configuration.setProperty("reg.lambda", "0.015");
+			configuration.setProperty("WRMF", "-alpha 1.0");
 			break;
 		case "svd":
 			this.algorithm = Algorithm.SVDPlusPlus;
@@ -97,31 +97,26 @@ public class LibRec {
 			break;
 		case "nsvd":
 			this.algorithm = Algorithm.NeighSVDPlusPlus;
-			configuration.setProperty("learn.rate", "0.01 -n 0.01 -f 0.01 -max -1 -bold-driver");
-			configuration.setProperty("reg.lambda", "0.1 -b 0.1 -n 0.1 -u 0.1 -i 0.1");
+			configuration.setProperty("learn.rate", "0.1 -max -1 -decay 0.95");
+			configuration.setProperty("reg.lambda", "0.1");
 			break;
 		case "tsvd":
 			this.algorithm = Algorithm.TimeSVDPlusPlus;
-			configuration.setProperty("learn.rate", "0.001 -max -1 -bold-driver");
-			configuration.setProperty("reg.lambda", "0.002 -u 0.002 -i 0.002 -b 0.002");
+			configuration.setProperty("learn.rate", "0.001 -max -1 -decay 0.95");
+			configuration.setProperty("reg.lambda", "0.002");
 			configuration.setProperty("timeSVD++", "-beta 0.04 -bins 30");
 			break;
 		case "tnsvd":
 			this.algorithm = Algorithm.TimeNeighSVDPlusPlus;
-			configuration.setProperty("learn.rate", "0.005 -n 0.005 -f 0.005 -mu 0.0000001 -max -1 -decay 0.95");
-			configuration.setProperty("reg.lambda", "0.002 -b 0.002 -n 0.002 -u 0.002 -i 0.002");
+			configuration.setProperty("learn.rate", "0.001 -mu 0.0000001 -max -1 -decay 0.95");
+			configuration.setProperty("reg.lambda", "0.001");
 			configuration.setProperty("timeNeighSVD++", "-beta 0.04 -bins 30");
 			break;
 		case "cnsvd":
 			this.algorithm = Algorithm.ComNeighSVDPlusPlus;
-			configuration.setProperty("learn.rate", "0.007 -n 0.007 -f 0.007 -c 0.007 -cn 0.007 -cf 0.007 -max -1 -bold-driver");
-			configuration.setProperty("reg.lambda", "0.05 -b 0.05 -n 0.15 -u 0.05 -i 0.05 -c 0.05 -cn 0.05 -cf 0.05");
+			configuration.setProperty("learn.rate", "0.01 -max -1 -decay 0.95");
+			configuration.setProperty("reg.lambda", "0.1");
 			configuration.setProperty("ComNeighSVD++", "-k 200");
-			break;
-		case "cnsvd2":
-			this.algorithm = Algorithm.ComNeighSVDPlusPlus2;
-			configuration.setProperty("learn.rate", "0.007 -n 0.007 -f 0.007 -c 0.007 -cn 0.007 -cf 0.007 -max -1 -bold-driver");
-			configuration.setProperty("reg.lambda", "0.05 -b 0.05 -n 0.15 -u 0.05 -i 0.05 -c 0.05 -cn 0.05 -cf 0.05");
 			break;
 		case "cnsvdfast":
 			this.algorithm = Algorithm.ComNeighSVDPlusPlusFast;
@@ -130,14 +125,14 @@ public class LibRec {
 			break;
 		case "tcnsvd":
 			this.algorithm = Algorithm.TimeComNeighSVDPlusPlus;
-			configuration.setProperty("learn.rate", "0.05 -mu 0.0000001 -max -1 -bold-driver");
-			configuration.setProperty("reg.lambda", "0.002 -b 0.002 -n 0.002 -u 0.002 -i 0.002");
+			configuration.setProperty("learn.rate", "0.0001 -mu 0.0000001 -max -1 -bold-driver");
+			configuration.setProperty("reg.lambda", "1.0");
 			configuration.setProperty("timeComNeighSVD++", "-beta 0.04 -bins 30 -cbins 2 -k 200");
 			break;
 		case "tcnsvdfast":
 			this.algorithm = Algorithm.TimeComNeighSVDPlusPlusFast;
 			configuration.setProperty("learn.rate", "0.0001 -mu 0.0000001 -max -1 -decay 0.95");
-			configuration.setProperty("reg.lambda", "0.002");
+			configuration.setProperty("reg.lambda", "0.1");
 			configuration.setProperty("timeComNeighSVD++Fast", "-beta 0.04 -bins 30");
 			break;
 		}
@@ -354,7 +349,6 @@ public class LibRec {
 				Measure m = en.getKey();
 				double val = evalMeasures.containsKey(m) ? evalMeasures.get(m) : 0.0;
 				evalMeasures.put(m, val + en.getValue() / folds);
-				// TODO: Maybe not only compute average, but also mean and variance. Should do that if we use SLPA.
 			}
 		}
 		

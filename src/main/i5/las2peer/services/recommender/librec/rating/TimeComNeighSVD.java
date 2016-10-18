@@ -1050,7 +1050,7 @@ public class TimeComNeighSVD extends IterativeRecommender {
 		int bin = (int) (day / (numDays + 0.0) * numBins);
 		
 		if (bin < 0)
-			return 1;
+			return 0;
 		if (bin >= numBins)
 			return numBins - 1;
 

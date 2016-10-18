@@ -459,7 +459,14 @@ public class TimeNeighSVD extends IterativeRecommender {
 	 * @return the bin number (starting from 0..numBins-1) for a specific timestamp t;
 	 */
 	protected int bin(int day) {
-		return (int) (day / (numDays + 0.0) * numBins);
+		int bin = (int) (day / (numDays + 0.0) * numBins);
+		
+		if (bin < 0)
+			return 0;
+		if (bin >= numBins)
+			return numBins - 1;
+
+		return bin;
 	}
 
 	/**

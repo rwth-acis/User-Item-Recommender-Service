@@ -88,7 +88,7 @@ public class WRMF extends IterativeRecommender {
 			DenseMatrix YtY = Yt.mult(Y);
 			for (int u = 0; u < numUsers; u++) {
 				if (verbose && (u + 1) % numUsers == 0)
-					Logs.debug("{}{} runs at iteration = {}, user = {}/{} {}", algoName, foldInfo, iter, u + 1,
+					Logs.info("{}{} runs at iteration = {}, user = {}/{} {}", algoName, foldInfo, iter, u + 1,
 							numUsers, new Date());
 
 				DenseMatrix YtCuI = new DenseMatrix(numFactors, numItems);
@@ -131,7 +131,7 @@ public class WRMF extends IterativeRecommender {
 			DenseMatrix XtX = Xt.mult(X);
 			for (int i = 0; i < numItems; i++) {
 				if (verbose && (i + 1) % numItems == 0)
-					Logs.debug("{}{} runs at iteration = {}, item = {}/{} {}", algoName, foldInfo, iter, i + 1,
+					Logs.info("{}{} runs at iteration = {}, item = {}/{} {}", algoName, foldInfo, iter, i + 1,
 							numItems, new Date());
 
 				DenseMatrix XtCiI = new DenseMatrix(numFactors, numUsers);

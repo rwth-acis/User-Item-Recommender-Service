@@ -1127,7 +1127,7 @@ public class TimeComNeighSVD extends IterativeRecommender {
 		double bipt = Bipt.get(i, period);
 		double cu = Cu.get(u);
 		double cut = (t >= 0 && t < numDays) ? Cut.get(u, t) : 0;
-		bias = (bi + bit + bipt) * (cu + cut);
+		bias += (bi + bit + bipt) * (cu + cut);
 		
 		// bu(t): eq. (9)
 		double bu = userBias.get(u);

@@ -784,7 +784,7 @@ public abstract class Recommender implements Runnable {
 		}
 
 		if (verbose)
-			Logs.debug("{}{} has candidate items: {}", algoName, foldInfo, candItems.size());
+			Logs.info("{}{} has candidate items: {}", algoName, foldInfo, candItems.size());
 
 		// ignore items for all users: most popular items
 		if (numIgnore > 0) {

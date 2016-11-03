@@ -371,17 +371,36 @@ public class TimeNeighSVD extends IterativeRecommender {
 		// retrieve the test rating timestamp
 		long timestamp = (long) testTimeMatrix.get(u, i);
 		int t = days(timestamp, minTimestamp);
+		if (t < 0) t = 0;
+		if (t > (numDays - 1)) t = numDays - 1;
 		int bin = bin(t);
 		double dev_ut = dev(u, t);
 
 		double pred = globalMean;
 
 		// bi(t): eq. (12)
-		pred += (itemBias.get(i) + Bit.get(i, bin)) * (Cu.get(u) + Cut.get(u, t));
+		double bi = itemBias.get(i);
+		double bit = Bit.get(i, bin);
+		double cu = Cu.get(u);
+		double cut = 0;
+		try{
+			cut = Cut.get(u, t);
+		}
+		catch (Exception e){
+			System.out.println("Cut dimensions: " + Cut.numRows() + "x" + Cut.numColumns());
+			System.out.println("numUsers: " + numUsers);
+			System.out.println("numDays: " + numDays);
+			System.out.println("user: " + u);
+			System.out.println("day: " + t);
+			e.printStackTrace();
+		}
+		pred += (bi + bit) * (cu + cut);
 
 		// bu(t): eq. (9)
+		double bu = userBias.get(u);
+		double au = Alpha.get(u);
 		double but = But.contains(u, t) ? But.get(u, t) : 0;
-		pred += userBias.get(u) + Alpha.get(u) * dev_ut + but;
+		pred += bu + au * dev_ut + but;
 
 		// qi * yj
 		List<Integer> Ru = userItemsCache.get(u);

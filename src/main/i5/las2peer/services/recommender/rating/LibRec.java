@@ -15,6 +15,7 @@ import com.google.common.collect.Table;
 import java.util.Properties;
 import java.util.Set;
 
+import i5.las2peer.services.recommender.librec.baseline.ItemAverage;
 import i5.las2peer.services.recommender.librec.data.CSVDataDAO;
 import i5.las2peer.services.recommender.librec.data.DataDAO;
 import i5.las2peer.services.recommender.librec.data.DataSplitter;
@@ -57,7 +58,7 @@ public class LibRec {
 	public enum DatasetType { FilmTrust, MovieLens, Netflix }
 	
 	public enum Algorithm {
-		ItemKNN, WRMF, SVDPlusPlus, TimeSVDPlusPlus,
+		ItemAvg, ItemKNN, WRMF, SVDPlusPlus, TimeSVDPlusPlus,
 		NeighSVDPlusPlus, TimeNeighSVDPlusPlus,
 		ComNeighSVDPlusPlus, ComNeighSVDPlusPlusFast,
 		TimeComNeighSVDPlusPlus, TimeComNeighSVDPlusPlusFast
@@ -78,11 +79,14 @@ public class LibRec {
 		configuration.setProperty("num.max.iter", "30");
 		
 		switch(algorithm.toLowerCase()){
+		case "itemavg":
+			this.algorithm = Algorithm.ItemAvg;
+			break;
 		case "itemknn":
 			this.algorithm = Algorithm.ItemKNN;
 			configuration.setProperty("similarity", "PCC");
 			configuration.setProperty("num.shrinkage", "30");
-			configuration.setProperty("num.neighbors", "50");
+			configuration.setProperty("num.neighbors", "40");
 			break;
 		case "wrmf":
 			this.algorithm = Algorithm.WRMF;
@@ -378,6 +382,8 @@ public class LibRec {
 	
 	private Recommender getRecommender(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold){
 		switch(algorithm){
+		case ItemAvg:
+			return new ItemAverage(trainMatrix, testMatrix, fold);
 		case ItemKNN:
 			return new ItemKNN(trainMatrix, testMatrix, fold);
 		case WRMF:

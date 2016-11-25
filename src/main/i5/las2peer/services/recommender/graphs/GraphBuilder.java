@@ -19,10 +19,10 @@ public class GraphBuilder {
 	private GraphConstructionMethod method = GraphConstructionMethod.RATINGS;
 	private SimilarityMeasure similarity = SimilarityMeasure.COSINE_SIMILARITY;
 	private SparseMatrix ratingsMatrix;
-	public Table<Integer, Integer, Set<Long>> userTagTable;
-	public Table<Integer, Integer, Set<Long>> itemTagTable;
-	int numUsers;
-	int numItems;
+	private Table<Integer, Integer, Set<Long>> userTagTable;
+	private Table<Integer, Integer, Set<Long>> itemTagTable;
+	private int numUsers;
+	private int numItems;
 	private SparseMatrix userAdjMatrix;
 	private SparseMatrix itemAdjMatrix;
 	private int graphConstrTime;

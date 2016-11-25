@@ -1,4 +1,4 @@
-package i5.las2peer.services.recommender.rating;
+package i5.las2peer.services.recommender.librec.main;
 
 import java.io.BufferedReader;
 import java.util.HashMap;
@@ -26,10 +26,10 @@ import i5.las2peer.services.recommender.librec.data.TimeDataSplitter;
 import i5.las2peer.services.recommender.librec.intf.Recommender;
 import i5.las2peer.services.recommender.librec.intf.Recommender.Measure;
 import i5.las2peer.services.recommender.librec.ranking.WRMF;
-import i5.las2peer.services.recommender.librec.rating.ComNeighSVDPlusPlus;
-import i5.las2peer.services.recommender.librec.rating.ComNeighSVDPlusPlusFast;
+import i5.las2peer.services.recommender.librec.rating.ComNeighSVD;
+import i5.las2peer.services.recommender.librec.rating.ComNeighSVDFast;
 import i5.las2peer.services.recommender.librec.rating.ItemKNN;
-import i5.las2peer.services.recommender.librec.rating.NeighSVDPlusPlus;
+import i5.las2peer.services.recommender.librec.rating.NeighSVD;
 import i5.las2peer.services.recommender.librec.rating.SVDPlusPlus;
 import i5.las2peer.services.recommender.librec.rating.TimeComNeighSVD;
 import i5.las2peer.services.recommender.librec.rating.TimeComNeighSVDFast;
@@ -47,7 +47,7 @@ public class LibRec {
 	private Properties configuration;
 	
 	private SparseMatrix ratingsMatrix, timeMatrix;
-	public static Table<Integer, Integer, Set<Long>> userTagTable, itemTagTable;
+	private Table<Integer, Integer, Set<Long>> userTagTable, itemTagTable;
 
 //	private int numUsers, numItems;
 	
@@ -391,15 +391,15 @@ public class LibRec {
 		case SVDPlusPlus:
 			return new SVDPlusPlus(trainMatrix, testMatrix, fold);
 		case NeighSVDPlusPlus:
-			return new NeighSVDPlusPlus(trainMatrix, testMatrix, fold);
+			return new NeighSVD(trainMatrix, testMatrix, fold);
 		case TimeSVDPlusPlus:
 			return new TimeSVD(trainMatrix, testMatrix, fold);
 		case TimeNeighSVDPlusPlus:
 			return new TimeNeighSVD(trainMatrix, testMatrix, fold);
 		case ComNeighSVDPlusPlus:
-			return new ComNeighSVDPlusPlus(trainMatrix, testMatrix, fold);
+			return new ComNeighSVD(trainMatrix, testMatrix, fold);
 		case ComNeighSVDPlusPlusFast:
-			return new ComNeighSVDPlusPlusFast(trainMatrix, testMatrix, fold);
+			return new ComNeighSVDFast(trainMatrix, testMatrix, fold);
 		case TimeComNeighSVDPlusPlus:
 			return new TimeComNeighSVD(trainMatrix, testMatrix, fold);
 		case TimeComNeighSVDPlusPlusFast:

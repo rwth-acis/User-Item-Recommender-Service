@@ -3,8 +3,8 @@ package i5.las2peer.services.recommender;
 import java.util.HashMap;
 import java.util.Map;
 
+import i5.las2peer.services.recommender.librec.main.LibRec;
 import i5.las2peer.services.recommender.librec.util.Logs;
-import i5.las2peer.services.recommender.rating.LibRec;
 
 public class RecommenderCLI {
 	

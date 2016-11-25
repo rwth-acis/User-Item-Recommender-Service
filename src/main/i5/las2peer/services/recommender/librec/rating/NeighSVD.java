@@ -34,12 +34,12 @@ import i5.las2peer.services.recommender.librec.util.Strings;
  * 
  */
 @Configuration("factors, lRate, lRateN, lRateF, maxLRate, regB, regN, regU, regI, iters, boldDriver")
-public class NeighSVDPlusPlus extends BiasedMF {
+public class NeighSVD extends BiasedMF {
 
 	protected DenseMatrix Y;
 	protected DenseMatrix W,C; // weighting factors for neighborhood model
 
-	public NeighSVDPlusPlus(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
+	public NeighSVD(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
 		setAlgoName("NeighSVD++");

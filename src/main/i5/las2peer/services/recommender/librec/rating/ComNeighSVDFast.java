@@ -40,7 +40,7 @@ import i5.las2peer.services.recommender.librec.util.Strings;
  * 
  */
 @Configuration("factors, lRateC, lRateCN, lRateCF, maxLRate, regC, regCN, regCF, iters, boldDriver, graphMethod, graphKNN, similarity, cdAlgo, wtSteps")
-public class ComNeighSVDPlusPlusFast extends BiasedMF {
+public class ComNeighSVDFast extends BiasedMF {
 
 	protected DenseMatrix Y, Ocu, Oci;
 	protected DenseMatrix W, C; // weighting factors for neighborhood model
@@ -66,7 +66,7 @@ public class ComNeighSVDPlusPlusFast extends BiasedMF {
 	// User/item community membership map
 	private DenseVector userMembershipsVector, itemMembershipsVector;
 	
-	public ComNeighSVDPlusPlusFast(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
+	public ComNeighSVDFast(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
 		setAlgoName("ComNeighSVD++Fast");

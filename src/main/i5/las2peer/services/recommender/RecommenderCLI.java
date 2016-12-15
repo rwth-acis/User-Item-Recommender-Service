@@ -28,8 +28,8 @@ public class RecommenderCLI {
 		setParameters();
 		
 		// Read rating data from file
-		String ratingsFile = options.containsKey("--ratings-file") ? options.get("--ratings-file") : "datasets/filmtrust/ratings.txt";
-		String datasetType = options.containsKey("--dataset-type") ? options.get("--dataset-type") : "filmtrust";
+		String ratingsFile = options.containsKey("--ratings-file") ? options.get("--ratings-file") : "datasets/ratings.txt";
+		String datasetType = options.containsKey("--dataset-type") ? options.get("--dataset-type") : "movielens";
 		try {
 			librec.readRatingsFromFile(ratingsFile, datasetType);
 		} catch (Exception e) {

@@ -1,4 +1,4 @@
-package i5.las2peer.services.recommender.dataimport;
+package i5.las2peer.services.recommender.service;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -14,8 +14,6 @@ import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.dbutils.DbUtils;
 
-import i5.las2peer.services.recommender.DatabaseManager;
-
 public class DataImporter {
 	
 	private DatabaseManager dbm;
@@ -24,7 +22,7 @@ public class DataImporter {
 		this.dbm = dbm;
 	}
 
-	public void importData(String data, String datasetName, String fileName) throws DatasetUnknownException, DatasetFileUnknownException, SQLException, IOException, ParseException{
+	public void importData(String data, String datasetName, String fileName) throws Exception {
 		if(datasetName.contains("MovieLens")){
 			if(fileName.contains("movies")){
 				importMovieLensMovies(data);
@@ -36,15 +34,15 @@ public class DataImporter {
 				importMovieLensTags(data);
 			}
 			else{
-				throw new DatasetFileUnknownException();
+				throw new Exception("Movielens dataset file not recognized.");
 			}
 		}
 		else{
-			throw new DatasetUnknownException();
+			throw new Exception("Unknown dataset type");
 		}
 	}
 	
-	public void importMovieLensMovies(String data) throws SQLException, ParseException, IOException{
+	public void importMovieLensMovies(String data) throws Exception{
 		Connection conn = null;
 		Statement deleteStmnt = null;
 		PreparedStatement stmnt = null;
@@ -64,7 +62,7 @@ public class DataImporter {
 			// Clear table before importing dataset
 			try{
 				deleteStmnt = conn.createStatement();
-				deleteStmnt.executeUpdate("DELETE FROM Movie");
+				deleteStmnt.executeUpdate("DELETE FROM Item");
 			}
 			finally{
 				DbUtils.closeQuietly(stmnt);
@@ -72,19 +70,20 @@ public class DataImporter {
 			
 			// Add each record to the database
 			try{
-				stmnt = conn.prepareStatement("INSERT INTO Movie (MovieId,Title) VALUES (?, ?)");
+//				stmnt = conn.prepareStatement("INSERT INTO Item (ItemId,Name) VALUES (?, ?)");
+				stmnt = conn.prepareStatement("INSERT INTO Item (ItemId) VALUES (?)");
 				for(CSVRecord record : parser){
 					if(!(record.isConsistent())){
-						throw new ParseException("Record nr. " + record.getRecordNumber() + "contains " + record.size() + " fields. "
-								+ "Should contain 3", 0);
+						throw new Exception(String.format("Record nr. %d contains %d fields. Should contain 3",
+								record.getRecordNumber(), record.size()));
 					}
 				    try{
 				    	stmnt.setInt(1, Integer.valueOf(record.get("movieId")));
 				    }
 				    catch(NumberFormatException e){
-				    	throw new ParseException("Numeric value could not be parsed.", 0);
+				    	throw new Exception("Numeric value could not be parsed.");
 				    }
-					stmnt.setString(2, record.get("title"));
+//					stmnt.setString(2, record.get("title"));
 					stmnt.executeUpdate();
 				}
 			}
@@ -126,7 +125,7 @@ public class DataImporter {
 			
 			// Add each record to the database
 			try{
-				stmnt = conn.prepareStatement("INSERT INTO Rating (UserId, MovieId, Rating, Time) VALUES (?, ?, ?, ?)");
+				stmnt = conn.prepareStatement("INSERT INTO Rating (UserId, ItemId, Rating, Time) VALUES (?, ?, ?, ?)");
 				for(CSVRecord record : parser){
 					if(!record.isSet("userId") || !record.isSet("movieId") || !record.isSet("rating") || !record.isSet("timestamp")){
 						throw new ParseException("Empty field(s) in record nr. " + record.getRecordNumber(), 0);
@@ -182,7 +181,7 @@ public class DataImporter {
 			
 			// Add each record to the database
 			try{
-				stmnt = conn.prepareStatement("INSERT INTO Tag (UserId, MovieId, Tag, Time) VALUES (?, ?, ?, ?)");
+				stmnt = conn.prepareStatement("INSERT INTO Tag (UserId, ItemId, Tag, Time) VALUES (?, ?, ?, ?)");
 				for(CSVRecord record : parser){
 					if(!record.isSet("userId") || !record.isSet("movieId") || !record.isSet("tag") || !record.isSet("timestamp")){
 						throw new ParseException("Empty field(s) in record nr. " + record.getRecordNumber(), 0);

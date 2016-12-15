@@ -1,4 +1,4 @@
-package i5.las2peer.services.recommender;
+package i5.las2peer.services.recommender.service;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -67,8 +67,11 @@ public class DatabaseManager extends Configurable{
 		tableList = queryGetTableList();
 		
 		// Create every table that is not in the list
-		if (!tableList.contains("Movie")){
-			createMovieTable();
+		if (!tableList.contains("Item")){
+			createItemTable();
+		}
+		if (!tableList.contains("User")){
+			createUserTable();
 		}
 		if (!tableList.contains("Rating")){
 			createRatingTable();
@@ -76,7 +79,9 @@ public class DatabaseManager extends Configurable{
 		if (!tableList.contains("Tag")){
 			createTagTable();
 		}
-		
+		if (!tableList.contains("Prediction")){
+			createPredictionTable();
+		}
 	}
 	
 	private void queryDropAllTables() throws SQLException{
@@ -85,7 +90,7 @@ public class DatabaseManager extends Configurable{
 		
 		try{
 			conn = getConnection();
-			stmnt = conn.prepareStatement("DROP TABLE IF EXISTS Rating,Tag,Movie");
+			stmnt = conn.prepareStatement("DROP TABLE IF EXISTS Prediction,Rating,Tag,Item,User");
 			stmnt.executeUpdate();
 		}
 		finally{
@@ -115,16 +120,43 @@ public class DatabaseManager extends Configurable{
 		return tables;
 	}
 	
-	private void createMovieTable() throws SQLException{
+	private void createItemTable() throws SQLException{
 		Connection conn = null;
 		PreparedStatement stmnt = null;
 		
 		try{
 			conn = getConnection();
-			stmnt = conn.prepareStatement("CREATE TABLE Movie ("
-					+ "MovieId INT(11) NOT NULL AUTO_INCREMENT,"
-					+ "Title VARCHAR(45) NOT NULL,"
-					+ "PRIMARY KEY (MovieId)"
+//			stmnt = conn.prepareStatement("CREATE TABLE Item ("
+//					+ "ItemId INT NOT NULL AUTO_INCREMENT,"
+//					+ "Name VARCHAR(45) DEFAULT NULL,"
+//					+ "PRIMARY KEY (ItemId)"
+//					+ ")");
+			stmnt = conn.prepareStatement("CREATE TABLE Item ("
+					+ "ItemId INT NOT NULL AUTO_INCREMENT,"
+					+ "PRIMARY KEY (ItemId)"
+					+ ")");
+			stmnt.executeUpdate();
+		}
+		finally{
+			DbUtils.closeQuietly(conn);
+			DbUtils.closeQuietly(stmnt);
+		}
+	}
+	
+	private void createUserTable() throws SQLException{
+		Connection conn = null;
+		PreparedStatement stmnt = null;
+		
+		try{
+			conn = getConnection();
+//			stmnt = conn.prepareStatement("CREATE TABLE User ("
+//					+ "UserId INT NOT NULL AUTO_INCREMENT,"
+//					+ "Name VARCHAR(45) DEFAULT NULL,"
+//					+ "PRIMARY KEY (UserId)"
+//					+ ")");
+			stmnt = conn.prepareStatement("CREATE TABLE User ("
+					+ "UserId INT NOT NULL AUTO_INCREMENT,"
+					+ "PRIMARY KEY (UserId)"
 					+ ")");
 			stmnt.executeUpdate();
 		}
@@ -141,15 +173,53 @@ public class DatabaseManager extends Configurable{
 		try{
 			conn = getConnection();
 			stmnt = conn.prepareStatement("CREATE TABLE Rating("
-					+ "UserId int(11) NOT NULL,"
-					+ "MovieId int(11) NOT NULL,"
+					+ "UserId int NOT NULL,"
+					+ "ItemId int NOT NULL,"
 					+ "Time datetime NOT NULL,"
-					+ "Rating int(11) NOT NULL,"
-					+ "PRIMARY KEY (UserId,MovieId),"
-					+ "KEY FK_RatingMovie (MovieId),"
-					+ "CONSTRAINT FK_RatingMovie "
-						+ "FOREIGN KEY (MovieId) "
-						+ "REFERENCES Movie (MovieId) "
+					+ "Rating decimal(2,1) NOT NULL,"
+					+ "PRIMARY KEY (UserId,ItemId),"
+					+ "KEY FK_RatingItem (ItemId),"
+					+ "KEY FK_RatingUser (UserId),"
+					+ "CONSTRAINT FK_RatingItem "
+						+ "FOREIGN KEY (ItemId) "
+						+ "REFERENCES Item (ItemId) "
+						+ "ON DELETE NO ACTION "
+						+ "ON UPDATE NO ACTION,"
+					+ "CONSTRAINT FK_RatingUser "
+						+ "FOREIGN KEY (UserId) "
+						+ "REFERENCES User (UserId) "
+						+ "ON DELETE NO ACTION "
+						+ "ON UPDATE NO ACTION"
+					+ ")");
+			stmnt.executeUpdate();
+		}
+		finally{
+			DbUtils.closeQuietly(conn);
+			DbUtils.closeQuietly(stmnt);
+		}
+	}
+
+	private void createPredictionTable() throws SQLException{
+		Connection conn = null;
+		PreparedStatement stmnt = null;
+		
+		try{
+			conn = getConnection();
+			stmnt = conn.prepareStatement("CREATE TABLE Prediction("
+					+ "UserId int NOT NULL,"
+					+ "ItemId int NOT NULL,"
+					+ "Prediction decimal(6,5) NOT NULL,"
+					+ "PRIMARY KEY (UserId,ItemId),"
+					+ "KEY FK_RatingItem (ItemId),"
+					+ "KEY FK_RatingUser (UserId),"
+					+ "CONSTRAINT FK_PredictionItem "
+						+ "FOREIGN KEY (ItemId) "
+						+ "REFERENCES Item (ItemId) "
+						+ "ON DELETE NO ACTION "
+						+ "ON UPDATE NO ACTION,"
+					+ "CONSTRAINT FK_PredictionUser "
+						+ "FOREIGN KEY (UserId) "
+						+ "REFERENCES User (UserId) "
 						+ "ON DELETE NO ACTION "
 						+ "ON UPDATE NO ACTION"
 					+ ")");
@@ -168,15 +238,21 @@ public class DatabaseManager extends Configurable{
 		try{
 			conn = getConnection();
 			stmnt = conn.prepareStatement("CREATE TABLE Tag ("
-					+ "UserId varchar(45) NOT NULL,"
-					+ "MovieId int(11) NOT NULL,"
-					+ "Time varchar(45) NOT NULL,"
+					+ "UserId int NOT NULL,"
+					+ "ItemId int NOT NULL,"
+					+ "Time datetime NOT NULL,"
 					+ "Tag varchar(45) NOT NULL,"
-					+ "PRIMARY KEY (UserId,MovieId),"
-					+ "KEY FK_TagMovie (MovieId),"
-					+ "CONSTRAINT FK_TagMovie "
-						+ "FOREIGN KEY (MovieId) "
-						+ "REFERENCES Movie (MovieId) "
+					+ "PRIMARY KEY (UserId,ItemId),"
+					+ "KEY FK_TagItem (ItemId),"
+					+ "KEY FK_TagUser (UserId),"
+					+ "CONSTRAINT FK_TagItem "
+						+ "FOREIGN KEY (ItemId) "
+						+ "REFERENCES Item (ItemId) "
+						+ "ON DELETE NO ACTION "
+						+ "ON UPDATE NO ACTION,"
+					+ "CONSTRAINT FK_TagUser "
+						+ "FOREIGN KEY (UserId) "
+						+ "REFERENCES User (UserId) "
 						+ "ON DELETE NO ACTION "
 						+ "ON UPDATE NO ACTION"
 					+ ")");

@@ -18,17 +18,25 @@
 
 package i5.las2peer.services.recommender.librec.data;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.HashBiMap;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.HashMultiset;
+import com.google.common.collect.Multimap;
 import com.google.common.collect.Multiset;
+import com.google.common.collect.Table;
 
+import i5.las2peer.services.recommender.entities.Rating;
+import i5.las2peer.services.recommender.librec.util.Dates;
 import i5.las2peer.services.recommender.librec.util.FileIO;
 import i5.las2peer.services.recommender.librec.util.Logs;
 import i5.las2peer.services.recommender.librec.util.Stats;
@@ -40,7 +48,7 @@ import i5.las2peer.services.recommender.librec.util.Strings;
  * @author guoguibing
  * 
  */
-public abstract class DataDAO {
+public class DataDAO {
 
 	// name of data file
 	protected String dataName;
@@ -129,15 +137,252 @@ public abstract class DataDAO {
 	}
 
 	/**
-	 * read data from the file(s) given by dataPath
+	 * Default relevant columns {0: user column, 1: item column, 2: rate column}; default recommendation task is rating
+	 * prediction;
+	 * 
 	 * 
 	 * @return a sparse matrix storing all the relevant data
 	 */
-	abstract public SparseMatrix[] readData() throws Exception;
+	public SparseMatrix[] readData() throws Exception {
+		return readData(new int[] { 0, 1, 2 }, -1);
+	}
 	
-	abstract public SparseMatrix[] readData(double binThold) throws Exception;
+	/**
+	 * Default relevant columns {0: user column, 1: item column, 2: rate column}, default recommendation task is rating prediction;
+	 * 
+	 * @param binThold
+	 *            the threshold to binarize a rating. If a rating is greater than the threshold, the value will be 1;
+	 *            otherwise 0. To disable this feature, i.e., keep the original rating value, set the threshold a
+	 *            negative value
+	 * @return a sparse matrix storing all the relevant data
+	 */
+	public SparseMatrix[] readData(double binThold) throws Exception {
+		return readData(new int[] { 0, 1, 2 }, binThold);
+	}
 	
-	abstract public SparseMatrix[] readData(int[] cols, double binThold) throws Exception;
+	/**
+	 * Read data from the data file. Note that we didn't take care of the duplicated lines.
+	 * 
+	 * @param cols
+	 *            the indexes of the relevant columns in the data file: {user, item, [rating, timestamp] (optional)}
+	 * @param binThold
+	 *            the threshold to binarize a rating. If a rating is greater than the threshold, the value will be 1;
+	 *            otherwise 0. To disable this feature, i.e., keep the original rating value, set the threshold a
+	 *            negative value
+	 * @return a sparse matrix storing all the relevant data
+	 */
+	public SparseMatrix[] readData(int[] cols, double binThold) throws Exception {
+
+		Logs.info(String.format("Dataset: %s", Strings.last(dataPath, 38)));
+
+		// Table {row-id, col-id, rate}
+		Table<Integer, Integer, Double> dataTable = HashBasedTable.create();
+		// Table {row-id, col-id, timestamp}
+		Table<Integer, Integer, Long> timeTable = null;
+		// Map {col-id, multiple row-id}: used to fast build a rating matrix
+		Multimap<Integer, Integer> colMap = HashMultimap.create();
+
+		BufferedReader br = FileIO.getReader(dataPath);
+		String line = null;
+		minTimestamp = Long.MAX_VALUE;
+		maxTimestamp = Long.MIN_VALUE;
+		while ((line = br.readLine()) != null) {
+			if (isHeadline()) {
+				setHeadline(false);
+				continue;
+			}
+
+			String[] data = line.trim().split("[ \t,]+");
+			
+			if(data.length < 2){
+				Logs.error(String.format("Dataset: Cannot read line \"%s\"", line));
+				continue;
+			}
+			
+			String user = data[cols[0]];
+			String item = data[cols[1]];
+			Double rate = (cols.length >= 3 && data.length >= 3) ? Double.valueOf(data[cols[2]]) : 1.0;
+
+			// binarize the rating for item recommendation task
+			if (binThold >= 0)
+				rate = rate > binThold ? 1.0 : 0.0;
+
+			scaleDist.add(rate);
+
+			// inner id starting from 0
+			int row = userIds.containsKey(user) ? userIds.get(user) : userIds.size();
+			userIds.put(user, row);
+
+			int col = itemIds.containsKey(item) ? itemIds.get(item) : itemIds.size();
+			itemIds.put(item, col);
+
+			dataTable.put(row, col, rate);
+			colMap.put(col, row);
+
+			// record rating's issuing time
+			if (cols.length >= 4 && data.length >= 4) {
+				if (timeTable == null)
+					timeTable = HashBasedTable.create();
+
+				// convert to million-seconds
+				long mms = 0L;
+				try {
+					mms = Long.parseLong(data[cols[3]]); // cannot format "9.7323480e+008"
+				} catch (NumberFormatException e) {
+					mms = (long) Double.parseDouble(data[cols[3]]);
+				}
+				long timestamp = timeUnit.toMillis(mms);
+
+				if (minTimestamp > timestamp)
+					minTimestamp = timestamp;
+
+				if (maxTimestamp < timestamp)
+					maxTimestamp = timestamp;
+
+				timeTable.put(row, col, timestamp);
+			}
+
+		}
+		br.close();
+
+		numRatings = scaleDist.size();
+		ratingScale = new ArrayList<>(scaleDist.elementSet());
+		Collections.sort(ratingScale);
+
+		int numRows = numUsers(), numCols = numItems();
+
+		// if min-rate = 0.0, shift upper a scale
+		double minRate = ratingScale.get(0).doubleValue();
+		double epsilon = minRate == 0.0 ? ratingScale.get(1).doubleValue() - minRate : 0;
+		if (epsilon > 0) {
+			// shift upper a scale
+			for (int i = 0, im = ratingScale.size(); i < im; i++) {
+				double val = ratingScale.get(i);
+				ratingScale.set(i, val + epsilon);
+			}
+			// update data table
+			for (int row = 0; row < numRows; row++) {
+				for (int col = 0; col < numCols; col++) {
+					if (dataTable.contains(row, col))
+						dataTable.put(row, col, dataTable.get(row, col) + epsilon);
+				}
+			}
+		}
+
+		String dateRange = "";
+		if (cols.length >= 4)
+			dateRange = String.format(", Timestamps = {%s, %s}", Dates.toString(minTimestamp),
+					Dates.toString(maxTimestamp));
+
+		Logs.debug("With Specs: {Users, {}} = {{}, {}, {}}, Scale = {{}}{}", (isItemAsUser ? "Users, Links"
+				: "Items, Ratings"), numRows, numCols, numRatings, Strings.toString(ratingScale), dateRange);
+
+		// build rating matrix
+		rateMatrix = new SparseMatrix(numRows, numCols, dataTable, colMap);
+
+		if (timeTable != null)
+			timeMatrix = new SparseMatrix(numRows, numCols, timeTable, colMap);
+
+		// release memory of data table
+		dataTable = null;
+		timeTable = null;
+
+		return new SparseMatrix[] { rateMatrix, timeMatrix };
+	}
+
+	/**
+	 * Read data from a List of Ratings
+	 * 
+	 * @param ratingsList contains the rating data including timestamps
+	 * @param binThold
+	 *            the threshold to binarize a rating. If a rating is greater than the threshold, the value will be 1;
+	 *            otherwise 0. To disable this feature, i.e., keep the original rating value, set the threshold a
+	 *            negative value
+	 * @return a sparse matrix storing all the relevant data
+	 * @throws Exception 
+	 */
+	public SparseMatrix[] readData(List<Rating> ratingsList, double binThold) throws Exception {
+		// Table {row-id, col-id, rate}
+		Table<Integer, Integer, Double> dataTable = HashBasedTable.create();
+		// Table {row-id, col-id, timestamp}
+		Table<Integer, Integer, Long> timeTable = HashBasedTable.create();
+		// Map {col-id, multiple row-id}: used to fast build a rating matrix
+		Multimap<Integer, Integer> colMap = HashMultimap.create();
+
+		minTimestamp = Long.MAX_VALUE;
+		maxTimestamp = Long.MIN_VALUE;
+		for (Rating rating : ratingsList) {
+			String user = Integer.toString(rating.getUserId());
+			String item = Integer.toString(rating.getItemId());
+			double rate = rating.getRating();
+			long timestamp = timeUnit.toMillis(rating.getTimestamp());
+
+			// binarize the rating for item recommendation task
+			if (binThold >= 0)
+				rate = rate > binThold ? 1.0 : 0.0;
+
+			scaleDist.add(rate);
+
+			// inner id starting from 0
+			int row = userIds.containsKey(user) ? userIds.get(user) : userIds.size();
+			userIds.put(user, row);
+
+			int col = itemIds.containsKey(item) ? itemIds.get(item) : itemIds.size();
+			itemIds.put(item, col);
+
+			dataTable.put(row, col, rate);
+			colMap.put(col, row);
+
+			if (minTimestamp > timestamp)
+				minTimestamp = timestamp;
+			if (maxTimestamp < timestamp)
+				maxTimestamp = timestamp;
+			timeTable.put(row, col, timestamp);
+		}
+
+		numRatings = scaleDist.size();
+		ratingScale = new ArrayList<>(scaleDist.elementSet());
+		Collections.sort(ratingScale);
+
+		int numRows = numUsers(), numCols = numItems();
+
+		// if min-rate = 0.0, shift upper a scale
+		double minRate = ratingScale.get(0).doubleValue();
+		double epsilon = minRate == 0.0 ? ratingScale.get(1).doubleValue() - minRate : 0;
+		if (epsilon > 0) {
+			// shift upper a scale
+			for (int i = 0, im = ratingScale.size(); i < im; i++) {
+				double val = ratingScale.get(i);
+				ratingScale.set(i, val + epsilon);
+			}
+			// update data table
+			for (int row = 0; row < numRows; row++) {
+				for (int col = 0; col < numCols; col++) {
+					if (dataTable.contains(row, col))
+						dataTable.put(row, col, dataTable.get(row, col) + epsilon);
+				}
+			}
+		}
+
+		String dateRange = "";
+		dateRange = String.format(", Timestamps = {%s, %s}", Dates.toString(minTimestamp),
+				Dates.toString(maxTimestamp));
+
+		Logs.debug("With Specs: {Users, {}} = {{}, {}, {}}, Scale = {{}}{}", (isItemAsUser ? "Users, Links"
+				: "Items, Ratings"), numRows, numCols, numRatings, Strings.toString(ratingScale), dateRange);
+
+		// build rating matrix
+		rateMatrix = new SparseMatrix(numRows, numCols, dataTable, colMap);
+
+		if (timeTable != null)
+			timeMatrix = new SparseMatrix(numRows, numCols, timeTable, colMap);
+
+		// release memory of data table
+		dataTable = null;
+		timeTable = null;
+
+		return new SparseMatrix[] { rateMatrix, timeMatrix };
+	}
 	
 	/**
 	 * write the rate data to another data file given by the path {@code toPath}

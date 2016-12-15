@@ -3,6 +3,7 @@ package i5.las2peer.services.recommender.librec.main;
 import java.io.BufferedReader;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
@@ -15,11 +16,11 @@ import com.google.common.collect.Table;
 import java.util.Properties;
 import java.util.Set;
 
+import i5.las2peer.services.recommender.entities.Rating;
+import i5.las2peer.services.recommender.entities.Tagging;
 import i5.las2peer.services.recommender.librec.baseline.ItemAverage;
-import i5.las2peer.services.recommender.librec.data.CSVDataDAO;
 import i5.las2peer.services.recommender.librec.data.DataDAO;
 import i5.las2peer.services.recommender.librec.data.DataSplitter;
-import i5.las2peer.services.recommender.librec.data.NetflixDataDAO;
 import i5.las2peer.services.recommender.librec.data.SparseMatrix;
 import i5.las2peer.services.recommender.librec.data.TagDataSplitter;
 import i5.las2peer.services.recommender.librec.data.TimeDataSplitter;
@@ -146,9 +147,78 @@ public class LibRec {
 		configuration.setProperty(parameter, value);
 	}
 	
+	public void setRatings(List<Rating> ratingsList) throws Exception {
+		DataDAO rateDao = new DataDAO("");
+		
+		// rating threshold
+		float binThold = -1;
+
+		SparseMatrix[] data;
+		
+		rateDao.setTimeUnit(TimeUnit.SECONDS);	// time unit of ratings' timestamps, not used since FilmTrust does not contain timestamps
+		data = rateDao.readData(ratingsList, binThold);
+		
+		ratingsMatrix = data[0];
+		timeMatrix = data[1];
+		
+		Recommender.rateDao = rateDao;
+		Recommender.binThold = binThold;
+	}
+	
+	public void setTaggings(List<Tagging> taggings) {
+		DataDAO rateDao = Recommender.rateDao;
+		TimeUnit timeUnit = TimeUnit.SECONDS;
+		
+		BiMap<String, Integer> tagIds = HashBiMap.create();
+		userTagTable = HashBasedTable.create();
+		itemTagTable = HashBasedTable.create();
+		
+		// for statistics
+		int numTaggings = 0;
+		
+		for (Tagging tagging : taggings) {
+			String userString = Integer.toString(tagging.getUserId());
+			String itemString = Integer.toString(tagging.getItemId());
+			String tagString = tagging.getTag();
+			long timestamp = timeUnit.toMillis(tagging.getTimestamp());
+			
+			int user;
+			int item;
+			
+			// skip users and items that are not part of the ratings matrix
+			try{
+				user = rateDao.getUserId(userString);
+				item = rateDao.getItemId(itemString);
+			}
+			catch (Exception e){
+				continue;
+			}
+			
+			int tag = tagIds.containsKey(tagString) ? tagIds.get(tagString) : tagIds.size();
+			tagIds.put(tagString, tag);
+			
+			if (!userTagTable.contains(user, tag)){
+				userTagTable.put(user, tag, new HashSet<Long>());
+			}
+			if (!itemTagTable.contains(item, tag)){
+				itemTagTable.put(item, tag, new HashSet<Long>());
+			}
+			
+			userTagTable.get(user, tag).add(timestamp);
+			itemTagTable.get(item, tag).add(timestamp);
+			
+			numTaggings++;
+		}
+		
+		int numUserTags = userTagTable.columnKeySet().size();
+		int numItemTags = itemTagTable.columnKeySet().size();
+		Logs.info("Tagging data: number of tagging instances: {}, unique user tags: {}, unique item tags: {}",
+				numTaggings, numUserTags, numItemTags);
+	}
+	
 	public void readRatingsFromFile(String filePath, String type) throws Exception {
 		// DAO object
-		DataDAO rateDao;
+		DataDAO rateDao = new DataDAO(filePath);
 		
 		// rating threshold
 		float binThold = -1;
@@ -156,29 +226,22 @@ public class LibRec {
 		SparseMatrix[] data;
 		
 		if(type.toLowerCase().equals("filmtrust")){
-			rateDao = new CSVDataDAO(filePath);
 			int[] columns = new int[] {0, 1, 2};	// contains three columns: userId, movieId, rating
 			rateDao.setHeadline(false); 			// does not contain headline
 			rateDao.setTimeUnit(TimeUnit.SECONDS);	// time unit of ratings' timestamps, not used since FilmTrust does not contain timestamps
 			data = rateDao.readData(columns, binThold);
 		}
 		else if(type.toLowerCase().equals("movielens")){
-			rateDao = new CSVDataDAO(filePath);
 			int[] columns = new int[] {0, 1, 2, 3};	// contains three columns: userId, movieId, rating, timestamp
 			rateDao.setHeadline(true);	 			// first line is headline
 			rateDao.setTimeUnit(TimeUnit.SECONDS);	// time unit of ratings' timestamps
 			data = rateDao.readData(columns, binThold);
 		}
 		else if(type.toLowerCase().equals("netflix")){
-			rateDao = new CSVDataDAO(filePath);
 			int[] columns = new int[] {0, 1, 2, 3};	// contains three columns: userId, movieId, rating, timestamp
 			rateDao.setHeadline(true);	 			// first line is headline
 			rateDao.setTimeUnit(TimeUnit.MILLISECONDS);	// time unit of ratings' timestamps
 			data = rateDao.readData(columns, binThold);
-		}
-		else if(type.toLowerCase().equals("netflix_orig")){
-			rateDao = new NetflixDataDAO(filePath);
-			data = rateDao.readData(binThold);
 		}
 		else{
 			return;
@@ -287,6 +350,21 @@ public class LibRec {
 	
 	public double getPrediction(int u, int i) throws Exception{
 		return model.getPrediction(u,i);
+	}
+	
+	public Table<Integer,Integer,Double> getAllPredictions() throws Exception{
+		Table<Integer,Integer,Double> predictionTable = HashBasedTable.create();
+		for (Map.Entry<String, Integer> userEntry : Recommender.rateDao.getUserIds().entrySet()){
+			int outerUserId = Integer.valueOf(userEntry.getKey());
+			int innerUserId = userEntry.getValue();
+			for (Map.Entry<String, Integer> itemEntry : Recommender.rateDao.getItemIds().entrySet()){
+				int outerItemId = Integer.valueOf(itemEntry.getKey());
+				int innerItemId = itemEntry.getValue();
+				double prediction = model.getPrediction(innerUserId, innerItemId);
+				predictionTable.put(outerUserId, outerItemId, prediction);
+			}
+		}
+		return predictionTable;
 	}
 	
 	public void evaluate() throws InterruptedException{

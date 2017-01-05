@@ -41,6 +41,7 @@ public class DataConvertor {
 	 *            path to the source file
 	 * @param targetPath
 	 *            path to the target file
+	 * @throws Exception on file I/O errors
 	 */
 	public DataConvertor(String sourcePath, String targetPath) throws Exception {
 		this.sourcePath = sourcePath;
@@ -57,6 +58,7 @@ public class DataConvertor {
 	 *            separator of the source file
 	 * @param toSep
 	 *            separtor of the target file
+	 * @throws Exception on file I/O errors
 	 */
 	public void cvtSeparator(String sep, String toSep) throws Exception {
 		BufferedReader br = FileIO.getReader(sourcePath);
@@ -91,6 +93,7 @@ public class DataConvertor {
 	 *            the separtor of the first line
 	 * @param sep2
 	 *            the separtor of the other lines
+	 * @throws Exception on file I/O errors
 	 * 
 	 */
 	public void cvtFirstLines(String sep1, String sep2) throws Exception {

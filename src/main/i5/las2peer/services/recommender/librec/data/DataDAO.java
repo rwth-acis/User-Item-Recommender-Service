@@ -128,7 +128,7 @@ public class DataDAO {
 		this(path, null, null);
 	}
 
-	/**
+	/*
 	 * Contructor for data DAO object
 	 * 
 	 */
@@ -140,8 +140,9 @@ public class DataDAO {
 	 * Default relevant columns {0: user column, 1: item column, 2: rate column}; default recommendation task is rating
 	 * prediction;
 	 * 
-	 * 
 	 * @return a sparse matrix storing all the relevant data
+	 * 
+	 * @throws Exception on file I/O and number formatting errors
 	 */
 	public SparseMatrix[] readData() throws Exception {
 		return readData(new int[] { 0, 1, 2 }, -1);
@@ -155,7 +156,8 @@ public class DataDAO {
 	 *            otherwise 0. To disable this feature, i.e., keep the original rating value, set the threshold a
 	 *            negative value
 	 * @return a sparse matrix storing all the relevant data
-	 */
+	 * @throws Exception on file I/O and number formatting errors
+ 	 */
 	public SparseMatrix[] readData(double binThold) throws Exception {
 		return readData(new int[] { 0, 1, 2 }, binThold);
 	}
@@ -170,6 +172,7 @@ public class DataDAO {
 	 *            otherwise 0. To disable this feature, i.e., keep the original rating value, set the threshold a
 	 *            negative value
 	 * @return a sparse matrix storing all the relevant data
+	 * @throws Exception on file I/O and number formatting errors
 	 */
 	public SparseMatrix[] readData(int[] cols, double binThold) throws Exception {
 
@@ -299,7 +302,7 @@ public class DataDAO {
 	 *            otherwise 0. To disable this feature, i.e., keep the original rating value, set the threshold a
 	 *            negative value
 	 * @return a sparse matrix storing all the relevant data
-	 * @throws Exception 
+	 * @throws Exception on file I/O and number formatting errors
 	 */
 	public SparseMatrix[] readData(List<Rating> ratingsList, double binThold) throws Exception {
 		// Table {row-id, col-id, rate}
@@ -391,6 +394,7 @@ public class DataDAO {
 	 *            the data file to write to
 	 * @param sep
 	 *            the sparator of the written data file
+	 * @throws Exception on file I/O errors
 	 */
 	public void writeData(String toPath, String sep) throws Exception {
 		FileIO.deleteFile(toPath);
@@ -412,7 +416,7 @@ public class DataDAO {
 		Logs.debug("Data has been exported to {}", toPath);
 	}
 
-	/**
+	/*
 	 * Default sep=" " is adopted
 	 */
 	public void writeData(String toPath) throws Exception {
@@ -426,6 +430,7 @@ public class DataDAO {
 	 *            relation name of dataset
 	 * @param toPath
 	 *            data file path
+	 * @throws Exception on file I/O errors
 	 */
 	public void writeArff(String relation, String toPath) throws Exception {
 		FileIO.deleteFile(toPath);
@@ -465,7 +470,7 @@ public class DataDAO {
 		Logs.debug("Data has been exported to {}", toPath);
 	}
 
-	/**
+	/*
 	 * print out specifications of the dataset
 	 */
 	public void printSpecs() throws Exception {
@@ -544,8 +549,8 @@ public class DataDAO {
 		Logs.info(Strings.toSection(sps));
 	}
 
-	/**
-	 * print out distributions of the dataset <br/>
+	/*
+	 * print out distributions of the dataset <br>
 	 * 
 	 * <ul>
 	 * <li>#users (y) -- #ratings (x) (that are issued by each user)</li>
@@ -712,8 +717,8 @@ public class DataDAO {
 		return dataName;
 	}
 
-	/**
-	 * @return directory of the data file
+	/*
+	 * return directory of the data file
 	 */
 	public String getDataDirectory() {
 		if (dataDir == null) {
@@ -724,7 +729,7 @@ public class DataDAO {
 		return dataDir;
 	}
 
-	/**
+	/*
 	 * set the time unit of the data file
 	 */
 	public void setTimeUnit(TimeUnit timeUnit) {

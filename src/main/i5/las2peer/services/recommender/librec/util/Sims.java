@@ -32,6 +32,8 @@ import java.util.Set;
 public class Sims {
 
 	/**
+	 * @param a first user's ratings
+	 * @param b second user's ratings
 	 * @return cosine similarity
 	 */
 	public static double cos(List<Double> a, List<Double> b) {
@@ -114,7 +116,7 @@ public class Sims {
 	 *            first vector of ratings
 	 * @param b
 	 *            second vector of ratings
-	 * @return Pearson Correlation Coefficient (PCC) value. <br/>
+	 * @return Pearson Correlation Coefficient (PCC) value. <br>
 	 *         If vector a or b is null or the length is less than 2, Double.NaN is returned.
 	 */
 	public static double pcc(List<? extends Number> a, List<? extends Number> b) {
@@ -139,6 +141,9 @@ public class Sims {
 
 	/**
 	 * calculate extend Jaccard Coefficient between two vectors of ratings
+	 * @param a first user's ratings
+	 * @param b second user's ratings
+	 * @return extended Jaccard coefficient
 	 */
 	public static double exJaccard(List<Double> a, List<Double> b) {
 		double num = 0.0, den_a = 0.0, den_b = 0.0;
@@ -156,6 +161,9 @@ public class Sims {
 
 	/**
 	 * calculate Dice Coefficient between two vectors of ratings
+	 * @param a first user's ratings
+	 * @param b second user's ratings
+	 * @return Dice coefficient
 	 */
 	public static double dice(List<Double> a, List<Double> b) {
 		double num = 0.0, den_a = 0.0, den_b = 0.0;
@@ -174,7 +182,9 @@ public class Sims {
 	/**
 	 * Jaccard's coefficient is defined as the number of common rated items of two users divided by the total number of
 	 * their unique rated items.
-	 * 
+	 *
+	 * @param uItems list of user u's items
+	 * @param vItems list of user v's items
 	 * @return Jaccard's coefficient
 	 */
 	public static double jaccard(List<Integer> uItems, List<Integer> vItems) {
@@ -193,9 +203,11 @@ public class Sims {
 
 	/**
 	 * Kendall Rank Correlation Coefficient
-	 * 
 	 * @author Bin Wu
 	 * 
+	 * @param uItems user u's ratings
+	 * @param vItems user v's ratings
+	 * @return Kendall rank correlation coefficient
 	 */
 	public static double krcc(List<Double> uItems, List<Double> vItems) {
 		int common = 0, all = 0;

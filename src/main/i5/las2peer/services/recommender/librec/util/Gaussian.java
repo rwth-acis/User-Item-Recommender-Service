@@ -21,8 +21,8 @@ package i5.las2peer.services.recommender.librec.util;
 /**
  * <h3>Gaussian Distribution</h3>
  * <p>
- * The approximation is accurate to absolute error less than $8 * 10^(-16)$. <br/>
- * Reference paper: George Marsaglia, Evaluating the Normal Distribution.<br/>
+ * The approximation is accurate to absolute error less than $8 * 10^(-16)$. <br>
+ * Reference paper: George Marsaglia, Evaluating the Normal Distribution.<br>
  * 
  * http://introcs.cs.princeton.edu/java/21function/ <br>
  * http://www.jstatsoft.org/v11/a04/paper
@@ -31,14 +31,14 @@ package i5.las2peer.services.recommender.librec.util;
  */
 public class Gaussian {
 
-	/**
+	/*
 	 * standard Gaussian pdf
 	 */
 	public static double pdf(double x) {
 		return Math.exp(-x * x / 2) / Math.sqrt(2 * Math.PI);
 	}
 
-	/**
+	/*
 	 * Gaussian pdf with mean mu and stddev sigma
 	 */
 	public static double pdf(double x, double mu, double sigma) {
@@ -48,6 +48,7 @@ public class Gaussian {
 	/**
 	 * standard Gaussian cdf using Taylor approximation;
 	 * 
+	 * @param z input variable z
 	 * @return the probability that a random variable distributed according to the standard normal distribution (mean =
 	 *         0 and stdev = 1) produces a value less than z
 	 */
@@ -67,14 +68,17 @@ public class Gaussian {
 	/**
 	 * Gaussian cdf with mean mu and stddev sigma
 	 * 
-	 * @returnt he probability that a random variable X distributed normally with mean mu and stdev sigma produces a
+	 * @param z variable z
+	 * @param mu mean
+	 * @param sigma standard deviation
+	 * @return the probability that a random variable X distributed normally with mean mu and stdev sigma produces a
 	 *          value less than z
 	 */
 	public static double cdf(double z, double mu, double sigma) {
 		return cdf((z - mu) / sigma);
 	}
 
-	/**
+	/*
 	 * Compute z for standard normal such that cdf(z) = y via bisection search
 	 */
 	public static double PhiInverse(double y) {
@@ -91,7 +95,7 @@ public class Gaussian {
 			return PhiInverse(y, delta, mid, hi);
 	}
 
-	/**
+	/*
 	 * Compute z for standard normal such that cdf(z, mu, sigma) = y via bisection search
 	 */
 	public static double PhiInverse(double y, double mu, double sigma) {

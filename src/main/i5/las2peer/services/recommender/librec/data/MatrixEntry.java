@@ -25,21 +25,25 @@ public interface MatrixEntry {
 
 	/**
 	 * Returns the current row index
+	 * @return row index
 	 */
 	int row();
 
 	/**
 	 * Returns the current column index
+	 * @return column index
 	 */
 	int column();
 
 	/**
 	 * Returns the value at the current index
+	 * @return value at the current index
 	 */
 	double get();
 
 	/**
 	 * Sets the value at the current index
+	 * @param value value to set
 	 */
 	void set(double value);
 

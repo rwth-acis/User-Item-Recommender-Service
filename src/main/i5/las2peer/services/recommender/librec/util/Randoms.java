@@ -39,8 +39,8 @@ public class Randoms {
 	/**
 	 * Random generate an integer in [0, range)
 	 * 
-	 * @param range
-	 * @return
+	 * @param range range upper bound
+	 * @return random integer
 	 */
 	public static int uniform(int range) {
 		return uniform(0, range);
@@ -53,9 +53,9 @@ public class Randoms {
 	/**
 	 * Random generate an integer in [min, max)
 	 * 
-	 * @param min
-	 * @param max
-	 * @return
+	 * @param min minimum
+	 * @param max maximum
+	 * @return random integer
 	 */
 	public static int uniform(int min, int max) {
 		return min + r.nextInt(max - min);
@@ -63,13 +63,17 @@ public class Randoms {
 
 	/**
 	 * return real number uniformly in [0, 1)
+	 * @return random real
 	 */
 	public static double random() {
 		return uniform();
 	}
 
 	/**
-	 * @return a random number from a given list of numbers
+	 * Return a random number from a given list of numbers
+	 * @param <T> number type
+	 * @param data list of numbers
+	 * @return random number
 	 */
 	public static <T> T random(List<T> data) {
 		int idx = uniform(data.size());
@@ -82,6 +86,7 @@ public class Randoms {
 	 * 
 	 * @param size
 	 *            the size of random array
+	 * @return random double array
 	 */
 	public static double[] doubles(int size) {
 		double[] array = new double[size];
@@ -94,8 +99,11 @@ public class Randoms {
 	/**
 	 * a random double array with values in [min, max)
 	 * 
+	 * @param min minimum
+	 * @param max maximum
 	 * @param size
 	 *            the size of random array
+	 * @return random double array
 	 */
 	public static double[] doubles(double min, double max, int size) {
 		double[] array = new double[size];
@@ -107,6 +115,7 @@ public class Randoms {
 
 	/**
 	 * random (uniformly distributed) double in [0, 1)
+	 * @return random double
 	 */
 	public static double uniform() {
 		return uniform(0.0, 1.0);
@@ -114,6 +123,9 @@ public class Randoms {
 
 	/**
 	 * random (uniformly distributed) double in [min, max)
+	 * @param min minimum
+	 * @param max maximum
+	 * @return random double
 	 */
 	public static double uniform(double min, double max) {
 		return min + (max - min) * r.nextDouble();
@@ -121,6 +133,8 @@ public class Randoms {
 
 	/**
 	 * Return a boolean, which is true with probability p, and false otherwise.
+	 * @param p probability
+	 * @return random boolean
 	 */
 	public static boolean bernoulli(double p) {
 		return uniform() < p;
@@ -128,6 +142,7 @@ public class Randoms {
 
 	/**
 	 * Return a boolean, which is true with probability .5, and false otherwise.
+	 * @return random boolean
 	 */
 	public static boolean bernoulli() {
 		return bernoulli(0.5);
@@ -140,6 +155,7 @@ public class Randoms {
 	 *            mean
 	 * @param sigma
 	 *            stddev
+	 * @return random double
 	 * 
 	 */
 	public static double gaussian(double mu, double sigma) {
@@ -350,6 +366,8 @@ public class Randoms {
 
 	/**
 	 * Return an integer with a Poisson distribution with mean lambda.
+	 * @param lambda mean
+	 * @return random integer
 	 */
 	public static int poisson(double lambda) {
 		// using algorithm given by Knuth
@@ -366,6 +384,8 @@ public class Randoms {
 
 	/**
 	 * Return a real number with a Pareto distribution with parameter alpha.
+	 * @param alpha alpha parameter
+	 * @return random double
 	 */
 	public static double pareto(double alpha) {
 		return Math.pow(1 - uniform(), -1.0 / alpha) - 1.0;
@@ -373,6 +393,7 @@ public class Randoms {
 
 	/**
 	 * Return a real number with a Cauchy distribution.
+	 * @return random double
 	 */
 	public static double cauchy() {
 		return Math.tan(Math.PI * (uniform() - 0.5));
@@ -381,6 +402,8 @@ public class Randoms {
 	/**
 	 * Return a number from a discrete distribution: i with probability a[i]. Precondition: array entries are
 	 * nonnegative and their sum (very nearly) equals 1.0.
+	 * @param a probability array
+	 * @return random integer
 	 */
 	public static int discrete(double[] a) {
 		double EPSILON = 1E-6;
@@ -407,6 +430,8 @@ public class Randoms {
 
 	/**
 	 * Return a real number from an exponential distribution with rate lambda.
+	 * @param lambda rate
+	 * @return random double
 	 */
 	public static double exp(double lambda) {
 		return -Math.log(1 - uniform()) / lambda;
@@ -436,7 +461,6 @@ public class Randoms {
 	 *            the exception values when generating integers, sorted first
 	 * @return next no-repeated random integer
 	 */
-
 	public static int nextInt(int min, int max, int... exceptions) {
 		int next;
 		while (true) {
@@ -456,7 +480,10 @@ public class Randoms {
 
 	/**
 	 * Generate no repeat {@code size} indexes from {@code min} to {@code max}
-	 * 
+	 * @param size size
+	 * @param min minimum
+	 * @param max maximum
+	 * @return index array
 	 */
 	public static int[] indexs(int size, int min, int max) {
 		Set<Integer> used = new HashSet<>();
@@ -488,8 +515,6 @@ public class Randoms {
 	 *            the length of the array
 	 * @param range
 	 *            the index range of the array, default [0, range)
-	 * @param exceptions
-	 *            the exceptions when generating values
 	 * @return ascending sorted integer array
 	 * @throws Exception
 	 *             if the range is less than length, an exception will be thrown
@@ -527,7 +552,13 @@ public class Randoms {
 	/**
 	 * Generate a set of random (unique) integers in the range [min, max) with length {@code length}
 	 * 
+	 * @param length
+	 *            the length of the array
+	 * @param min range lower bound
+	 * @param max range upper bound
 	 * @return a set of unique integers
+	 * @throws Exception
+	 *             if the range is less than length, an exception will be thrown
 	 */
 	public static List<Integer> randInts(int length, int min, int max) throws Exception {
 		int len = max - min;
@@ -555,6 +586,7 @@ public class Randoms {
 	 * 
 	 * @param size
 	 *            array size
+	 * @return probabilities array
 	 */
 	public static double[] randProbs(int size) {
 		if (size < 1)

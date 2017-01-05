@@ -102,6 +102,7 @@ public class TrustMF extends SocialRecommender {
 
 	/**
 	 * Build TrusterMF model: Br*Vr
+	 * @throws Exception on errors during convergence check
 	 */
 	protected void TrusterMF() throws Exception {
 		for (int iter = 1; iter <= numIters; iter++) {
@@ -173,6 +174,7 @@ public class TrustMF extends SocialRecommender {
 
 	/**
 	 * Build TrusteeMF model: We*Ve
+	 * @throws Exception on errors during convergence check
 	 */
 	protected void TrusteeMF() throws Exception {
 		for (int iter = 1; iter <= numIters; iter++) {

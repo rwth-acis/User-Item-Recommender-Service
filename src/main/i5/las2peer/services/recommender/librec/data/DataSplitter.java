@@ -120,6 +120,7 @@ public class DataSplitter {
 	 * 
 	 * @param ratio
 	 *            the ratio of training data over all the ratings.
+	 * @return array containing the train matrix [0] and the test matrix [1]
 	 */
 	public SparseMatrix[] getRatioByRating(double ratio) {
 
@@ -157,6 +158,8 @@ public class DataSplitter {
 	 *            the ratio of training data
 	 * @param timestamps
 	 *            the timestamps of all rating data
+	 * @return array containing the train matrix [0] and the test matrix [1]
+	 * 
 	 */
 	public SparseMatrix[] getRatioByRatingDate(double ratio, SparseMatrix timestamps) {
 
@@ -208,6 +211,8 @@ public class DataSplitter {
 	 *            the ratio of training data
 	 * @param timeMatrix
 	 *            the timestamps of all rating data
+	 * @return array containing the train matrix [0] and the test matrix [1]
+	 * 
 	 */
 	public SparseMatrix[] getRatioByUserDate(double ratio, SparseMatrix timeMatrix) {
 
@@ -255,6 +260,8 @@ public class DataSplitter {
 	 *            the ratio of training data
 	 * @param timestamps
 	 *            the timestamps of all rating data
+	 * @return array containing the train matrix [0] and the test matrix [1]
+	 * 
 	 */
 	public SparseMatrix[] getRatioByItemDate(double ratio, SparseMatrix timestamps) {
 
@@ -302,6 +309,8 @@ public class DataSplitter {
 	 *            training ratio
 	 * @param validRatio
 	 *            validation ratio
+	 * @return array containing the train matrix [0] and the test matrix [1]
+	 * 
 	 */
 	public SparseMatrix[] getRatio(double trainRatio, double validRatio) {
 
@@ -343,7 +352,7 @@ public class DataSplitter {
 		return new SparseMatrix[] { trainMatrix, validMatrix, testMatrix };
 	}
 
-	/**
+	/*
 	 * Split ratings into two parts where one rating per user is preserved as the test set and the remaining data as the
 	 * training set
 	 * 
@@ -393,7 +402,7 @@ public class DataSplitter {
 		return new SparseMatrix[] { trainMatrix, testMatrix };
 	}
 
-	/**
+	/*
 	 * Split ratings into two parts where one rating per item is preserved as the test set and the remaining data as the
 	 * training set
 	 * 
@@ -443,7 +452,7 @@ public class DataSplitter {
 		return new SparseMatrix[] { trainMatrix, testMatrix };
 	}
 
-	/**
+	/*
 	 * Split ratings into two parts: the training set consisting of user-item ratings where {@code numGiven} ratings are
 	 * preserved for each user, and the rest are used as the testing data
 	 * 
@@ -492,7 +501,7 @@ public class DataSplitter {
 		return new SparseMatrix[] { trainMatrix, testMatrix };
 	}
 
-	/**
+	/*
 	 * Split ratings into two parts: the training set consisting of user-item ratings where {@code numGiven} earliest
 	 * ratings are preserved for each user, and the rest are used as the testing data
 	 * 
@@ -535,7 +544,7 @@ public class DataSplitter {
 		return new SparseMatrix[] { trainMatrix, testMatrix };
 	}
 
-	/**
+	/*
 	 * Split ratings into two parts: the training set consisting of user-item ratings where {@code numGiven} earliest
 	 * ratings are preserved for each item, and the rest are used as the testing data
 	 * 
@@ -578,7 +587,7 @@ public class DataSplitter {
 		return new SparseMatrix[] { trainMatrix, testMatrix };
 	}
 
-	/**
+	/*
 	 * Split ratings into two parts: the training set consisting of user-item ratings where {@code numGiven} ratings are
 	 * preserved for each item, and the rest are used as the testing data
 	 * 
@@ -627,7 +636,7 @@ public class DataSplitter {
 		return new SparseMatrix[] { trainMatrix, testMatrix };
 	}
 
-	/**
+	/*
 	 * Split ratings into two parts: the training set consisting of user-item ratings where {@code ratio} percentage of
 	 * ratings are preserved for each user, and the rest are used as the testing data
 	 * 
@@ -662,7 +671,7 @@ public class DataSplitter {
 		return new SparseMatrix[] { trainMatrix, testMatrix };
 	}
 
-	/**
+	/*
 	 * Split ratings into two parts: the training set consisting of user-item ratings where {@code ratio} percentage of
 	 * ratings are preserved for each item, and the rest are used as the testing data
 	 * 
@@ -707,6 +716,8 @@ public class DataSplitter {
 	 *            number of users, -1 to use all users;
 	 * @param numItems
 	 *            number of items, -1 to user all items;
+	 * @throws Exception on errors during random number generation
+	 * 
 	 */
 	public void getSample(int numUsers, int numItems) throws Exception {
 		int rows = rateMatrix.numRows();

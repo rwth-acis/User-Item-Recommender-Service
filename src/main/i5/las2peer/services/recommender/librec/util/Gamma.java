@@ -32,11 +32,12 @@ public class Gamma {
 	private final static double s7 = 1.0 / 132.0;
 
 	/**
-	 * log Gamma function: log(gamma(alpha)) for alpha>0, accurate to 10 decimal places <br>
+	 * log Gamma function: {@code log(gamma(alpha))} for {@code alpha>0}, accurate to 10 decimal places <br>
 	 * 
-	 * Reference: Pike MC & Hill ID (1966) Algorithm 291: Logarithm of the gamma function. Communications of the
+	 * Reference: Pike MC &amp; Hill ID (1966) Algorithm 291: Logarithm of the gamma function. Communications of the
 	 * Association for Computing Machinery, 9:684
 	 *
+	 * @param x alpha
 	 * @return the log of the gamma function of the given alpha
 	 */
 	public static double logGamma(double x) {
@@ -53,12 +54,14 @@ public class Gamma {
 	 *
 	 * Uses Lanczos approximation formula.
 	 * 
+	 * @param x input variable x
+	 * @return gamma
 	 */
 	public static double gamma(double x) {
 		return Math.exp(logGamma(x));
 	}
 
-	/**
+	/*
 	 * digamma(x) = d log Gamma(x)/ dx
 	 */
 	public static double digamma(double x) {
@@ -107,6 +110,7 @@ public class Gamma {
 	}
 
 	/**
+	 * @param y input variable y
 	 * @return the inverse function of digamma, i.e., returns x such that digamma(x) = y adapted from Tony Minka fastfit
 	 *         Matlab code
 	 */

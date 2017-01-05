@@ -37,7 +37,9 @@ import i5.las2peer.services.recommender.librec.util.FileIO.Converter;
 public class Lists {
 
 	/**
-	 * @return the proper initial size for a target given capacity, based on the default "load factor=0.7"
+	 * Return the proper initial size for a target given capacity, based on the default "load factor=0.7"
+	 * @param capacity capacity
+	 * @return initial size
 	 */
 	public static int initSize(int capacity) {
 		return (int) (Math.ceil(capacity / 0.7));
@@ -49,6 +51,7 @@ public class Lists {
 
 	/**
 	 * Rearrange the elements of a double array in random order.
+	 * @param data data
 	 */
 	public static void shaffle(int[] data) {
 		int N = data.length;
@@ -92,8 +95,8 @@ public class Lists {
 		}
 	}
 
-	/**
-	 * @return the top-n subset of list {@code data}
+	/*
+	 * return the top-n subset of list {@code data}
 	 */
 	public static <T> List<T> subset(List<T> data, int n) {
 		List<T> ts = new ArrayList<>();
@@ -108,8 +111,8 @@ public class Lists {
 		return ts;
 	}
 
-	/**
-	 * @return a new list of the intersection of two lists: list1 and list2
+	/*
+	 * return a new list of the intersection of two lists: list1 and list2
 	 */
 	public static <T> List<T> intersect(List<T> list1, List<T> list2) {
 		List<T> ts = new ArrayList<>();
@@ -122,8 +125,8 @@ public class Lists {
 		return ts;
 	}
 
-	/**
-	 * @return the number of common items of two lists: list1 and list2
+	/*
+	 * return the number of common items of two lists: list1 and list2
 	 */
 	public static <T> int overlapSize(List<T> list1, List<T> list2) {
 		int res = 0;
@@ -136,10 +139,10 @@ public class Lists {
 		return res;
 	}
 
-	/**
+	/*
 	 * Note: if you need to operate on the original list, it's better to use the method "retainAll" or "removeAll"
 	 * 
-	 * @return a new list with the exception of two lists: list1 and list2
+	 * return a new list with the exception of two lists: list1 and list2
 	 */
 	public static <T> List<T> except(List<T> list1, List<T> list2) {
 		List<T> ts = new ArrayList<>();
@@ -152,8 +155,8 @@ public class Lists {
 		return ts;
 	}
 
-	/**
-	 * @return the number of elements in the first list but not in the second list
+	/*
+	 * return the number of elements in the first list but not in the second list
 	 */
 	public static <T> int exceptSize(List<T> list1, List<T> list2) {
 		int res = 0;
@@ -166,8 +169,8 @@ public class Lists {
 		return res;
 	}
 
-	/**
-	 * @return whether list is empty: null or no elements insides
+	/*
+	 * return whether list is empty: null or no elements insides
 	 */
 	public static <T> boolean isEmpty(List<T> ts) {
 		if (ts == null || ts.size() < 1)
@@ -195,11 +198,11 @@ public class Lists {
 	}
 
 	/**
-	 * Turn an double array into a List<Double> object
+	 * Turn an double array into a {@code List<Double>} object
 	 * 
 	 * @param data
 	 *            an double array
-	 * @return a List<Double> object
+	 * @return a {@code List<Double>} object
 	 */
 	public static List<Double> toList(double[] data) {
 		if (data == null || data.length < 1)
@@ -224,7 +227,7 @@ public class Lists {
 		return da;
 	}
 
-	/**
+	/*
 	 * Convert int array to int list
 	 */
 	public static List<Integer> toList(int[] data) {
@@ -242,10 +245,12 @@ public class Lists {
 	 * 
 	 * <p>
 	 * <strong>Remark: </strong> note that this method may be memory-consuming as it needs to make an ArrayList copy of
-	 * input Map data. Instead, we suggest to store original data in List<Map.Entry<K,V>> and use sortList() method to
+	 * input Map data. Instead, we suggest to store original data in {@code List<Map.Entry<K,V>>} and use {@code sortList()} method to
 	 * avoid object copying.
 	 * </p>
 	 * 
+	 * @param <K> key type
+	 * @param <V> value type
 	 * @param data
 	 *            map data
 	 * @param inverse
@@ -267,6 +272,8 @@ public class Lists {
 	/**
 	 * sort a map object: {@code Map<K, V extends Comparable<? extends V>}
 	 * 
+	 * @param <K> key type
+	 * @param <V> value type
 	 * @param data
 	 *            map data
 	 * @return an ascending sorted list
@@ -278,11 +285,12 @@ public class Lists {
 	/**
 	 * sort a list of objects: {@code List<Map.Entry<K, V extends Comparable<? extends V>>}
 	 * 
+	 * @param <K> key type
+	 * @param <V> value type
 	 * @param data
 	 *            map data
 	 * @param inverse
 	 *            descending if true; otherwise ascending
-	 * @return a sorted list
 	 */
 	public static <K, V extends Comparable<? super V>> void sortList(List<Map.Entry<K, V>> data, final boolean inverse) {
 
@@ -303,9 +311,10 @@ public class Lists {
 	/**
 	 * sort a map object: {@code List<Map.Entry<K, V extends Comparable<? extends V>>}
 	 * 
+	 * @param <K> key type
+	 * @param <V> value type
 	 * @param data
 	 *            map data
-	 * @return an ascending sorted list
 	 */
 	public static <K, V extends Comparable<? super V>> void sortList(List<Map.Entry<K, V>> data) {
 

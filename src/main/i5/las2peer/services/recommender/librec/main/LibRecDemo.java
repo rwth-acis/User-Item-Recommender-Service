@@ -130,6 +130,8 @@ public class LibRecDemo {
 
 	/**
 	 * run the LibRec library
+	 * @param args command line arguments
+	 * @throws Exception on various errors processing arguments, file I/O, running the algorithm
 	 */
 	protected void execute(String[] args) throws Exception {
 		// process librec arguments
@@ -159,6 +161,7 @@ public class LibRecDemo {
 
 	/**
 	 * read input data
+	 * @throws Exception on file I/O and number formatting errors
 	 */
 	protected void readData() throws Exception {
 		// DAO object
@@ -197,6 +200,8 @@ public class LibRecDemo {
 
 	/**
 	 * reset general (and static) settings
+	 * @param configFile string representing the file to read the configuration from
+	 * @throws Exception on file I/O errors
 	 */
 	protected void preset(String configFile) throws Exception {
 
@@ -227,7 +232,7 @@ public class LibRecDemo {
 
 	/**
 	 * entry of the LibRec library
-	 * 
+	 * @param args command line arguments
 	 */
 	public static void main(String[] args) {
 
@@ -247,6 +252,7 @@ public class LibRecDemo {
 	 * 
 	 * @param args
 	 *            command line arguments
+	 * @throws Exception on file I/O errors
 	 */
 	protected void cmdLine(String[] args) throws Exception {
 
@@ -350,6 +356,9 @@ public class LibRecDemo {
 
 	/**
 	 * write a matrix data into a file
+	 * @param data data matrix
+	 * @param filePath file to write
+	 * @throws Exception on file I/O errors
 	 */
 	private void writeMatrix(SparseMatrix data, String filePath) throws Exception {
 		// delete old file first
@@ -384,7 +393,7 @@ public class LibRecDemo {
 
 	/**
 	 * run a specific algorithm one or multiple times
-	 * 
+	 * @throws Exception on file I/O and algorithm errors
 	 */
 	protected void run() throws Exception {
 
@@ -403,7 +412,8 @@ public class LibRecDemo {
 
 	/**
 	 * prepare training and test data, and then run a specified recommender
-	 * 
+	 * @param evalOptions evaluation options
+	 * @throws Exception on errors splitting the data or running the algorithm
 	 */
 	private void runAlgorithm(LineConfiger evalOptions) throws Exception {
 
@@ -528,6 +538,8 @@ public class LibRecDemo {
 
 	/**
 	 * interface to run Leave-one-out approach
+	 * @param evalOptions evaluation options
+	 * @throws Exception on errors running the algorithm
 	 */
 	private void runLeaveOneOut(LineConfiger params) throws Exception {
 
@@ -612,6 +624,9 @@ public class LibRecDemo {
 
 	/**
 	 * print out the evaluation information for a specific algorithm
+	 * @param algo recommender algorithm
+	 * @param ms measures
+	 * @throws Exception on file I/O errors
 	 */
 	private void printEvalInfo(Recommender algo, Map<Measure, Double> ms) throws Exception {
 
@@ -650,6 +665,7 @@ public class LibRecDemo {
 	 * 
 	 * @param attachment
 	 *            email attachment
+	 * @throws Exception on file I/O and notifier errors
 	 */
 	protected void notifyMe(String attachment) throws Exception {
 
@@ -691,6 +707,9 @@ public class LibRecDemo {
 
 	/**
 	 * @return a recommender to be run
+	 * @param data array containing training [0] and testing [1] data
+	 * @param fold fold number
+	 * @throws Exception on recommender construction errors
 	 */
 	protected Recommender getRecommender(SparseMatrix[] data, int fold) throws Exception {
 
@@ -838,6 +857,7 @@ public class LibRecDemo {
 
 	/**
 	 * set the configuration file to be used
+	 * @param configurations configuration files
 	 */
 	public void setConfigFiles(String... configurations) {
 		configFiles = Arrays.asList(configurations);

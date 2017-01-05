@@ -25,16 +25,19 @@ public interface VectorEntry {
 
 	/**
 	 * Returns the current index
+	 * @return index
 	 */
 	int index();
 
 	/**
 	 * Returns the value at the current index
+	 * @return value
 	 */
 	double get();
 
 	/**
 	 * Sets the value at the current index
+	 * @param value value
 	 */
 	void set(double value);
 

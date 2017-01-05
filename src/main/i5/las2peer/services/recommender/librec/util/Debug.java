@@ -47,7 +47,7 @@ public class Debug
 	 *            the arguments to be passed for this method
 	 * 
 	 * @return How much memory is used by calling obj's method (in KByte)
-	 * @throws Exception
+	 * @throws Exception on errors during invoke
 	 * 
 	 */
 	public static double memory(Object obj, Method method, Object... args) throws Exception
@@ -73,7 +73,7 @@ public class Debug
 
 	/**
 	 * Redirect system errors into a file
-	 * 
+	 * @param filePath file path
 	 */
 	public static void pipeErrors(String filePath)
 	{
@@ -104,7 +104,7 @@ public class Debug
 
 	/**
 	 * Redirect system outputs into a file
-	 * 
+	 * @param filePath file path
 	 */
 	public static void pipeConsoles(String filePath)
 	{

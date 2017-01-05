@@ -31,12 +31,12 @@ import i5.las2peer.services.recommender.librec.util.Lists;
  * Pennock et al., <strong>Collaborative Filtering by Personality Diagnosis: A Hybrid Memory- and Model-based
  * Approach</strong>, UAI 2000.
  * 
- * <p>
  * Related Work:
  * <ul>
- * <a href= "http://www.cs.carleton.edu/cs_comps/0607/recommend/recommender/pd.html">A brief introduction to Personality
- * Diagnosis</a></li>
- * </p>
+ * <li>
+ * A brief introduction to Personality Diagnosis (http://www.cs.carleton.edu/cs_comps/0607/recommend/recommender/pd.html)
+ * </li>
+ * </ul>
  * 
  * @author guoguibing
  * 

@@ -24,7 +24,9 @@ package i5.las2peer.services.recommender.librec.data;
 public interface TensorEntry {
 
 	/**
-	 * @return the index of dimension d
+	 * Return the index of dimension d
+	 * @param d dimension
+	 * @return index
 	 */
 	int key(int d);
 
@@ -45,6 +47,7 @@ public interface TensorEntry {
 
 	/**
 	 * Sets the value at the current index
+	 * @param value value
 	 */
 	void set(double value);
 

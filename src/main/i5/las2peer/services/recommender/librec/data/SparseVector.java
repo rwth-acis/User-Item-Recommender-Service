@@ -84,6 +84,7 @@ public class SparseVector implements Iterable<VectorEntry>, Serializable {
 
 	/**
 	 * Construct a sparse vecto by deeply copying another vector
+	 * @param sv vector to copy
 	 */
 	public SparseVector(SparseVector sv) {
 		this(sv.capacity, sv.data);
@@ -93,7 +94,8 @@ public class SparseVector implements Iterable<VectorEntry>, Serializable {
 	 * Check if a vector contains a specific index
 	 * 
 	 * @param idx
-	 *            the idex to search
+	 *            the index to search
+	 * @return true if the vector contains the index
 	 */
 	public boolean contains(int idx) {
 		return Arrays.binarySearch(index, idx) >= 0;
@@ -134,6 +136,7 @@ public class SparseVector implements Iterable<VectorEntry>, Serializable {
 
 	/**
 	 * Number of entries in the sparse structure
+	 * @return number of entries
 	 */
 	public int getCount() {
 		return count;
@@ -141,6 +144,8 @@ public class SparseVector implements Iterable<VectorEntry>, Serializable {
 
 	/**
 	 * Set a value to entry [idx]
+	 * @param idx index
+	 * @param val value
 	 */
 	public void set(int idx, double val) {
 		check(idx);
@@ -151,6 +156,8 @@ public class SparseVector implements Iterable<VectorEntry>, Serializable {
 
 	/**
 	 * Add a value to entry [idx]
+	 * @param idx index
+	 * @param val value
 	 */
 	public void add(int idx, double val) {
 		check(idx);
@@ -161,6 +168,8 @@ public class SparseVector implements Iterable<VectorEntry>, Serializable {
 
 	/**
 	 * Retrieve a value at entry [idx]
+	 * @param idx index
+	 * @return value at the index
 	 */
 	public double get(int idx) {
 		check(idx);
@@ -171,7 +180,9 @@ public class SparseVector implements Iterable<VectorEntry>, Serializable {
 	}
 
 	/**
-	 * @return inner product with a given sparse vector
+	 * Return the inner product with a given sparse vector
+	 * @param vec sparse vector
+	 * @return inner product
 	 */
 	public double inner(SparseVector vec) {
 		double res = 0;
@@ -184,7 +195,9 @@ public class SparseVector implements Iterable<VectorEntry>, Serializable {
 	}
 
 	/**
-	 * @return inner product with a given dense vector
+	 * Return the inner product with a given dense vector
+	 * @param vec dense vector
+	 * @return inner product
 	 */
 	public double inner(DenseVector vec) {
 		double res = 0;
@@ -195,21 +208,24 @@ public class SparseVector implements Iterable<VectorEntry>, Serializable {
 	}
 
 	/**
-	 * @return sum of vector entries
+	 * Return the sum of vector entries
+	 * @return sum
 	 */
 	public double sum() {
 		return Stats.sum(data);
 	}
 
 	/**
-	 * @return mean of vector entries
+	 * Return the mean of vector entries
+	 * @return mean
 	 */
 	public double mean() {
 		return sum() / count;
 	}
 
 	/**
-	 * @return the cardinary of a sparse vector
+	 * Return the cardinary of this vector 
+	 * @return cardinary
 	 */
 	public int size() {
 		int num = 0;
@@ -222,6 +238,7 @@ public class SparseVector implements Iterable<VectorEntry>, Serializable {
 
 	/**
 	 * Checks the index
+	 * @param idx index
 	 */
 	protected void check(int idx) {
 		if (idx < 0)
@@ -233,6 +250,8 @@ public class SparseVector implements Iterable<VectorEntry>, Serializable {
 	/**
 	 * Tries to find the index. If it is not found, a reallocation is done, and
 	 * a new index is returned.
+	 * @param idx index
+	 * @return new index
 	 */
 	private int getIndex(int idx) {
 		// Try to find column index

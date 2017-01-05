@@ -25,7 +25,7 @@ import i5.las2peer.services.recommender.librec.intf.IterativeRecommender;
 /**
  * <ul>
  * <li><strong>PMF:</strong> Ruslan Salakhutdinov and Andriy Mnih, Probabilistic Matrix Factorization, NIPS 2008.</li>
- * <li><strong>RegSVD:</strong> Arkadiusz Paterek, <strong>Improving Regularized Singular Value Decomposition
+ * <li><strong>RegSVD:</strong> Arkadiusz Paterek, Improving Regularized Singular Value Decomposition
  * Collaborative Filtering, Proceedings of KDD Cup and Workshop, 2007.</li>
  * </ul>
  * 

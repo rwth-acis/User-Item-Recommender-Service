@@ -209,6 +209,7 @@ public class RecommenderMain extends Service {
 	 * Remove user
 	 * Remove a user from the system.
 	 * 
+	 * @param userIdStr User identifier given as path parameter.
 	 * @return HTTP status code 200 for success and status code 500 for failure.
 	 */
 	@DELETE
@@ -275,6 +276,11 @@ public class RecommenderMain extends Service {
 	 * Add rating
 	 * Adds a rating event for a user.
 	 * 
+	 * @param userIdStr User identifier given as path parameter.
+	 * @param itemIdStr Item identifier given as query parameter.
+	 * @param timestampStr Timestamp given as query parameter.
+	 * @param ratingStr Rating value given as query parameter.
+	 * 
 	 * @return HTTP status code 200 for success and status code 500 for failure.
 	 */
 	@POST
@@ -314,6 +320,9 @@ public class RecommenderMain extends Service {
 	 * Remove rating
 	 * Removes a rating of a user.
 	 * 
+	 * @param userIdStr User identifier given as path parameter.
+	 * @param itemIdStr Item identifier given as query parameter.
+	 * 
 	 * @return HTTP status code 200 for success and status code 500 for failure.
 	 */
 	@DELETE
@@ -348,6 +357,11 @@ public class RecommenderMain extends Service {
 	/**
 	 * Add tagging
 	 * Adds a new tagging event to the system.
+	 * 
+	 * @param userIdStr User identifier given as path parameter.
+	 * @param itemIdStr Item identifier given as query parameter.
+	 * @param timestampStr Timestamp given as query parameter.
+	 * @param tag Tag given as query parameter.
 	 * 
 	 * @return HTTP status code 200 for success and status code 500 for failure.
 	 */
@@ -387,6 +401,10 @@ public class RecommenderMain extends Service {
 	 * Remove tagging
 	 * Removes a tagging of a user.
 	 * 
+	 * @param userIdStr User identifier given as path parameter.
+	 * @param itemIdStr Item identifier given as query parameter.
+	 * @param tag Tag given as query parameter.
+	 * 
 	 * @return HTTP status code 200 for success and status code 500 for failure.
 	 */
 	@DELETE
@@ -422,6 +440,8 @@ public class RecommenderMain extends Service {
 	/**
 	 * Retrieve ratings
 	 * Retrieves all ratings of a user.
+	 * 
+	 * @param userIdStr User identifier given as path parameter.
 	 * 
 	 * @return All ratings of the user.
 	 */
@@ -461,6 +481,8 @@ public class RecommenderMain extends Service {
 	 * Retrieve taggings
 	 * Retrieves all taggings of a user.
 	 * 
+	 * @param userIdStr User identifier given as path parameter.
+	 * 
 	 * @return All taggings of the user.
 	 */
 	@GET
@@ -499,7 +521,9 @@ public class RecommenderMain extends Service {
 	 * Retrieve prediction
 	 * Retrieves a rating prediction for a user.
 	 * 
-	 * @param itemId Identifier of the targeted item.
+	 * @param userIdStr User identifier given as path parameter.
+	 * @param itemIdStr Item identifier given as query parameter.
+	 * 
 	 * @return Predicted rating for the user and item.
 	 */
 	@GET
@@ -542,7 +566,9 @@ public class RecommenderMain extends Service {
 	 * Retrieve recommendations
 	 * Retrieves a recommendation list for a user.
 	 * 
-	 * @param count Maximum number of items.
+	 * @param userIdStr User identifier given as path parameter.
+	 * @param countStr Maximum number of items given as query parameter.
+	 * 
 	 * @return Recommendation list.
 	 */
 	@GET
@@ -623,6 +649,8 @@ public class RecommenderMain extends Service {
 	 * Remove item
 	 * Remove a item from the system.
 	 * 
+	 * @param itemIdStr Item identifier given as path parameter.
+	 * 
 	 * @return HTTP status code 200 for success and status code 500 for failure.
 	 */
 	@DELETE
@@ -690,6 +718,8 @@ public class RecommenderMain extends Service {
 	 * Retrieve ratings
 	 * Retrieves all ratings of an item.
 	 * 
+	 * @param itemIdStr Item identifier given as path parameter.
+	 * 
 	 * @return All ratings of the item.
 	 */
 	@GET
@@ -727,6 +757,8 @@ public class RecommenderMain extends Service {
 	/**
 	 * Retrieve taggings
 	 * Retrieves all taggings of an item.
+	 * 
+	 * @param itemIdStr Item identifier given as path parameter.
 	 * 
 	 * @return All taggings of the item.
 	 */
@@ -770,6 +802,35 @@ public class RecommenderMain extends Service {
 	/**
 	 * Run recommender
 	 * Run the recommender algorithm and compute rating predictions.
+	 * 
+	 * @param recAlgo Recommender algorithm
+	 * @param cdAlgo Community detection algorithm
+	 * @param cdWtSteps Steps parameter for Walktrap community detection algorithm
+	 * @param graphMethod Method to use for graph construction
+	 * @param graphKnnK Number of neighbors for k-nearest neighbor graph construction
+	 * @param graphKnnSim Similarity measure to use for k-nearest neighbor graph construction
+	 * @param recFactors Factor size for matrix factorization
+	 * @param recIters Number of iterations for iterative learning
+	 * @param recLearnRate Learning rate gamma for iterative learning
+	 * @param recLearnRateN Learning rate gamma (neighborhood) for iterative learning
+	 * @param recLearnRateF Learning rate gamma (factors) for iterative learning
+	 * @param recLearnRateC Learning rate gamma (community baseline) for iterative learning
+	 * @param recLearnRateCN Learning rate gamma (community neighborhood) for iterative learning
+	 * @param recLearnRateCF Learning rate gamma (community factors) for iterative learning
+	 * @param recLearnRateMu Learning rate gamma (mu/phi/psi parameters) for iterative learning for time-aware models
+	 * @param recLambda Regularization factor lambda for iterative learning
+	 * @param recLambdaB Regularization factor lambda (baseline) for iterative learning
+	 * @param recLambdaN Regularization factor lambda (neighborhood) for iterative learning
+	 * @param recLambdaF Regularization factor lambda (factors) for iterative learning
+	 * @param recLambdaC Regularization factor lambda (community baseline) for iterative learning
+	 * @param recLambdaCN Regularization factor lambda (community neighborhood) for iterative learning
+	 * @param recLambdaCF Regularization factor lambda (community factors) for iterative learning
+	 * @param recBeta Parameter beta for time-aware recommendation models
+	 * @param recBins Number of time bins for time-aware recommendation models
+	 * @param recTcnsvdCBins Number of time bins for community detection, i.e. to capture community drift
+	 * @param recWrmfAlpha Alpha parameter for WRMF algorithm
+	 * @param recKnnSim Similarity measure to use for k-nearest neighbor recommendation algorithm
+	 * @param recKnnK Number of neighbors for k-nearest neighbor recommendation algorithm
 	 * 
 	 * @return HTTP response with status code 200 if the algorithm was successfully run and 500 for failure.
 	 */

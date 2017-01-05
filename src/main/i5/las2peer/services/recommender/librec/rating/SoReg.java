@@ -63,6 +63,9 @@ public class SoReg extends SocialRecommender {
 
 	/**
 	 * compute similarity between users u and v
+	 * @param u user u
+	 * @param v user v
+	 * @return similarity
 	 */
 	protected double similarity(Integer u, Integer v) {
 		if (userCorrs.contains(u, v))

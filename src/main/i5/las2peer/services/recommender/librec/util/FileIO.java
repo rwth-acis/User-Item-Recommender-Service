@@ -141,7 +141,7 @@ public class FileIO {
 
 	/**
 	 * Get resource path, supporting file and url io path
-	 * 
+	 * @param filePath file path
 	 * @return path to the file
 	 */
 	public static String getResource(String filePath) {
@@ -196,7 +196,7 @@ public class FileIO {
 	/**
 	 * Make directory path: make sure the path is ended with file separator
 	 * 
-	 * @param dirPath
+	 * @param dirPath directory path
 	 * @return corrected directory path with file separator in the end
 	 */
 	public static String makeDirPath(String dirPath) {
@@ -218,9 +218,8 @@ public class FileIO {
 	/**
 	 * make directory path using the names of directories
 	 * 
-	 * @param dirs
-	 * @return
-	 * @throws Exception
+	 * @param dirs directory names
+	 * @return string containing directory path
 	 */
 	public static String makeDirPath(String... dirs) {
 		String dirPath = "";
@@ -233,7 +232,7 @@ public class FileIO {
 	/**
 	 * Make directory if it does not exist
 	 * 
-	 * @param dirPath
+	 * @param dirPath directory path
 	 * @return Directory path with file separator in the end
 	 */
 	public static String makeDirectory(String dirPath) {
@@ -247,7 +246,7 @@ public class FileIO {
 	/**
 	 * Construct directory and return directory path
 	 * 
-	 * @param dirs
+	 * @param dirs directories
 	 * @return constructed directory path
 	 */
 	public static String makeDirectory(String... dirs) {
@@ -262,7 +261,7 @@ public class FileIO {
 	 *            : the name of file to be written
 	 * @param content
 	 *            : the content of a string to be written
-	 * @throws Exception
+	 * @throws Exception on file I/O Errors
 	 */
 	public static void writeString(String filePath, String content) throws Exception {
 		writeString(filePath, content, false);
@@ -289,11 +288,8 @@ public class FileIO {
 		writeList(filePath, objs, null, false);
 	}
 
-	/**
+	/*
 	 * Write contents in Collection<T> to a file with the help of a writer helper
-	 * 
-	 * @param <T>
-	 *            type of Objects in the collection
 	 * 
 	 */
 	public static <T> void writeList(String filePath, Collection<T> ts, Converter<T, String> lw, boolean append)
@@ -344,7 +340,7 @@ public class FileIO {
 	 * @param keywords
 	 *            the keywords of lines to be read
 	 * @return the content of a file as string
-	 * @throws Exception
+	 * @throws Exception on file I/O errors
 	 */
 	public static String readAsString(String filePath, String... keywords) throws Exception {
 		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(filePath), "UTF-8"));
@@ -371,10 +367,10 @@ public class FileIO {
 	 * 1. Note that line numbers must be ordered from min to max; hence before invoke this method, use ordering method
 	 * first
 	 * 
-	 * @param filePath
-	 * @param lines
-	 * @return
-	 * @throws Exception
+	 * @param filePath file path
+	 * @param lines lines to read
+	 * @return line content
+	 * @throws Exception on file I/O errors
 	 */
 	public static String readAsString(String filePath, int... lines) throws Exception {
 		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(filePath), "UTF-8"));
@@ -404,20 +400,20 @@ public class FileIO {
 	}
 
 	/**
-	 * Read the content of a file and return it as a List<String>
+	 * Read the content of a file and return it as a {@code List<String>}
 	 * 
 	 * @param filePath
 	 *            : the file to be read
-	 * @return the content of a file in java.util.List<String>
-	 * @throws Exception
+	 * @return the content of a file in {@code java.util.List<String>}
+	 * @throws Exception on file I/O errors
+	 * @throws FileNotFoundException on file I/O errors
 	 */
 	public static List<String> readAsList(String filePath) throws FileNotFoundException, Exception {
 		return readAsList(filePath, null);
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <T> List<T> readAsList(String filePath, Converter<String, T> rh) throws FileNotFoundException,
-			Exception {
+	public static <T> List<T> readAsList(String filePath, Converter<String, T> rh) throws Exception {
 		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(filePath), "UTF-8"));
 		List<T> contents = new ArrayList<>();
 		T t = null;
@@ -492,22 +488,23 @@ public class FileIO {
 	}
 
 	/**
-	 * read a map in the form of Map<Integer, Double>
+	 * read a map in the form of {@code Map<Integer, Double>}
 	 * 
-	 * @param filePath
-	 * @return Map<Integer, Double>
-	 * @throws Exception
+	 * @param filePath file path
+	 * @return {@code Map<Integer, Double>}
+	 * @throws Exception on file I/O errors
 	 */
 	public static Map<String, Double> readAsIDMap(String filePath) throws Exception {
 		return readAsIDMap(filePath, ",");
 	}
 
 	/**
-	 * read a map in the form of Map<Integer, Double>
+	 * read a map in the form of {@code Map<Integer, Double>}
 	 * 
-	 * @param filePath
-	 * @return Map<Integer, Double>
-	 * @throws Exception
+	 * @param filePath file path
+	 * @param sep separator
+	 * @return {@code Map<Integer, Double>}
+	 * @throws Exception on file I/O errors
 	 */
 	public static Map<String, Double> readAsIDMap(String filePath, String sep) throws Exception {
 		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(filePath), "UTF-8"));
@@ -550,7 +547,7 @@ public class FileIO {
 	 *            the old string needed to be replaced, supporting regular expression
 	 * @param replacement
 	 *            the new string used to replace old string
-	 * @throws Exception
+	 * @throws Exception on file I/O errors
 	 */
 	public static void renameFiles(String dirPath, String regex, String replacement) throws Exception {
 		File dir = new File(dirPath);
@@ -578,6 +575,9 @@ public class FileIO {
 
 	/**
 	 * fast file copy
+	 * @param source source file
+	 * @param target target file
+	 * @throws Exception on file I/O errors
 	 */
 	public static void copyFile(File source, File target) throws Exception {
 
@@ -668,7 +668,7 @@ public class FileIO {
 		}
 	}
 
-	/**
+	/*
 	 * empty a file content
 	 */
 	public static void empty(String filePath) throws Exception {
@@ -678,7 +678,7 @@ public class FileIO {
 		file.createNewFile();
 	}
 
-	/**
+	/*
 	 * check whether a file exists
 	 */
 	public static boolean exist(String filePath) {
@@ -707,7 +707,7 @@ public class FileIO {
 	 *            a given folder: must be all files (not sub-folders)
 	 * @param filePath
 	 *            zipped file
-	 * @throws Exception
+	 * @throws Exception on file I/O errors
 	 */
 	public static void zipFolder(String dirPath, String filePath) throws Exception {
 		File outFile = new File(filePath);

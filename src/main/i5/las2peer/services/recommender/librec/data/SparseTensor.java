@@ -221,6 +221,7 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 	 *            value to add
 	 * @param keys
 	 *            n-dimensional keys
+	 * @throws Exception on dimension mismatches
 	 */
 	public void add(double val, int... keys) throws Exception {
 
@@ -242,6 +243,7 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 	 *            value to set
 	 * @param keys
 	 *            n-dimensional keys
+	 * @throws Exception on dimension mismatches
 	 */
 	public void set(double val, int... keys) throws Exception {
 		int index = findIndex(keys);
@@ -267,7 +269,7 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 
 	}
 
-	/**
+	/*
 	 * remove an entry with specific keys. NOTE: it is not recommended to remove by entry index because the index may be
 	 * changed after operations are executed, especially operation as addiction, remove, etc.
 	 */
@@ -290,8 +292,8 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 		return true;
 	}
 
-	/**
-	 * @return all entries for a (user, item) pair
+	/*
+	 * return all entries for a (user, item) pair
 	 */
 	public List<Integer> getIndices(int user, int item) {
 		List<Integer> res = new ArrayList<>();
@@ -306,7 +308,7 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 		return res;
 	}
 
-	/**
+	/*
 	 * find the inner index of a given keys
 	 */
 	private int findIndex(int... keys) throws Exception {
@@ -410,13 +412,14 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 	 * @param keys
 	 *            keys to check
 	 * @return true if found, and false otherwise
-	 */
+ 	 * @throws Exception on dimension mismatches
+ 	 */
 	public boolean contains(int... keys) throws Exception {
 		return findIndex(keys) >= 0 ? true : false;
 	}
 
-	/**
-	 * @return whether a dimension d is indexed
+	/*
+	 * return whether a dimension d is indexed
 	 */
 	public boolean isIndexed(int d) {
 		return indexedDimensions.contains(d);
@@ -454,8 +457,8 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 		return true;
 	}
 
-	/**
-	 * @return a value given a specific i-entry
+	/*
+	 * return a value given a specific i-entry
 	 */
 	public double get(int... keys) throws Exception {
 		assert keys.length == this.numDimensions;
@@ -526,8 +529,8 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 		}
 	}
 
-	/**
-	 * @return indices (positions) of a key in dimension d
+	/*
+	 * return indices (positions) of a key in dimension d
 	 */
 	public Collection<Integer> getIndex(int d, int key) {
 		if (!isIndexed(d))
@@ -536,8 +539,8 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 		return keyIndices[d].get(key);
 	}
 
-	/**
-	 * @return keys in a given index
+	/*
+	 * return keys in a given index
 	 */
 	public int[] keys(int index) {
 		int[] res = new int[numDimensions];
@@ -548,15 +551,15 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 		return res;
 	}
 
-	/**
-	 * @return key in the position {@code index} of dimension {@code d}
+	/*
+	 * return key in the position {@code index} of dimension {@code d}
 	 */
 	public int key(int d, int index) {
 		return ndKeys[d].get(index);
 	}
 
-	/**
-	 * @return value in a given index
+	/*
+	 * return value in a given index
 	 */
 	public double value(int index) {
 		return values.get(index);
@@ -730,6 +733,7 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 	 * @param dim
 	 *            mode/dimension of the tensor to be used
 	 * @return a new tensor in (I1 x I2 x ... x In-1 x J x In+1 x ... x IN)
+	 * @throws Exception on dimension mismatches
 	 */
 	public SparseTensor modeProduct(DenseMatrix mat, int dim) throws Exception {
 
@@ -769,6 +773,7 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 	 * @param dim
 	 *            mode/dimension of the tensor to be used
 	 * @return a new tensor in (I1 x I2 x ... x In-1 x 1 x In+1 x ... x IN)
+	 * @throws Exception on dimension mismatches
 	 */
 	public SparseTensor modeProduct(DenseVector vec, int dim) throws Exception {
 
@@ -802,10 +807,6 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 	 * retrieve a rating matrix from the tensor. Warning: it assumes there is at most one entry for each (user, item)
 	 * pair.
 	 * 
-	 * @param userDim
-	 *            dimension of users
-	 * @param itemDim
-	 *            dimension of items
 	 * @return a sparse rating matrix
 	 */
 	public SparseMatrix rateMatrix() {
@@ -842,8 +843,8 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 		return Math.sqrt(res);
 	}
 
-	/**
-	 * @return inner product with another tensor
+	/*
+	 * return inner product with another tensor
 	 */
 	public double innerProduct(SparseTensor st) throws Exception {
 		if (!isDimMatch(st))
@@ -860,8 +861,8 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 		return res;
 	}
 
-	/**
-	 * @return whether two sparse tensors have the same dimensions
+	/*
+	 * return whether two sparse tensors have the same dimensions
 	 */
 	public boolean isDimMatch(SparseTensor st) {
 		if (numDimensions != st.numDimensions)
@@ -919,7 +920,7 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 		return sb.toString();
 	}
 
-	/**
+	/*
 	 * Usage demonstration
 	 */
 	public static void main(String[] args) throws Exception {

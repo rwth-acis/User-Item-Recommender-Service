@@ -448,13 +448,13 @@ public class Cover {
 		return matrix;
 	}
 	
-	/**
-	 * Filters the cover membership matrix by removing insignificant membership values.
-	 * The cover is then normalized and empty communities are removed. All metric results
-	 * besides the execution time are removed as well.
-	 * @param threshold A threshold value, all entries below the threshold will be set to 0, unless they are the maximum 
-	 * belonging factor of the node.
-	 */
+//	/**
+//	 * Filters the cover membership matrix by removing insignificant membership values.
+//	 * The cover is then normalized and empty communities are removed. All metric results
+//	 * besides the execution time are removed as well.
+//	 * @param threshold A threshold value, all entries below the threshold will be set to 0, unless they are the maximum 
+//	 * belonging factor of the node.
+//	 */
 //	public void filterMembershipsbyThreshold(double threshold) {
 //		Matrix memberships = this.getMemberships();
 //		for(int i=0; i<memberships.rows(); i++) {
@@ -497,12 +497,12 @@ public class Cover {
 		return communities.get(communityIndex).getSize();
 	}
 	
-	/**
-	 * Filters a matrix row by setting all entries which are lower than a threshold value and the row's max entry to zero.
-	 * @param matrix The matrix.
-	 * @param rowIndex The index of the row to filter.
-	 * @param threshold The threshold.
-	 */
+//	/**
+//	 * Filters a matrix row by setting all entries which are lower than a threshold value and the row's max entry to zero.
+//	 * @param matrix The matrix.
+//	 * @param rowIndex The index of the row to filter.
+//	 * @param threshold The threshold.
+//	 */
 //	protected void setRowEntriesBelowThresholdToZero(Matrix matrix, int rowIndex, double threshold) {
 //		Vector row = matrix.getRow(rowIndex);
 //		double rowThreshold = Math.min(row.fold(Vectors.mkMaxAccumulator()), threshold);

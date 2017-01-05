@@ -34,12 +34,10 @@ import i5.las2peer.services.recommender.librec.util.Randoms;
 /**
  * Neil Hurley, <strong>Personalised ranking with diversity</strong>, RecSys 2013.
  * 
- * <p>
  * Related Work:
  * <ul>
  * <li>Jahrer and Toscher, Collaborative Filtering Ensemble for Ranking, JMLR, 2012 (KDD Cup 2011 Track 2).</li>
  * </ul>
- * </p>
  * 
  * @author guoguibing
  * 

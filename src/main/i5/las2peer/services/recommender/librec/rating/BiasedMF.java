@@ -25,7 +25,7 @@ import i5.las2peer.services.recommender.librec.data.SparseMatrix;
 import i5.las2peer.services.recommender.librec.intf.IterativeRecommender;
 
 /**
- * Biased Matrix Factorization Models. <br/>
+ * Biased Matrix Factorization Models. <br>
  * 
  * NOTE: To have more control on learning, you can add additional regularation parameters to user/item biases. For
  * simplicity, we do not do this.

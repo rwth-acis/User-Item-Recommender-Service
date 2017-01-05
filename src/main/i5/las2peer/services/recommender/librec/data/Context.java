@@ -20,11 +20,10 @@ package i5.las2peer.services.recommender.librec.data;
 /**
  * Interface for contextual information.
  * 
- * <p>
- * Context information will be stored in the contextTable <UserId, ItemId, Context>, corresponding to dataTable <UserId,
- * ItemId, Rating>. If only user context is used, contextTable is reduced to <UserId, -1, UserContext>; If only item
- * context is used, contextTable is reduced to <-1, ItemId, ItemContext>. In this way, machine memory can be saved.
- * </p>
+ * Context information will be stored in the contextTable UserId,ItemId,Context, corresponding to
+ * dataTable UserId,ItemId,Rating. If only user context is used, contextTable is reduced to UserId,-1,UserContext;
+ * If only item context is used, contextTable is reduced to -1,ItemId,ItemContext. In this way, machine memory
+ * can be saved.
  * 
  * @author guoguibing
  * 

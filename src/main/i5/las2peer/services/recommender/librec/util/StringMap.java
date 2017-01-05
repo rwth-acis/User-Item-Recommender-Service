@@ -19,7 +19,7 @@
 package i5.las2peer.services.recommender.librec.util;
 
 /**
- * Abstract class that uses <string, string> as <key, value> parameter-value map
+ * Abstract class that uses {@code <string,string>} as {@code <key, value>} parameter-value map
  * 
  * @author Guo Guibing
  *

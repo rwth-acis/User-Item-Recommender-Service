@@ -23,6 +23,7 @@ import java.util.List;
 import i5.las2peer.services.recommender.librec.data.DenseMatrix;
 import i5.las2peer.services.recommender.librec.data.MatrixEntry;
 import i5.las2peer.services.recommender.librec.data.SparseMatrix;
+import i5.las2peer.services.recommender.librec.util.Logs;
 
 /**
  * Yehuda Koren, <strong>Factorization Meets the Neighborhood: a Multifaceted Collaborative Filtering Model.</strong>,
@@ -127,6 +128,7 @@ public class SVDPlusPlus extends BiasedMF {
 
 	@Override
 	protected double predict(int u, int j) throws Exception {
+		Logs.info("numUsers={}, numItems={}, u={}, j={}", numUsers, numItems, u, j);
 		double pred = globalMean + userBias.get(u) + itemBias.get(j) + DenseMatrix.rowMult(P, u, Q, j);
 
 		List<Integer> items = userItemsCache.get(u);

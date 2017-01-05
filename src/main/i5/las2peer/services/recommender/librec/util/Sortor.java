@@ -33,7 +33,7 @@ import java.util.List;
  * 
  */
 public class Sortor {
-	/**
+	/*
 	 * refers to: http://en.wikipedia.org/wiki/Insertion_sort
 	 * 
 	 * <p>
@@ -59,7 +59,7 @@ public class Sortor {
 
 	}
 
-	/**
+	/*
 	 * refers to: http://en.wikipedia.org/wiki/Selection_sort
 	 * 
 	 */
@@ -83,7 +83,7 @@ public class Sortor {
 
 	}
 
-	/**
+	/*
 	 * a.k.a <em>sinking sort</em>, refers to:
 	 * http://en.wikipedia.org/wiki/Bubble_sort
 	 * 
@@ -123,7 +123,7 @@ public class Sortor {
 
 	}
 
-	/**
+	/*
 	 * refers to: http://en.wikipedia.org/wiki/Shell_sort
 	 * 
 	 * <p>
@@ -153,7 +153,7 @@ public class Sortor {
 
 	}
 
-	/**
+	/*
 	 * refers to: http://en.wikipedia.org/wiki/Comb_sort
 	 * 
 	 * <p>
@@ -221,7 +221,7 @@ public class Sortor {
 
 	}
 
-	/**
+	/*
 	 * refers to: http://en.wikipedia.org/wiki/Merge_sort
 	 * 
 	 */

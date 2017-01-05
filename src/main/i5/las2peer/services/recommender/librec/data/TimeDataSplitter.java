@@ -45,7 +45,9 @@ public class TimeDataSplitter {
 	 * Construct a data splitter to split a given matrix into kfolds
 	 * 
 	 * @param rateMatrix
-	 *            data matrix
+	 *            matrix containing the ratings 
+	 * @param timeMatrix
+	 *            matrix containing the timestamps of the ratings 
 	 * @param kfold
 	 *            number of folds to split the data into
 	 * @param trainRatio
@@ -64,7 +66,9 @@ public class TimeDataSplitter {
 	 * Construct a data splitter with data source of a given rate matrix
 	 * 
 	 * @param rateMatrix
-	 *            data source
+	 *            matrix containing the ratings 
+	 * @param timeMatrix
+	 *            matrix containing the timestamps of the ratings 
 	 */
 	public TimeDataSplitter(SparseMatrix rateMatrix, SparseMatrix timeMatrix) {
 		this.rateMatrix = rateMatrix;

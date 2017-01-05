@@ -40,7 +40,6 @@ import i5.las2peer.services.recommender.librec.util.Strings;
 /**
  * Xia Ning and George Karypis, <strong>SLIM: Sparse Linear Methods for Top-N Recommender Systems</strong>, ICDM 2011. <br>
  * 
- * <p>
  * Related Work:
  * <ul>
  * <li>Levy and Jack, Efficient Top-N Recommendation by Linear Regression, ISRS 2013. This paper reports experimental
@@ -48,7 +47,6 @@ import i5.las2peer.services.recommender.librec.util.Strings;
  * <li>Friedman et al., Regularization Paths for Generalized Linear Models via Coordinate Descent, Journal of
  * Statistical Software, 2010.</li>
  * </ul>
- * </p>
  * 
  * @author guoguibing
  * 
@@ -180,8 +178,8 @@ public class SLIM extends IterativeRecommender {
 		}
 	}
 
-	/**
-	 * @return a prediction without the contribution of excludede_item
+	/*
+	 * return a prediction without the contribution of excludede_item
 	 */
 	protected double predict(int u, int j, int excluded_item) throws Exception {
 

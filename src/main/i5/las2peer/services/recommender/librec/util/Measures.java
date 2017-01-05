@@ -32,12 +32,11 @@ public class Measures {
 
 	/**
 	 * Compute the average precision (AP) of a list of ranked items
-	 * 
-	 * @param <T>
-	 * 
+	 *
+	 * @param <T> item type
 	 * @param rankedList
 	 *            a list of ranked item IDs, the highest-ranking item first
-	 * @param groudTruth
+	 * @param groundTruth
 	 *            a collection of positive/correct item IDs
 	 * @return the AP for the given list
 	 */
@@ -63,7 +62,7 @@ public class Measures {
 	/**
 	 * Compute the precision at N of a list of ranked items at several N
 	 * 
-	 * @param <T>
+	 * @param <T> item type
 	 * 
 	 * @param rankedList
 	 *            a list of ranked item IDs, the highest-ranking item first
@@ -85,7 +84,7 @@ public class Measures {
 	/**
 	 * Compute the precision at N of a list of ranked items
 	 * 
-	 * @param <T>
+	 * @param <T> item type
 	 * 
 	 * @param rankedList
 	 *            a list of ranked item IDs, the highest-ranking item first
@@ -102,7 +101,7 @@ public class Measures {
 	/**
 	 * Compute the precision at N of a list of ranked items at several N
 	 * 
-	 * @param <T>
+	 * @param <T> item type
 	 * 
 	 * @param rankedList
 	 *            a list of ranked item IDs, the highest-ranking item first
@@ -124,7 +123,7 @@ public class Measures {
 	/**
 	 * Compute the precision at N of a list of ranked items
 	 * 
-	 * @param <T>
+	 * @param <T> item type
 	 * 
 	 * @param rankedList
 	 *            a list of ranked item IDs, the highest-ranking item first
@@ -141,7 +140,7 @@ public class Measures {
 	/**
 	 * Compute the number of hits until position N of a list of ranked items
 	 * 
-	 * @param <T>
+	 * @param <T> item type
 	 * 
 	 * @param rankedList
 	 *            a list of ranked item IDs, the highest-ranking item first
@@ -172,7 +171,7 @@ public class Measures {
 	/**
 	 * Compute the normalized cumulative gain (NDCG) of a list of ranked items
 	 * 
-	 * @param <T>
+	 * @param <T> item type
 	 * 
 	 * @param rankedList
 	 *            a list of ranked item IDs, the highest-ranking item first
@@ -215,13 +214,12 @@ public class Measures {
 	/**
 	 * Compute the reciprocal rank of a list of ranked items
 	 * 
-	 * @param <T>
-	 * 
+	 * @param <T> item type
 	 * @param rankedList
 	 *            a list of ranked item IDs, the highest-ranking item first
 	 * @param groundTruth
 	 *            a collection of positive/correct item IDs
-	 * @return the mean reciprocal rank for the given data<
+	 * @return the mean reciprocal rank for the given data
 	 */
 	public static <T> double RR(List<T> rankedList, List<T> groundTruth) {
 
@@ -238,8 +236,7 @@ public class Measures {
 	/**
 	 * Compute the area under the ROC curve (AUC) of a list of ranked items
 	 * 
-	 * @param <T>
-	 * 
+	 * @param <T> item type
 	 * @param rankedList
 	 *            a list of ranked item IDs, the highest-ranking item first
 	 * @param groundTruth
@@ -248,7 +245,6 @@ public class Measures {
 	 *            the number of relevant items that were not ranked (considered
 	 *            to be ranked below all ranked_items)
 	 * @return the AUC for the given data
-	 * @throws Exception
 	 */
 	public static <T> double AUC(List<T> rankedList, List<T> groundTruth, int num_dropped_items) {
 

@@ -195,6 +195,8 @@ public abstract class Recommender implements Runnable {
 	 *            train matrix
 	 * @param testMatrix
 	 *            test matrix
+	 * @param fold
+	 *            fold number
 	 */
 	public Recommender(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 
@@ -312,7 +314,7 @@ public abstract class Recommender implements Runnable {
 		}
 	}
 
-	/**
+	/*
 	 * execution method of a recommender
 	 * 
 	 */
@@ -422,14 +424,14 @@ public abstract class Recommender implements Runnable {
 		}
 	}
 
-	/**
+	/*
 	 * validate model with held-out validation data
 	 */
 	protected void validateModel() {
 	}
 
-	/**
-	 * @return the evaluation information of a recommend
+	/*
+	 * return the evaluation information of a recommend
 	 */
 	public static String getEvalInfo(Map<Measure, Double> measures) {
 		String evalInfo = null;
@@ -460,8 +462,8 @@ public abstract class Recommender implements Runnable {
 		return evalInfo;
 	}
 
-	/**
-	 * @return the evaluation information of a recommend
+	/*
+	 * return the evaluation information of a recommend
 	 */
 	public static String getRatingEvalInfo(Map<Measure, Double> measures) {
 		String evalInfo = String.format("[MAE,RMSE,NMAE,rMAE,rRMSE,MPE] = [%.6f,%.6f,%.6f,%.6f,%.6f,%.6f]",
@@ -471,8 +473,8 @@ public abstract class Recommender implements Runnable {
 		return evalInfo;
 	}
 
-	/**
-	 * @return the evaluation information of a recommend
+	/*
+	 * return the evaluation information of a recommend
 	 */
 	public static String getRankingEvalInfo(Map<Measure, Double> measures) {
 		String evalInfo = String.format("[Pre5,Pre10,Rec5,Rec10,AUC,MAP,NDCG,MRR,D5,D10] = "
@@ -485,7 +487,7 @@ public abstract class Recommender implements Runnable {
 		return evalInfo;
 	}
 
-	/**
+	/*
 	 * initialize recommender model
 	 */
 	protected void initModel() throws Exception {
@@ -601,7 +603,7 @@ public abstract class Recommender implements Runnable {
 		return sim;
 	}
 
-	/**
+	/*
 	 * Learning method: override this method to build a model, for a model-based method. Default implementation is
 	 * useful for memory-based methods.
 	 * 
@@ -609,25 +611,25 @@ public abstract class Recommender implements Runnable {
 	protected void buildModel() throws Exception {
 	}
 
-	/**
+	/*
 	 * After learning model: release some intermediate data to avoid memory leak
 	 */
 	protected void postModel() throws Exception {
 	}
 
-	/**
+	/*
 	 * Serializing a learned model (i.e., variable data) to files.
 	 */
 	protected void saveModel() throws Exception {
 	}
 
-	/**
+	/*
 	 * Deserializing a learned model (i.e., variable data) from files.
 	 */
 	protected void loadModel() throws Exception {
 	}
 
-	/**
+	/*
 	 * determine whether the rating of a user-item (u, j) is used to predicted
 	 * 
 	 */
@@ -641,8 +643,8 @@ public abstract class Recommender implements Runnable {
 		}
 	}
 
-	/**
-	 * @return the evaluation results of rating and ranking predictions
+	/*
+	 * return the evaluation results of rating and ranking predictions
 	 */
 	protected Map<Measure, Double> evalAll() throws Exception {
 		Map<Measure, Double> ratingsMeasures = evalRatings();
@@ -655,8 +657,8 @@ public abstract class Recommender implements Runnable {
 		return allMeasures;
 	}
 	
-	/**
-	 * @return the evaluation results of rating predictions
+	/*
+	 * return the evaluation results of rating predictions
 	 */
 	protected Map<Measure, Double> evalRatings() throws Exception {
 
@@ -748,8 +750,8 @@ public abstract class Recommender implements Runnable {
 		return measures;
 	}
 
-	/**
-	 * @return the evaluation results of ranking predictions
+	/*
+	 * return the evaluation results of ranking predictions
 	 */
 	protected Map<Measure, Double> evalRankings() throws Exception {
 
@@ -946,6 +948,7 @@ public abstract class Recommender implements Runnable {
 	 * @param bound
 	 *            whether to bound the prediction
 	 * @return prediction
+	 * @throws Exception depending on the implementing class
 	 */
 	protected double predict(int u, int j, boolean bound) throws Exception {
 		double pred = predict(u, j);
@@ -969,6 +972,7 @@ public abstract class Recommender implements Runnable {
 	 * @param j
 	 *            item id
 	 * @return raw prediction without bounded
+	 * @throws Exception depending on the implementing class
 	 */
 	protected double predict(int u, int j) throws Exception {
 		return globalMean;
@@ -987,6 +991,7 @@ public abstract class Recommender implements Runnable {
 	 * @param j
 	 *            item id
 	 * @return a ranking score for user u on item j
+	 * @throws Exception depending on the implementing class
 	 */
 	protected double ranking(int u, int j) throws Exception {
 		return predict(u, j, false);
@@ -998,8 +1003,6 @@ public abstract class Recommender implements Runnable {
 	 *            the list of ranked items to be recommended
 	 * @param cutoff
 	 *            cutoff in the list
-	 * @param corrs
-	 *            correlations between items
 	 * @return diversity at a specific cutoff position
 	 */
 	protected double diverseAt(List<Integer> rankedItems, int cutoff) {
@@ -1031,20 +1034,20 @@ public abstract class Recommender implements Runnable {
 		return 0.5 * (sum / num);
 	}
 
-	/**
+	/*
 	 * Below are a set of mathematical functions. As many recommenders often adopts them, for conveniency's sake, we put
 	 * these functions in the base Recommender class, though they belong to Math class.
 	 * 
 	 */
 
-	/**
+	/*
 	 * logistic function g(x)
 	 */
 	protected double g(double x) {
 		return 1.0 / (1 + Math.exp(-x));
 	}
 
-	/**
+	/*
 	 * gradient value of logistic function g(x)
 	 */
 	protected double gd(double x) {
@@ -1065,7 +1068,7 @@ public abstract class Recommender implements Runnable {
 		return Math.exp(-0.5 * Math.pow(x - mu, 2) / (sigma * sigma));
 	}
 
-	/**
+	/*
 	 * normalize a rating to the region (0, 1)
 	 */
 	protected double normalize(double rate) {
@@ -1083,7 +1086,7 @@ public abstract class Recommender implements Runnable {
 		}
 	}
 
-	/**
+	/*
 	 * 
 	 * denormalize a prediction to the region (minRate, maxRate)
 	 */
@@ -1091,7 +1094,7 @@ public abstract class Recommender implements Runnable {
 		return minRate + pred * (maxRate - minRate);
 	}
 
-	/**
+	/*
 	 * useful to print out specific recommender's settings
 	 */
 	@Override
@@ -1099,7 +1102,7 @@ public abstract class Recommender implements Runnable {
 		return "";
 	}
 
-	/**
+	/*
 	 * Set a user-specific name of an algorithm
 	 * 
 	 */

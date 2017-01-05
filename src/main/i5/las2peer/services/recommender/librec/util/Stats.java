@@ -32,6 +32,7 @@ import java.util.Map;
 public class Stats {
  
 	/**
+	 * @param data sample data
 	 * @return mean value of a sample
 	 */
 	public static double mean(Collection<? extends Number> data) {
@@ -48,6 +49,8 @@ public class Stats {
 	}
 
 	/**
+	 * @param a number 1
+	 * @param b number 2
 	 * @return harmonic mean
 	 */
 	public static double hMean(double a, double b) {
@@ -62,6 +65,7 @@ public class Stats {
 	 * Notes: the sample mean and population mean is estimated in the same way.
 	 * </p>
 	 * 
+	 * @param data sample data
 	 * @return mean value of a sample
 	 */
 	public static double mean(double[] data) {
@@ -112,6 +116,8 @@ public class Stats {
 	}
 
 	/**
+	 * @param data data
+	 * @param weights data weights
 	 * @return weighted average value of {@code data} and {@code weights}
 	 */
 	public static double average(List<Double> data, List<Double> weights) {
@@ -131,7 +137,8 @@ public class Stats {
 	/**
 	 * Calculate the median value of an array,
 	 * <em>Note that the values of doulbe.NaN will be ignored silently.</em>
-	 * 
+	 * @param data data
+	 * @return median
 	 */
 	public static double median(double[] data) {
 		double median = 0.0;
@@ -153,7 +160,7 @@ public class Stats {
 		return median;
 	}
 
-	/**
+	/*
 	 * Calculate the median value of a data collection,
 	 * <em>Note that the values of doulbe.NaN will be ignored silently��</em>
 	 * 
@@ -162,7 +169,7 @@ public class Stats {
 		return median(Lists.toArray(data));
 	}
 
-	/**
+	/*
 	 * Calculate a sample's variance
 	 * 
 	 */
@@ -170,7 +177,7 @@ public class Stats {
 		return var(data, mean(data));
 	}
 
-	/**
+	/*
 	 * Calculate a sample's variance
 	 * 
 	 * <p>
@@ -191,14 +198,14 @@ public class Stats {
 		return sum / data.length;
 	}
 
-	/**
+	/*
 	 * calculate the standard deviation
 	 */
 	public static double sd(Collection<? extends Number> data) {
 		return sd(data, mean(data));
 	}
 
-	/**
+	/*
 	 * calculate the standard deviation
 	 */
 	public static double sd(Collection<? extends Number> data, double mean) {
@@ -209,14 +216,14 @@ public class Stats {
 		return Math.sqrt(sum / data.size());
 	}
 
-	/**
+	/*
 	 * calculate a sample's standard deviation
 	 */
 	public static double sd(double[] data) {
 		return sd(data, mean(data));
 	}
 
-	/**
+	/*
 	 * calculate a sample's standard deviation
 	 */
 	public static double sd(double[] data, double mean) {
@@ -246,21 +253,21 @@ public class Stats {
 		return sum;
 	}
 
-	/**
+	/*
 	 * the sum from 1 to n
 	 */
 	public static int sum(int n) {
 		return n * (n - 1) / 2;
 	}
 
-	/**
+	/*
 	 * the sum from 1^2 to n^2, with the largest value to n^3/3
 	 */
 	public static double sumSquare(int n) {
 		return n * (n + 0.5) * (n + 1) / 3;
 	}
 
-	/**
+	/*
 	 * find out the maximum element and its index of an array
 	 * 
 	 */
@@ -277,7 +284,7 @@ public class Stats {
 		return new double[] { max, index };
 	}
 
-	/**
+	/*
 	 * find out the maximum element and its index of an array
 	 * 
 	 */
@@ -294,7 +301,7 @@ public class Stats {
 		return new int[] { max, index };
 	}
 
-	/**
+	/*
 	 * find out the minimum element and its index of an array
 	 * 
 	 */
@@ -311,7 +318,7 @@ public class Stats {
 		return new int[] { min, index };
 	}
 
-	/**
+	/*
 	 * find out the minimum element and its index of an array
 	 * 
 	 */

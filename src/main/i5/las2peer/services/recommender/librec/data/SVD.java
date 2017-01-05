@@ -24,12 +24,12 @@ import i5.las2peer.services.recommender.librec.util.Maths;
  * <strong>Singular Value Decomposition: adapted from the JAMA implementations</strong><br>
  * 
  * <p>
- * For an m-by-n matrix A with m >= n, the singular value decomposition is an m-by-n orthogonal matrix U, an n-by-n
- * diagonal matrix S, and an n-by-n orthogonal matrix V so that A = U*S*V'. Note that this implementation requires m>=n.
+ * For an m-by-n matrix A with {@code m >= n}, the singular value decomposition is an m-by-n orthogonal matrix U, an n-by-n
+ * diagonal matrix S, and an n-by-n orthogonal matrix V so that {@code A = U*S*V'}. Note that this implementation requires {@code m>=n}.
  * Otherwise, you'd better use the transpose of a matrix.
  * </p>
  * <p>
- * The singular values, sigma[k] = S[k][k], are ordered so that sigma[0] >= sigma[1] >= ... >= sigma[n-1].
+ * The singular values, {@code sigma[k] = S[k][k]}, are ordered so that {@code sigma[0] >= sigma[1] >= ... >= sigma[n-1]}.
  * </p>
  */
 

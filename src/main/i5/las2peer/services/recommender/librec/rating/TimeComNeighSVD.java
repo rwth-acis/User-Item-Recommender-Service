@@ -1020,7 +1020,10 @@ public class TimeComNeighSVD extends IterativeRecommender {
 
 	/***************************************************************** Functional Methods *******************************************/
 	/**
-	 * @return the time deviation for a specific timestamp (number of days) t w.r.t the mean date tu
+	 * Return the time deviation for a specific timestamp (number of days) t w.r.t the mean date tu
+	 * @param u user
+	 * @param t time (day)
+	 * @return time deviation
 	 */
 	protected double dev(int u, int t) {
 		double tu = userMeanDate.get(u);
@@ -1032,7 +1035,13 @@ public class TimeComNeighSVD extends IterativeRecommender {
 	}
 
 	/**
-	 * @return the rating decay for user u rating item j w.r.t. timestamp (number of days) t, i.e. e^(-beta_u * |t-tj|) from eq. (16)
+	 * Return the rating decay for user u rating item j w.r.t. timestamp (number of days) t,
+	 * i.e. e^(-beta_u * |t-tj|) from eq. (16)
+	 * 
+	 * @param u user
+	 * @param j item
+	 * @param t time (day)
+	 * @return rating decay
 	 */
 	protected double decay(int u, int j, int t) {
 		int tj = days((long) timeMatrix.get(u, j), minTrainTimestamp);
@@ -1044,7 +1053,9 @@ public class TimeComNeighSVD extends IterativeRecommender {
 	}
 
 	/**
-	 * @return the bin number (starting from 0..numBins-1) for a specific day;
+	 * Return the bin number (starting from 0..numBins-1) for a specific day
+	 * @param day day
+	 * @return bin number
 	 */
 	protected int bin(int day) {
 		int bin = (int) (day / (numDays + 0.0) * numBins);
@@ -1058,7 +1069,9 @@ public class TimeComNeighSVD extends IterativeRecommender {
 	}
 
 	/**
-	 * @return the period (day of week) for a specific day;
+	 * Return the period (day of week) for a specific day
+	 * @param timestamp timestamp 
+	 * @return period
 	 */
 	protected int period(long timestamp) {
 		cal.setTimeInMillis(timestamp);
@@ -1067,14 +1080,19 @@ public class TimeComNeighSVD extends IterativeRecommender {
 	}
 
 	/**
-	 * @return number of days for a given time difference
+	 * Return the number of days for a given time difference
+	 * @param diff difference between two timestamps
+	 * @return number of days
 	 */
 	protected static int days(long diff) {
 		return (int) TimeUnit.MILLISECONDS.toDays(diff);
 	}
 
 	/**
-	 * @return number of days between two timestamps
+	 * Return the number of days between two timestamps
+	 * @param t1 first timestamp
+	 * @param t2 second timestamp
+	 * @return number of days
 	 */
 	protected static int days(long t1, long t2) {
 		return days(Math.abs(t1 - t2));
@@ -1083,7 +1101,11 @@ public class TimeComNeighSVD extends IterativeRecommender {
 	/******************************************************* Prediction Methods *****************************************************/
 	
 	/**
-	 * @return user and item bias for given user and item
+	 * Return user and item bias for given user and item
+	 * @param u user
+	 * @param j item
+	 * @param timestamp timestamp
+	 * @return bias
 	 */
 	private double buj(int u, int j, long timestamp){
 		double buj = globalMean;
@@ -1111,7 +1133,14 @@ public class TimeComNeighSVD extends IterativeRecommender {
 	}
 	
 	/**
-	 * @return user, item and community bias for given user and item
+	 * Return user, item and community bias for given user and item
+	 * @param u user
+	 * @param i item
+	 * @param timestamp timestamp
+	 * @param userStaticCommunities list of static communities that the user is a member of
+	 * @param userCommunities list of communities that the user is a member of at the time represented by the timestamp 
+	 * @param itemCommunities list of communities that the item is a member of at the time represented by the timestamp
+	 * @return bias
 	 */
 	private double bias(int u, int i, long timestamp, List<Integer> userStaticCommunities, List<Integer> userCommunities, List<Integer> itemCommunities){
 		double bias = globalMean;
@@ -1163,7 +1192,8 @@ public class TimeComNeighSVD extends IterativeRecommender {
 	/******************************************************* Community-related Methods **********************************************/
 	
 	/**
-	 * @return an array of size numCBins containing the rating matrices for each cbin (bins are numbered from 0 to numCBins-1)
+	 * Return an array of size numCBins containing the rating matrices for each cbin
+	 * @return array containing the rating matrices for each cbin (bins are numbered from 0 to numCBins-1)
 	 */
 	private SparseMatrix[] trainDataCBins() {
 		Logs.info("{}{} split training data into bins for dynamic community structure detection ...", algoName, foldInfo);
@@ -1199,7 +1229,9 @@ public class TimeComNeighSVD extends IterativeRecommender {
 	}
 
 	/**
-	 * @return a list of length numCBins containing the tagging data that falls into each cbin (bins are numbered from 0 to numCBins-1)
+	 * Return a list of length numCBins containing the tagging data that falls into each cbin
+	 * @param tagTable tagging data
+	 * @return list containing the tagging data that falls into each cbin (bins are numbered from 0 to numCBins-1)
 	 */
 	private List<Table<Integer, Integer, Set<Long>>> tagDataCBins(Table<Integer, Integer, Set<Long>> tagTable) {
 		Logs.info("{}{} split tagging data into bins for dynamic community structure detection ...", algoName, foldInfo);
@@ -1233,7 +1265,10 @@ public class TimeComNeighSVD extends IterativeRecommender {
 	}
 
 	/**
-	 * @return the time deviation for a specific timestamp (number of days) t w.r.t the community mean date tc
+	 * Return the time deviation for a specific timestamp (number of days) t w.r.t the community mean date tc
+	 * @param c community
+	 * @param t time (day)
+	 * @return time deviation
 	 */
 	protected double devc(int c, int t) {
 		double tc = communityMeanDate[0].get(c);
@@ -1245,7 +1280,9 @@ public class TimeComNeighSVD extends IterativeRecommender {
 	}
 
 	/**
-	 * @return the community bin number (numbered 1..numCBins) for a specific day t (number of days after trainMinTimestamp);
+	 * Return the community bin number for a specific day t (number of days after trainMinTimestamp);
+	 * @param day day
+	 * @return community bin number (numbered 1..numCBins)
 	 */
 	protected int cbin(int day) {
 		int cbin = (int) (day / (numDays + 0.0) * numCBins) + 1;
@@ -1262,6 +1299,7 @@ public class TimeComNeighSVD extends IterativeRecommender {
 	 * @param u user
 	 * @param j item
 	 * @param t time (day) of the rating that is to be predicted
+	 * @param cbin community time bin
 	 * @return the rating decay for user u rating item j w.r.t. timestamp (number of days) t, i.e. e^(-beta_u * |t-tj|) from eq. (16)
 	 */
 	protected double cdecay(int u, int j, int t, int cbin) {
@@ -1273,6 +1311,9 @@ public class TimeComNeighSVD extends IterativeRecommender {
 		return Math.pow(Math.E, -1.0 * Psi.get(u) * diff);
 	}
 	
+	/**
+	 * Log statistics on the user and item community structures
+	 */
 	private void logCommunityInfo() {
 		for (int cbin = 0; cbin <= numCBins; cbin++){
 			int userMemSize = userMemberships[cbin].size();

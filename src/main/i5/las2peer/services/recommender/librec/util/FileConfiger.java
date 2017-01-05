@@ -69,6 +69,7 @@ public class FileConfiger extends StringMap {
 	}
 
 	/**
+	 * @param key key
 	 * @return the file IO path: supporting windows, linux and unix
 	 */
 	public String getPath(String key) {
@@ -91,7 +92,8 @@ public class FileConfiger extends StringMap {
 
 	/**
 	 * return a set values in a specified range
-	 * 
+	 * @param key key
+	 * @return list of values
 	 */
 	public List<Float> getRange(String key) {
 
@@ -181,7 +183,9 @@ public class FileConfiger extends StringMap {
 
 	/**
 	 * return a set of float values set for a key, separated by the string "reg"
-	 * 
+	 * @param val value
+	 * @param reg separator
+	 * @return list of values
 	 */
 	public List<Float> getMultiValues(String val, String reg) {
 		List<Float> values = new ArrayList<>();

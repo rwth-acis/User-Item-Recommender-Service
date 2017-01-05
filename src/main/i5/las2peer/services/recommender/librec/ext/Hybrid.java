@@ -178,6 +178,9 @@ public class Hybrid extends Recommender {
 
 	/**
 	 * for validity purpose
+	 * @param u user
+	 * @param j item
+	 * @return ranking score 
 	 */
 	protected double ProbS(int u, int j) {
 

@@ -82,13 +82,13 @@ public class LLORMAUpdater extends Thread {
 	/**
 	 * Construct a local model for singleton LLORMA.
 	 *
-	 * @param id
+	 * @param tid
 	 *            A unique thread ID.
 	 * @param rk
 	 *            The rank which will be used in this local model.
-	 * @param u
+	 * @param uc
 	 *            The number of users.
-	 * @param i
+	 * @param ic
 	 *            The number of items.
 	 * @param au
 	 *            The anchor user used to learn this local model.
@@ -96,9 +96,15 @@ public class LLORMAUpdater extends Thread {
 	 *            The anchor item used to learn this local model.
 	 * @param lr
 	 *            Learning rate parameter.
-	 * @param w0
+	 * @param regU
+	 *            User regularization factor.
+	 * @param regI
+	 *            Item regularization factor.
+	 * @param iter
+	 *            Maximum number of iterations.
+	 * @param w
 	 *            Initial vector containing each user's weight.
-	 * @param v0
+	 * @param v
 	 *            Initial vector containing each item's weight.
 	 * @param rm
 	 *            The rating matrix used for learning.

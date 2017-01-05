@@ -154,6 +154,7 @@ public abstract class IterativeRecommender extends Recommender {
 	 *            current iteration
 	 * 
 	 * @return boolean: true if it is converged; false otherwise
+	 * @throws Exception on file I/O errors
 	 * 
 	 */
 	protected boolean isConverged(int iter) throws Exception {
@@ -217,7 +218,7 @@ public abstract class IterativeRecommender extends Recommender {
 	}
 
 	/**
-	 * Update current learning rate after each epoch <br/>
+	 * Update current learning rate after each epoch <br>
 	 * 
 	 * <ol>
 	 * <li>bold driver: Gemulla et al., Large-scale matrix factorization with distributed stochastic gradient descent,

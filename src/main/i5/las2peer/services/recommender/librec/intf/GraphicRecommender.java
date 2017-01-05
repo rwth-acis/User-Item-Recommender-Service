@@ -187,6 +187,8 @@ public class GraphicRecommender extends Recommender {
 	 * 
 	 * @param iter
 	 *            current iteration
+	 * @return true if converged
+	 * @throws Exception for compatibility with inheriting classes
 	 */
 	protected boolean isConverged(int iter) throws Exception {
 		return false;

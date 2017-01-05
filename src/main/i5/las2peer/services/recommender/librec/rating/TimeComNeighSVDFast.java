@@ -576,7 +576,9 @@ public class TimeComNeighSVDFast extends IterativeRecommender {
 
 	/***************************************************************** Functional Methods *******************************************/
 	/**
-	 * @return the bin number (starting from 0..numBins-1) for a specific day;
+	 * Return the bin number (starting from 0..numBins-1) for a specific day
+	 * @param day day
+	 * @return bin number
 	 */
 	protected int bin(int day) {
 		int bin = (int) (day / (numDays + 0.0) * numBins);
@@ -590,14 +592,19 @@ public class TimeComNeighSVDFast extends IterativeRecommender {
 	}
 
 	/**
-	 * @return number of days for a given time difference
+	 * Return the number of days for a given time difference
+	 * @param diff difference between two timestamps
+	 * @return number of days
 	 */
 	protected static int days(long diff) {
 		return (int) TimeUnit.MILLISECONDS.toDays(diff);
 	}
 
 	/**
-	 * @return number of days between two timestamps
+	 * Return the number of days between two timestamps
+	 * @param t1 first timestamp
+	 * @param t2 second timestamp
+	 * @return number of days
 	 */
 	protected static int days(long t1, long t2) {
 		return days(Math.abs(t1 - t2));
@@ -606,7 +613,11 @@ public class TimeComNeighSVDFast extends IterativeRecommender {
 	/******************************************************* Prediction Methods *****************************************************/
 	
 	/**
-	 * @return bias for given user and item
+	 * Return user and item bias for given user and item
+	 * @param u user
+	 * @param j item
+	 * @param t time (days)
+	 * @return bias
 	 */
 	private double bias(int u, int i, int t){
 		int cu = (int) userMembershipsVector.get(u);
@@ -633,7 +644,10 @@ public class TimeComNeighSVDFast extends IterativeRecommender {
 	/******************************************************* Community-related Methods **********************************************/
 	
 	/**
-	 * @return the time deviation for a specific timestamp (number of days) t w.r.t the community mean date tc
+	 * Return the time deviation for a specific timestamp (number of days) t w.r.t the community mean date tc
+	 * @param c community
+	 * @param t time (day)
+	 * @return time deviation
 	 */
 	protected double devc(int c, int t) {
 		double tc = communityMeanDate.get(c);
@@ -645,7 +659,7 @@ public class TimeComNeighSVDFast extends IterativeRecommender {
 	}
 
 	/**
-	 * @param c user community
+	 * @param cu user community
 	 * @param j item
 	 * @param t time (day) of the rating that is to be predicted
 	 * @return the rating decay for user u rating item j w.r.t. timestamp (number of days) t, i.e. e^(-beta_u * |t-tj|) from eq. (16)
@@ -659,6 +673,9 @@ public class TimeComNeighSVDFast extends IterativeRecommender {
 		return Math.pow(Math.E, -1.0 * Phi.get(cu) * diff);
 	}
 	
+	/**
+	 * Log statistics on the user and item community structures
+	 */
 	private void logCommunityInfo() {
 		int userMemSize = userMembershipsMatrix.size();
 		int itemMemSize = itemMembershipsMatrix.size();

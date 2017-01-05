@@ -72,7 +72,7 @@ public class DenseMatrix implements Serializable {
 				data[i][j] = array[i][j];
 	}
 
-	/**
+	/*
 	 * Construct a dense matrix by a shallow copy of a data array
 	 */
 	public DenseMatrix(double[][] array, int numRows, int numColumns) {
@@ -114,8 +114,8 @@ public class DenseMatrix implements Serializable {
 		return mat;
 	}
 
-	/**
-	 * Initialize a dense matrix with small Guassian values <br/>
+	/*
+	 * Initialize a dense matrix with small Guassian values <br>
 	 * 
 	 * <strong>NOTE:</strong> small initial values make it easier to train a model; otherwise a very small learning rate
 	 * may be needed (especially when the number of factors is large) which can cause bad performance.
@@ -126,7 +126,7 @@ public class DenseMatrix implements Serializable {
 				data[i][j] = Randoms.gaussian(mean, sigma);
 	}
 
-	/**
+	/*
 	 * initialize a dense matrix with small random values in (0, range)
 	 */
 	public void init(double range) {
@@ -290,8 +290,8 @@ public class DenseMatrix implements Serializable {
 		return res;
 	}
 
-	/**
-	 * @return Kronecker product of two arbitrary matrices
+	/*
+	 * return Kronecker product of two arbitrary matrices
 	 */
 	public static DenseMatrix kroneckerProduct(DenseMatrix M, DenseMatrix N) {
 		DenseMatrix res = new DenseMatrix(M.numRows * N.numRows, M.numColumns * N.numColumns);
@@ -313,8 +313,8 @@ public class DenseMatrix implements Serializable {
 		return res;
 	}
 
-	/**
-	 * @return Khatri-Rao product of two matrices
+	/*
+	 * return Khatri-Rao product of two matrices
 	 */
 	public static DenseMatrix khatriRaoProduct(DenseMatrix M, DenseMatrix N) throws Exception {
 		if (M.numColumns != N.numColumns)
@@ -336,8 +336,8 @@ public class DenseMatrix implements Serializable {
 		return res;
 	}
 
-	/**
-	 * @return Hadamard product of two matrices
+	/*
+	 * return Hadamard product of two matrices
 	 */
 	public static DenseMatrix hadamardProduct(DenseMatrix M, DenseMatrix N) throws Exception {
 		if (M.numRows != N.numRows || M.numColumns != N.numColumns)
@@ -432,6 +432,7 @@ public class DenseMatrix implements Serializable {
 	/**
 	 * Do {@code matrix x vector} between current matrix and a given vector
 	 * 
+	 * @param vec vector with which to compute the product
 	 * @return a dense vector with the results of {@code matrix x vector}
 	 */
 	public DenseVector mult(DenseVector vec) {
@@ -488,21 +489,21 @@ public class DenseMatrix implements Serializable {
 
 	}
 
-	/**
+	/*
 	 * Get the value at entry [row, column]
 	 */
 	public double get(int row, int column) {
 		return data[row][column];
 	}
 
-	/**
+	/*
 	 * Set a value to entry [row, column]
 	 */
 	public void set(int row, int column, double val) {
 		data[row][column] = val;
 	}
 
-	/**
+	/*
 	 * Set a value to all entries
 	 */
 	public void setAll(double val) {
@@ -513,8 +514,8 @@ public class DenseMatrix implements Serializable {
 		}
 	}
 
-	/**
-	 * @return the sum of data entries in a row
+	/*
+	 * return the sum of data entries in a row
 	 */
 	public double sumOfRow(int row) {
 		double res = 0;
@@ -524,8 +525,8 @@ public class DenseMatrix implements Serializable {
 		return res;
 	}
 
-	/**
-	 * @return the sum of data entries in a column
+	/*
+	 * return the sum of data entries in a column
 	 */
 	public double sumOfColumn(int col) {
 		double res = 0;
@@ -549,15 +550,15 @@ public class DenseMatrix implements Serializable {
 		return res;
 	}
 
-	/**
+	/*
 	 * Add a value to entry [row, column]
 	 */
 	public void add(int row, int column, double val) {
 		data[row][column] += val;
 	}
 
-	/**
-	 * @return a new matrix by scaling the current matrix
+	/*
+	 * return a new matrix by scaling the current matrix
 	 */
 	public DenseMatrix scale(double val) {
 		DenseMatrix mat = new DenseMatrix(numRows, numColumns);
@@ -571,6 +572,7 @@ public class DenseMatrix implements Serializable {
 	/**
 	 * Do {@code A + B} matrix operation
 	 * 
+	 * @param mat matrix to add to this matrix
 	 * @return a matrix with results of {@code C = A + B}
 	 */
 	public DenseMatrix add(DenseMatrix mat) {
@@ -589,6 +591,7 @@ public class DenseMatrix implements Serializable {
 	/**
 	 * Do {@code A + B} matrix operation
 	 * 
+	 * @param mat matrix to add to this matrix
 	 * @return a matrix with results of {@code C = A + B}
 	 */
 	public DenseMatrix add(SparseMatrix mat) {
@@ -606,6 +609,7 @@ public class DenseMatrix implements Serializable {
 	/**
 	 * Do {@code A + c} matrix operation, where {@code c} is a constant. Each entries will be added by {@code c}
 	 * 
+	 * @param val constant to add to each entry of this matrix
 	 * @return a new matrix with results of {@code C = A + c}
 	 */
 	public DenseMatrix add(double val) {
@@ -620,9 +624,10 @@ public class DenseMatrix implements Serializable {
 	}
 
 	/**
-	 * Do {@code A + B} matrix operation
+	 * Do {@code A - B} matrix operation
 	 * 
-	 * @return a matrix with results of {@code C = A + B}
+	 * @param mat matrix to subtract
+	 * @return a matrix with results of {@code C = A - B}
 	 */
 	public DenseMatrix minus(DenseMatrix mat) {
 		assert numRows == mat.numRows;
@@ -638,9 +643,10 @@ public class DenseMatrix implements Serializable {
 	}
 
 	/**
-	 * Do {@code A + B} matrix operation
+	 * Do {@code A - B} matrix operation
 	 * 
-	 * @return a matrix with results of {@code C = A + B}
+	 * @param mat matrix to subtract
+	 * @return a matrix with results of {@code C = A - B}
 	 */
 	public DenseMatrix minus(SparseMatrix mat) {
 		assert numRows == mat.numRows;
@@ -655,9 +661,10 @@ public class DenseMatrix implements Serializable {
 	}
 
 	/**
-	 * Do {@code A + c} matrix operation, where {@code c} is a constant. Each entries will be added by {@code c}
+	 * Do {@code A - c} matrix operation, where {@code c} is a constant. Each entry will be decreased by {@code c}
 	 * 
-	 * @return a new matrix with results of {@code C = A + c}
+	 * @param val constant to subtract
+	 * @return a new matrix with results of {@code C = A - c}
 	 */
 	public DenseMatrix minus(double val) {
 

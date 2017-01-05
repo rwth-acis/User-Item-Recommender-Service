@@ -48,7 +48,7 @@ public class DenseVector implements Serializable {
 		data = new double[size];
 	}
 
-	/**
+	/*
 	 * Construct a dense vector by deeply copying data from a given array
 	 */
 	public DenseVector(double[] array) {
@@ -74,7 +74,7 @@ public class DenseVector implements Serializable {
 		}
 	}
 
-	/**
+	/*
 	 * Construct a dense vector by deeply copying data from a given vector
 	 */
 	public DenseVector(DenseVector vec) {
@@ -88,7 +88,7 @@ public class DenseVector implements Serializable {
 		return new DenseVector(this);
 	}
 
-	/**
+	/*
 	 * Initialize a dense vector with Gaussian values
 	 */
 	public void init(double mean, double sigma) {
@@ -104,7 +104,7 @@ public class DenseVector implements Serializable {
 			data[i] = Randoms.uniform();
 	}
 
-	/**
+	/*
 	 * Initialize a dense vector with uniform values in (0, range)
 	 */
 	public void init(double range) {
@@ -112,7 +112,7 @@ public class DenseVector implements Serializable {
 			data[i] = Randoms.uniform(0, range);
 	}
 
-	/**
+	/*
 	 * Get a value at entry [index]
 	 */
 	public double get(int idx) {
@@ -140,14 +140,14 @@ public class DenseVector implements Serializable {
 		return Stats.sum(data);
 	}
 
-	/**
+	/*
 	 * Set a value to entry [index]
 	 */
 	public void set(int idx, double val) {
 		data[idx] = val;
 	}
 
-	/**
+	/*
 	 * Set a value to all entries
 	 */
 	public void setAll(double val) {
@@ -155,22 +155,22 @@ public class DenseVector implements Serializable {
 			data[i] = val;
 	}
 
-	/**
+	/*
 	 * Add a value to entry [index]
 	 */
 	public void add(int idx, double val) {
 		data[idx] += val;
 	}
 
-	/**
+	/*
 	 * Substract a value from entry [index]
 	 */
 	public void minus(int idx, double val) {
 		data[idx] -= val;
 	}
 
-	/**
-	 * @return a dense vector by adding a value to all entries of current vector
+	/*
+	 * return a dense vector by adding a value to all entries of current vector
 	 */
 	public DenseVector add(double val) {
 		DenseVector result = new DenseVector(size);
@@ -181,8 +181,8 @@ public class DenseVector implements Serializable {
 		return result;
 	}
 
-	/**
-	 * @return a dense vector by substructing a value from all entries of current vector
+	/*
+	 * return a dense vector by substructing a value from all entries of current vector
 	 */
 	public DenseVector minus(double val) {
 
@@ -194,8 +194,8 @@ public class DenseVector implements Serializable {
 		return result;
 	}
 
-	/**
-	 * @return a dense vector by scaling a value to all entries of current vector
+	/*
+	 * return a dense vector by scaling a value to all entries of current vector
 	 */
 	public DenseVector scale(double val) {
 
@@ -209,6 +209,7 @@ public class DenseVector implements Serializable {
 	/**
 	 * Do vector operation: {@code a + b}
 	 * 
+	 * @param vec vector to add
 	 * @return a dense vector with results of {@code c = a + b}
 	 */
 	public DenseVector add(DenseVector vec) {
@@ -224,6 +225,7 @@ public class DenseVector implements Serializable {
 	/**
 	 * Do vector operation: {@code a - b}
 	 * 
+	 * @param vec vector to subtract
 	 * @return a dense vector with results of {@code c = a - b}
 	 */
 	public DenseVector minus(DenseVector vec) {
@@ -239,6 +241,7 @@ public class DenseVector implements Serializable {
 	/**
 	 * Do vector operation: {@code a^t * b}
 	 * 
+	 * @param vec vector with which to compute the product
 	 * @return the inner product of two vectors
 	 */
 	public double inner(DenseVector vec) {
@@ -254,6 +257,7 @@ public class DenseVector implements Serializable {
 	/**
 	 * Do vector operation: {@code a^t * b}
 	 * 
+	 * @param vec vector with which to compute the product
 	 * @return the inner product of two vectors
 	 */
 	public double inner(SparseVector vec) {
@@ -267,6 +271,7 @@ public class DenseVector implements Serializable {
 	/**
 	 * Do vector operation: {@code a * b^t}
 	 * 
+	 * @param vec vector with which to compute the product
 	 * @return the outer product of two vectors
 	 */
 	public DenseMatrix outer(DenseVector vec) {
@@ -279,9 +284,9 @@ public class DenseVector implements Serializable {
 		return mat;
 	}
 
-	/**
+	/*
 	 * 
-	 * @return the Kronecker product of two vectors
+	 * return the Kronecker product of two vectors
 	 */
 	public static DenseVector kroneckerProduct(DenseVector M, DenseVector N) {
 		DenseVector res = new DenseVector(M.size * N.size);

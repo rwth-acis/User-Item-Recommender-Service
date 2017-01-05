@@ -63,7 +63,7 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable {
 	protected double[] colData;
 	protected int[] colPtr, rowInd;
 
-	/**
+	/*
 	 * Construct a sparse matrix with both CRS and CCS structures
 	 */
 	public SparseMatrix(int rows, int cols, Table<Integer, Integer, ? extends Number> dataTable,
@@ -74,7 +74,7 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable {
 		construct(dataTable, colMap);
 	}
 
-	/**
+	/*
 	 * Construct a sparse matrix with only CRS structures
 	 */
 	public SparseMatrix(int rows, int cols, Table<Integer, Integer, ? extends Number> dataTable) {
@@ -95,8 +95,6 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable {
 	 * 
 	 * @param mat
 	 *            the original sparse matrix
-	 * @param deap
-	 *            whether to copy the CCS structures
 	 */
 	public SparseMatrix(SparseMatrix mat) {
 		numRows = mat.numRows;
@@ -687,7 +685,7 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable {
 		}
 	}
 
-	/**
+	/*
 	 * remove zero entries of the given matrix
 	 */
 	public static void reshape(SparseMatrix mat) {
@@ -753,7 +751,7 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable {
 		mat.colPtr = res.colPtr;
 	}
 
-	/**
+	/*
 	 * @return a new matrix with shape (rows, cols) with data from the current matrix
 	 */
 	public SparseMatrix reshape(int rows, int cols) {

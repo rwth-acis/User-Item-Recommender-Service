@@ -132,7 +132,7 @@ public class Strings {
 		return Joiner.on(sep).skipNulls().join(objs);
 	}
 
-	/**
+	/*
 	 * default sep="," between all objects
 	 * 
 	 */
@@ -391,7 +391,7 @@ public class Strings {
 		return sb.toString();
 	}
 
-	/**
+	/*
 	 * convert to a section of message
 	 */
 	public static String toSection(List<String> msgs) {

@@ -40,6 +40,7 @@ public class SymmMatrix implements Serializable {
 
 	/**
 	 * Construct a symmetric matrix
+	 * @param dim matrix dimension
 	 */
 	public SymmMatrix(int dim) {
 		this.dim = dim;
@@ -48,6 +49,7 @@ public class SymmMatrix implements Serializable {
 
 	/**
 	 * Construct a symmetric matrix by deeply copying data from a given matrix
+	 * @param mat matrix to copy from
 	 */
 	public SymmMatrix(SymmMatrix mat) {
 		dim = mat.dim;
@@ -63,6 +65,9 @@ public class SymmMatrix implements Serializable {
 
 	/**
 	 * Get a value at entry (row, col)
+	 *  @param row row
+	 *  @param col column
+	 *  @return value
 	 */
 	public double get(int row, int col) {
 
@@ -76,6 +81,9 @@ public class SymmMatrix implements Serializable {
 
 	/**
 	 * set a value to entry (row, col)
+	 *  @param row row
+	 *  @param col column
+	 *  @param val value
 	 */
 	public void set(int row, int col, double val) {
 		if (row >= col)
@@ -86,6 +94,9 @@ public class SymmMatrix implements Serializable {
 
 	/**
 	 * add a value to entry (row, col)
+	 *  @param row row
+	 *  @param col column
+	 *  @param val to add
 	 */
 	public void add(int row, int col, double val) {
 		if (row >= col)
@@ -96,6 +107,8 @@ public class SymmMatrix implements Serializable {
 
 	/**
 	 * Retrieve a complete row of similar items
+	 * @param row row
+	 * @return vector representing the row
 	 */
 	public SparseVector row(int row) {
 		SparseVector res = new SparseVector(dim);

@@ -11,9 +11,7 @@ import i5.las2peer.services.recommender.librec.util.Strings;
 
 /**
  * <h3>WRMF: Weighted Regularized Matrix Factorization.</h3>
- * <p>
  * This implementation refers to the method proposed by Hu et al. at ICDM 2008.
- * <p>
  * <ul>
  * <li><strong>Binary ratings:</strong> Pan et al., One-class Collaborative
  * Filtering, ICDM 2008.</li>

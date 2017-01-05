@@ -451,7 +451,10 @@ public class TimeNeighSVD extends IterativeRecommender {
 
 	/***************************************************************** Functional Methods *******************************************/
 	/**
-	 * @return the time deviation for a specific timestamp (number of days) t w.r.t the mean date tu
+	 * Return the time deviation for a specific timestamp (number of days) t w.r.t the mean date tu
+	 * @param u user
+	 * @param t time (day)
+	 * @return time deviation
 	 */
 	protected double dev(int u, int t) {
 		double tu = userMeanDate.get(u);
@@ -463,7 +466,13 @@ public class TimeNeighSVD extends IterativeRecommender {
 	}
 
 	/**
-	 * @return the rating decay for user u rating item j w.r.t. timestamp (number of days) t, i.e. e^(-beta_u * |t-tj|) from eq. (16)
+	 * Return the rating decay for user u rating item j w.r.t. timestamp (number of days) t,
+	 * i.e. e^(-beta_u * |t-tj|) from eq. (16)
+	 * 
+	 * @param u user
+	 * @param j item
+	 * @param t time (day)
+	 * @return rating decay
 	 */
 	protected double decay(int u, int j, int t) {
 		int tj = days((long) timeMatrix.get(u, j), minTimestamp);
@@ -475,7 +484,9 @@ public class TimeNeighSVD extends IterativeRecommender {
 	}
 
 	/**
-	 * @return the bin number (starting from 0..numBins-1) for a specific timestamp t;
+	 * Return the bin number (starting from 0..numBins-1) for a specific day
+	 * @param day day
+	 * @return bin number
 	 */
 	protected int bin(int day) {
 		int bin = (int) (day / (numDays + 0.0) * numBins);
@@ -489,14 +500,19 @@ public class TimeNeighSVD extends IterativeRecommender {
 	}
 
 	/**
-	 * @return number of days for a given time difference
+	 * Return the number of days for a given time difference
+	 * @param diff difference between two timestamps
+	 * @return number of days
 	 */
 	protected static int days(long diff) {
 		return (int) TimeUnit.MILLISECONDS.toDays(diff);
 	}
 
 	/**
-	 * @return number of days between two timestamps
+	 * Return the number of days between two timestamps
+	 * @param t1 first timestamp
+	 * @param t2 second timestamp
+	 * @return number of days
 	 */
 	protected static int days(long t1, long t2) {
 		return days(Math.abs(t1 - t2));

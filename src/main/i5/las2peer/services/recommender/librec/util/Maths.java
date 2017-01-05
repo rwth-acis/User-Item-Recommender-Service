@@ -40,8 +40,8 @@ public class Maths {
 	/**
 	 * Check if given string is a number (digits only)
 	 * 
-	 * @param string
-	 * @return
+	 * @param string string to be checked
+	 * @return true if the string is a number
 	 */
 	public static boolean isNumber(String string) {
 		return string.matches("^\\d+$");
@@ -50,8 +50,8 @@ public class Maths {
 	/**
 	 * Check if given string is numeric (-+0..9(.)0...9)
 	 * 
-	 * @param string
-	 * @return
+	 * @param string string to be checked
+	 * @return true if the string is numeric
 	 */
 	public static boolean isNumeric(String string) {
 		return string.matches("^[-+]?\\d+(\\.\\d+)?$");
@@ -60,8 +60,8 @@ public class Maths {
 	/**
 	 * Check if given string is number with dot separator and two decimals.
 	 * 
-	 * @param string
-	 * @return
+	 * @param string string to be checked
+	 * @return true if the string is a number with dot separator and two decimals
 	 */
 	public static boolean isNumberWith2Decimals(String string) {
 		return string.matches("^\\d+\\.\\d{2}$");
@@ -72,6 +72,7 @@ public class Maths {
 	}
 
 	/**
+	 * @param n input value n
 	 * @return n!
 	 */
 	public static int factorial(int n) {
@@ -84,6 +85,7 @@ public class Maths {
 	}
 
 	/**
+	 * @param n input value n
 	 * @return ln(e)=log_e(n)
 	 */
 	public static double ln(double n) {
@@ -96,6 +98,9 @@ public class Maths {
 
 	/**
 	 * given log(a) and log(b), return log(a + b)
+	 * @param log_a log a
+	 * @param log_b log b
+	 * @return log(a + b)
 	 */
 	public static double logSum(double log_a, double log_b) {
 		double v;
@@ -108,21 +113,21 @@ public class Maths {
 		return (v);
 	}
 
-	/**
+	/*
 	 * logistic function g(x)
 	 */
 	public static double logistic(double x) {
 		return g(x);
 	}
 
-	/**
+	/*
 	 * logistic function g(x)
 	 */
 	public static double g(double x) {
 		return 1.0 / (1.0 + Math.exp(-x));
 	}
 
-	/**
+	/*
 	 * gradient value of logistic function g(x)
 	 */
 	public static double gd(double x) {
@@ -148,7 +153,7 @@ public class Maths {
 		return x;
 	}
 
-	/**
+	/*
 	 * Fabonacci sequence
 	 * 
 	 */
@@ -163,7 +168,7 @@ public class Maths {
 			return fabonacci(n - 1) + fabonacci(n - 2);
 	}
 
-	/**
+	/*
 	 * greatest common divisor (gcd) or greatest common factor (gcf)
 	 * 
 	 * <p>
@@ -178,7 +183,7 @@ public class Maths {
 			return gcd(b, a % b);
 	}
 
-	/**
+	/*
 	 * least common multiple (lcm)
 	 * 
 	 */
@@ -189,7 +194,9 @@ public class Maths {
 			return 0;
 	}
 
-	/** sqrt(a^2 + b^2) without under/overflow. **/
+	/*
+	 * sqrt(a^2 + b^2) without under/overflow.
+	 */
 
 	public static double hypot(double a, double b) {
 		double r;

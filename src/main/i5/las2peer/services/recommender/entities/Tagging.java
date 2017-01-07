@@ -6,6 +6,16 @@ public class Tagging {
 	private long timestamp;
 	private String tag;
 	
+	public Tagging (){
+	}
+	
+	public Tagging (int userId, int itemId, long timestamp, String tag){
+		this.userId = userId;
+		this.itemId = itemId;
+		this.timestamp = timestamp;
+		this.tag = tag;
+	}
+	
 	public int getUserId() {
 		return userId;
 	}

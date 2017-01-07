@@ -294,9 +294,13 @@ public class DataDAO {
 	}
 
 	/**
-	 * Read data from a List of Ratings
+	 * Read data from a List of Ratings. userList and itemList can be used to add users and items that do
+	 * not have any ratings. If these lists are empty, then only the users and items from the ratingsList
+	 * are considered.
 	 * 
 	 * @param ratingsList contains the rating data including timestamps
+	 * @param userList list of users
+	 * @param itemList list of items
 	 * @param binThold
 	 *            the threshold to binarize a rating. If a rating is greater than the threshold, the value will be 1;
 	 *            otherwise 0. To disable this feature, i.e., keep the original rating value, set the threshold a
@@ -304,13 +308,26 @@ public class DataDAO {
 	 * @return a sparse matrix storing all the relevant data
 	 * @throws Exception on file I/O and number formatting errors
 	 */
-	public SparseMatrix[] readData(List<Rating> ratingsList, double binThold) throws Exception {
+	public SparseMatrix[] readData(List<Rating> ratingsList, List<Integer> userList,
+			List<Integer> itemList, double binThold) throws Exception {
 		// Table {row-id, col-id, rate}
 		Table<Integer, Integer, Double> dataTable = HashBasedTable.create();
 		// Table {row-id, col-id, timestamp}
 		Table<Integer, Integer, Long> timeTable = HashBasedTable.create();
 		// Map {col-id, multiple row-id}: used to fast build a rating matrix
 		Multimap<Integer, Integer> colMap = HashMultimap.create();
+		
+		// create inner userIds and itemIds
+		for (int user : userList){
+			String userStr = Integer.toString(user);
+			int row = userIds.containsKey(user) ? userIds.get(user) : userIds.size();
+			userIds.put(userStr, row);
+		}
+		for (int item : itemList){
+			String itemStr = Integer.toString(item);
+			int col = itemIds.containsKey(item) ? itemIds.get(item) : itemIds.size();
+			itemIds.put(itemStr, col);
+		}
 
 		minTimestamp = Long.MAX_VALUE;
 		maxTimestamp = Long.MIN_VALUE;

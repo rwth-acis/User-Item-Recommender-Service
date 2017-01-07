@@ -132,11 +132,13 @@ public class RecommenderDao {
 		librec.setParameter("evaluation.setup", "--early-stop loss");
 		
 		// Get rating data from database
-		List<Rating> ratings = queryGetRatings();
-		List<Tagging> tags = queryGetTaggings();
+		List<Rating> ratings = getRatings();
+		List<Tagging> tags = getTaggings();
+		List<Integer> users = getUsers();
+		List<Integer> items = getItems();
 		
 		// Set rating and tagging data
-		librec.setRatings(ratings);
+		librec.setRatings(ratings, users, items);
 		librec.setTaggings(tags);
 		librec.printDatasetSpecifications();
 		
@@ -147,7 +149,7 @@ public class RecommenderDao {
 		Table <Integer,Integer,Double> predictions = librec.getAllPredictions();
 		
 		// Store ratings in database
-		queryPutPredictions(predictions);
+		putPredictions(predictions);
 		
 		return;
 	}
@@ -173,7 +175,7 @@ public class RecommenderDao {
 		return json;
 	}
 
-	private List<Rating> queryGetRatings() throws SQLException {
+	private List<Rating> getRatings() throws SQLException {
 		Connection conn = null;
 		PreparedStatement stmnt = null;
 		ResultSet rs = null;
@@ -201,7 +203,7 @@ public class RecommenderDao {
 		return ratingsList;
 	}
 
-	private List<Tagging> queryGetTaggings() throws SQLException {
+	private List<Tagging> getTaggings() throws SQLException {
 		Connection conn = null;
 		PreparedStatement stmnt = null;
 		ResultSet rs = null;
@@ -229,7 +231,53 @@ public class RecommenderDao {
 		return taggingsList;
 	}
 
-	private void queryPutPredictions(Table<Integer, Integer, Double> predictions) throws SQLException {
+	private List<Integer> getUsers() throws SQLException {
+		Connection conn = null;
+		PreparedStatement stmnt = null;
+		ResultSet rs = null;
+		List<Integer> users = new LinkedList<Integer>();
+		
+		try{
+			conn = dbm.getConnection();
+			stmnt = conn.prepareStatement("SELECT UserId FROM User");
+			rs = stmnt.executeQuery();
+			while (rs.next()){
+				users.add(rs.getInt(1));
+			}
+		}
+		finally{
+			DbUtils.closeQuietly(conn);
+			DbUtils.closeQuietly(stmnt);
+			DbUtils.closeQuietly(rs);
+		}
+		
+		return users;
+	}
+
+	private List<Integer> getItems() throws SQLException {
+		Connection conn = null;
+		PreparedStatement stmnt = null;
+		ResultSet rs = null;
+		List<Integer> items = new LinkedList<Integer>();
+		
+		try{
+			conn = dbm.getConnection();
+			stmnt = conn.prepareStatement("SELECT ItemId FROM Item");
+			rs = stmnt.executeQuery();
+			while (rs.next()){
+				items.add(rs.getInt(1));
+			}
+		}
+		finally{
+			DbUtils.closeQuietly(conn);
+			DbUtils.closeQuietly(stmnt);
+			DbUtils.closeQuietly(rs);
+		}
+		
+		return items;
+	}
+
+	private void putPredictions(Table<Integer, Integer, Double> predictions) throws SQLException {
 		Connection conn = null;
 		Statement deleteStmnt = null;
 		PreparedStatement insertStmnt = null;

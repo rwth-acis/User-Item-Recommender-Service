@@ -6,6 +6,16 @@ public class Rating {
 	private long timestamp;
 	private double rating;
 	
+	public Rating (){
+	}
+	
+	public Rating (int userId, int itemId, long timestamp, double rating){
+		this.userId = userId;
+		this.itemId = itemId;
+		this.timestamp = timestamp;
+		this.rating = rating;
+	}
+	
 	public int getUserId() {
 		return userId;
 	}

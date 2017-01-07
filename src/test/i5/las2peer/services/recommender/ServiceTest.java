@@ -7,7 +7,6 @@ import java.io.PrintStream;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import i5.las2peer.p2p.LocalNode;
@@ -24,9 +23,8 @@ import i5.las2peer.webConnector.WebConnector;
  */
 public class ServiceTest {
 
-	private static final String HTTP_ADDRESS = "http://127.0.0.1";
-//	private static final int HTTP_PORT = WebConnector.DEFAULT_HTTP_PORT;
-	private static final int HTTP_PORT = 8082;
+//	private static final String HTTP_ADDRESS = "http://127.0.0.1";
+	private static final int HTTP_PORT = WebConnector.DEFAULT_HTTP_PORT;
 
 	private static LocalNode node;
 	private static WebConnector connector;
@@ -38,7 +36,7 @@ public class ServiceTest {
 	// during testing, the specified service version does not matter
 	private static final ServiceNameVersion testTemplateService = new ServiceNameVersion(RecommenderMain.class.getCanonicalName(),"1.0");
 
-	private static final String mainPath = "example/";
+//	private static final String mainPath = "example/";
 
 	/**
 	 * Called before the tests start.
@@ -52,7 +50,9 @@ public class ServiceTest {
 
 		// start node
 		node = LocalNode.newNode();
-		node.storeAgent(MockAgentFactory.getAdam());
+		testAgent = MockAgentFactory.getAdam();
+		testAgent.unlockPrivateKey(testPass); // agent must be unlocked in order to be stored
+		node.storeAgent(testAgent);
 		node.launch();
 
 		ServiceAgent testService = ServiceAgent.createServiceAgent(testTemplateService, "a pass");
@@ -74,7 +74,6 @@ public class ServiceTest {
 		try
 		{
 			System.out.println("waiting..");
-//			Thread.sleep(10000);
 			Thread.sleep(1000);
 		} catch (InterruptedException e)
 		{
@@ -107,12 +106,10 @@ public class ServiceTest {
 
 	}
 
-
 	/**
 	 * Test the TemplateService for valid rest mapping.
 	 * Important for development.
 	 */
-	@Ignore
 	@Test
 	public void testDebugMapping()
 	{

@@ -26,6 +26,7 @@
     <property name="junit.report" location="${export}/test_reports" />
 
     <property name="lib" location="lib" />
+    <property name="igraph" location="igraph" />
     
     <path id="libraries">
         <fileset dir="${lib}">
@@ -33,6 +34,8 @@
             <exclude name="junit-*.jar"/>
         </fileset>
     </path>
+	
+    <property name="lib.igraph" location="igraph" />
     
     <property name="lib.junit" location="${lib}/junit-4.12.jar" />
     
@@ -216,11 +219,12 @@ java -cp "lib/*:igraph:export/jars/*" i5.las2peer.services.recommender.Recommend
     </target>
     
     <target name="junit_tests" depends="init_junit, compile_all">
-        <junit fork="yes" haltonerror="yes" haltonfailure="yes" printsummary="yes">
+        <junit fork="yes" haltonerror="yes" haltonfailure="yes" printsummary="yes" showoutput="no">
             <classpath>
                 <pathelement path="${tmp.classes}" />
                 <pathelement path="${tmp.junit}" />
                 <pathelement path="${lib.junit}" />
+                <pathelement path="${lib.igraph}" />
                 <path refid="libraries"/>
             </classpath>
             <formatter type="plain" />

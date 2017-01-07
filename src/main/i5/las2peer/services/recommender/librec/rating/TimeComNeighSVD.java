@@ -584,7 +584,7 @@ public class TimeComNeighSVD extends IterativeRecommender {
 		OCut = new ArrayList<Map<Integer, Table<Integer, Integer, Double>>>(numCBins + 1);
 		ACu = new DenseMatrix(numUserCommunities[0], numFactors);
 		ACu.init(initMean, initStd);
-		Z = new DenseMatrix(numItems, numItems);
+		Z = new DenseMatrix(numItems, numFactors);
 		Z.init(initMean, initStd);
 		for (int cbin = 0; cbin <= numCBins; cbin++){
 			BCu[cbin] = new DenseVector(numUserCommunities[cbin]);

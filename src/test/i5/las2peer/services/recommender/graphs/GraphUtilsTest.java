@@ -1,40 +1,21 @@
 package i5.las2peer.services.recommender.graphs;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 
-import i5.las2peer.p2p.LocalNode;
-import i5.las2peer.p2p.ServiceNameVersion;
-import i5.las2peer.security.ServiceAgent;
-import i5.las2peer.security.UserAgent;
-import i5.las2peer.services.recommender.RecommenderMain;
 import i5.las2peer.services.recommender.librec.data.SparseMatrix;
-import i5.las2peer.services.recommender.rmi.RMIMyService;
-import i5.las2peer.testing.MockAgentFactory;
-import i5.las2peer.webConnector.WebConnector;
-import i5.las2peer.webConnector.client.ClientResponse;
-import i5.las2peer.webConnector.client.MiniClient;
 
-/**
- * Example Test Class demonstrating a basic JUnit test structure.
- *
- */
 public class GraphUtilsTest {
 
 	/**
 	 * Test the the construction of TF-IDF matrices to be used by the GF kNN algorithm
 	 */
+	@Ignore
 	@Test
 	public void testGetTfidfMatrix()
 	{

@@ -1,4 +1,4 @@
-package i5.las2peer.services.recommender;
+package i5.las2peer.services.recommender.rmi;
 
 import static org.junit.Assert.assertEquals;
 

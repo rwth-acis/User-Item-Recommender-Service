@@ -87,6 +87,7 @@ public class RecommenderCLI {
 	}
 	
 	private static void setParameters() {
+		librec.setParameter("evaluation.setup", "--test-view all --early-stop RMSE");
 		
 		if(options.containsKey("--rec-tcnsvd-cbins")){
 			librec.setParameter("timeComNeighSVD++", "-beta 0.04 -bins 30 -cbins " + options.get("--rec-tcnsvd-cbins") + " -k 200");

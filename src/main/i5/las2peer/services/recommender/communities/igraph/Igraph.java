@@ -26,6 +26,9 @@ public class Igraph {
 	private IgraphLibrary igraph = IgraphLibrary.INSTANCE;
 	
 	
+	/**
+	 * Constructor.
+	 */
 	public Igraph(){
 		igraph = IgraphLibrary.INSTANCE;
 		
@@ -33,6 +36,10 @@ public class Igraph {
 		igraph.igraph_vector_init(membershipsVector, 0);
 	}
 	
+	/**
+	 * Specify the graph (as an adjacency matrix) on which to run the community detection algorithm.
+	 * @param inputMatrix adjacency matrix
+	 */
 	public void setGraph(SparseMatrix inputMatrix){
 		// get the number of users in the user adjacency matrix
 		numUsers = inputMatrix.numRows();
@@ -77,6 +84,10 @@ public class Igraph {
 		igraph.igraph_add_edges(graph, edges, null);
 	}
 	
+	/**
+	 * Returns the detected community structure as a membership matrix.
+	 * @return membership matrix
+	 */
 	public SparseMatrix getMembershipsMatrix() {
 		// fill membership information into the memberships matrix
 		Table<Integer, Integer, Double> membershipsTable = HashBasedTable.create();
@@ -97,6 +108,11 @@ public class Igraph {
 		return membershipsMatrix;
 	}
 	
+	/**
+	 * Returns the detected community structure as a membership vector, where the entry at index
+	 * u contains the identifier of the community to which user u is assigned.
+	 * @return membership vector
+	 */
 	public DenseVector getMembershipsVector() {
 		// fill membership information into the memberships vector
 		DenseVector memberships = new DenseVector(numUsers);
@@ -109,6 +125,10 @@ public class Igraph {
 		return memberships;
 	}
 	
+	/**
+	 * Perform Walktrap community detection.
+	 * @param steps Walktrap steps parameter
+	 */
 	public void detectCommunitiesWalktrap(int steps){
 		/*
 		int igraph_community_walktrap(

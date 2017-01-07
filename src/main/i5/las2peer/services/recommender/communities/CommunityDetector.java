@@ -59,34 +59,73 @@ public class CommunityDetector {
 		WALKTRAP, DMID, SLPA
 	}
 	
-	
+	/**
+	 * Specify which algorithm to use for community detection
+	 * @param algorithm community detection algorithm
+	 */
 	public void setAlgorithm(CommunityDetectionAlgorithm algorithm){
 		this.algorithm = algorithm;
 	}
 	
+	/**
+	 * Specify the graph (given as an adjacency matrix) on which to perform comunity detection
+	 * @param graph adjacency matrix
+	 */
 	public void setGraph(SparseMatrix graph){
 		this.graph = graph;
 	}
 	
+	/**
+	 * Specify the parameters to use for DMID community detection
+	 * @param iterationBound DMID iteration bound parameter
+	 * @param precisionFactor DMID precision factor parameter
+	 * @param profitabilityDelta DMID profitability delta parameter
+	 */
 	public void setDmidParameters(int iterationBound, double precisionFactor, double profitabilityDelta){
 		dmidLeadershipIterationBound = iterationBound;
 		dmidLeadershipPrecisionFactor = precisionFactor;
 		dmidProfitabilityDelta = profitabilityDelta;
 	}
 	
+	/**
+	 * Specify the steps parameter to use for Walktrap community detection
+	 * @param steps Walktrap steps parameter 
+	 */
 	public void setWalktrapParameters(int steps){
 		walktrapSteps = steps;
 	}
-	
+	/**
+	 * Specify the parameters to use for SLPA community detection
+	 * @param probabilityThresh SLPA probabilityThresh parameter
+	 * @param memorySize SLPA memorySize parameter
+	 */
 	public void setSlpaParameters(double probabilityThresh, int memorySize){
 		slpaProbabilityThreshold = probabilityThresh;
 		slpaMemorySize = memorySize;
 	}
 	
+	/**
+	 * Specify whether to perform overlapping or non-overlapping community detection.
+	 * 
+	 * When using an overlapping community detection algorithm and this option is set
+	 * to false then only the community assignments with the highest membership level
+	 * are kept, so that the result is a non-overlapping community structure.
+	 * 
+	 * When using a non-overlapping community detection algorithm, then this option
+	 * has no effect, since the community structure is non-overlapping in any case.
+	 * 
+	 * @param overlapping
+	 */
 	public void setOverlapping(boolean overlapping){
 		this.overlapping = overlapping;
 	}
 	
+	/**
+	 * Perform community detection. Before calling this method the graph must be specified
+	 * using the setGraph() method.
+	 * @throws OcdAlgorithmException on community detection errors
+	 * @throws InterruptedException when a thread is interrupted
+	 */
 	public void detectCommunities() throws OcdAlgorithmException, InterruptedException{
 		Stopwatch sw = Stopwatch.createStarted();
 
@@ -108,22 +147,47 @@ public class CommunityDetector {
 		communityDetectionTime = (int) sw.elapsed(TimeUnit.SECONDS);
 	}
 	
+	/**
+	 * Returns the community structure as a membership matrix, where each row represents
+	 * a node, each column represents a community and each matrix entry indicates the
+	 * membership level of the corresponding node to the corresponding community.
+	 * @return membership matrix
+	 */
 	public SparseMatrix getMemberships(){
 		return membershipsMatrix;
 	}
 	
+	/**
+	 * Returns the community structure as a membership vector, where for each user u
+	 * the user's community assignment is given at index u. The vector may therefore 
+	 * only represent non-overlapping community structures.
+	 * @return membership vector
+	 */
 	public DenseVector getMembershipsVector(){
 		return membershipsVector;
 	}
 	
+	/**
+	 * Returns the number of communities detected.
+	 * @return number of communities
+	 */
 	public int getNumCommunities(){
 		return membershipsMatrix.numColumns();
 	}
 	
+	/**
+	 * Returns the time taken for community detection.
+	 * @return time
+	 */
 	public int getComputationTime(){
 		return communityDetectionTime;
 	}
 	
+	/**
+	 * Perform DMID community detection.
+	 * @throws OcdAlgorithmException on community detection errors
+	 * @throws InterruptedException when a thread is interrupted
+	 */
 	private void detectDmid() throws OcdAlgorithmException, InterruptedException {
 		Logs.info(String.format("DMID: [LIB, LPF, PD] = [%s, %s, %s]",
 				dmidLeadershipIterationBound, dmidLeadershipPrecisionFactor, dmidProfitabilityDelta));
@@ -145,6 +209,11 @@ public class CommunityDetector {
 		membershipsVector = computeMembershipsVector();
 	}
 	
+	/**
+	 * Perform SLPA community detection.
+	 * @throws OcdAlgorithmException on community detection errors
+	 * @throws InterruptedException when a thread is interrupted
+	 */
 	private void detectSlpa() throws OcdAlgorithmException, InterruptedException {
 		Logs.info(String.format("SLPA: [PT, MS] = [%s, %s]",
 				slpaProbabilityThreshold, slpaMemorySize));
@@ -165,6 +234,11 @@ public class CommunityDetector {
 		membershipsVector = computeMembershipsVector();
 	}
 	
+	/**
+	 * Construct a CustomGraph from the graph specified using the setGraph() method that
+	 * can be used by the WebOCD community detection algorithms.
+	 * @return graph
+	 */
 	private CustomGraph getWebOCDCustomGraph() {
 		// Construct a CustomGraph to be used by WebOCD from the SparseMatrix graph
 		
@@ -193,6 +267,11 @@ public class CommunityDetector {
 		return customGraph;
 	}
 	
+	/**
+	 * Reduce an overlapping community structure to a non-overlapping community
+	 * structure by only keeping the community with the highest membership level for
+	 * each node.
+	 */
 	private void makeNonOverlapping() {
 		int numNodes = membershipsMatrix.numRows();
 		int numCommunities = membershipsMatrix.numColumns();
@@ -218,6 +297,10 @@ public class CommunityDetector {
 		membershipsMatrix = new SparseMatrix(numNodes, numCommunities, membershipsTable, membershipsColMap);
 	}
 
+	/**
+	 * Compute a memberships vector that represents the (non-overlapping) community structure.
+	 * @return
+	 */
 	private DenseVector computeMembershipsVector(){
 		int numNodes = membershipsMatrix.numRows();
 		
@@ -241,6 +324,9 @@ public class CommunityDetector {
 		return vector;
 	}
 
+	/**
+	 * Perform Walktrap community detection.
+	 */
 	private void detectWalktrap() {
 		Logs.info(String.format("Walktrap: [steps] = [%s]", walktrapSteps));
 		

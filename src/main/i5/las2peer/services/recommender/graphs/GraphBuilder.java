@@ -35,29 +35,54 @@ public class GraphBuilder {
 		PEARSON_CORRELATION, COSINE_SIMILARITY, MEAN_SQUARED_DISTANCE, JACCARD_MEAN_SQUARED_DISTANCE
 	}
 	
+	/**
+	 * Set the number of neighbors for k-NN graph construction
+	 * @param k number of neighbors
+	 */
 	public void setK(int k){
 		this.k = k;
 	}
 	
+	/**
+	 * Set the similarity measure to use for k-NN graph construction
+	 * @param sim similarity measure
+	 */
 	public void setSimilarityMeasure(SimilarityMeasure sim){
 		similarity = sim;
 	}
 	
+	/**
+	 * Specify whether to use ratings-based k-NN graph construction or tag-based graph construction
+	 * @param m graph construction method
+	 */
 	public void setMethod(GraphConstructionMethod m){
 		method = m;
 	}
 	
+	/**
+	 * Set the rating data
+	 * @param ratingsMatrix rating data
+	 */
 	public void setRatingData(SparseMatrix ratingsMatrix){
 		this.ratingsMatrix = ratingsMatrix;
 		numUsers = ratingsMatrix.numRows();
 		numItems = ratingsMatrix.numColumns();
 	}
 	
+	/**
+	 * Set the tagging data. Data is given as Tables with the structure (userId, tagId, timestamp)
+	 * and (itemId, tagId, timestamp)
+	 * @param userTagTable user tagging data
+	 * @param itemTagTable item tagging data
+	 */
 	public void setTaggingData(Table<Integer, Integer, Set<Long>> userTagTable, Table<Integer, Integer, Set<Long>> itemTagTable){
 		this.userTagTable = userTagTable;
 		this.itemTagTable = itemTagTable;
 	}
 	
+	/**
+	 * Construct the user and item graphs
+	 */
 	public void buildGraphs(){
 		Stopwatch sw = Stopwatch.createStarted();
 		
@@ -72,18 +97,33 @@ public class GraphBuilder {
 		graphConstrTime = (int) sw.elapsed(TimeUnit.SECONDS);
 	}
 	
+	/**
+	 * Returns the user graph as an adjacency matrix
+	 * @return adjacency matrix
+	 */
 	public SparseMatrix getUserAdjacencyMatrix(){
 		return userAdjMatrix;
 	}
 	
+	/**
+	 * Returns the item graph as an adjacency matrix
+	 * @return adjacency matrix
+	 */
 	public SparseMatrix getItemAdjacencyMatrix(){
 		return itemAdjMatrix;
 	}
 	
+	/**
+	 * Returns the time taken to construct the user and item graphs
+	 * @return time in seconds
+	 */
 	public int getComputationTime(){
 		return graphConstrTime;
 	}
 	
+	/**
+	 * Construct the user and item graphs using the ratings-based method
+	 */
 	private void buildGraphsFromRatings() {
 		// Construct GFSparseMatrix from ratings matrix and compute TF-IDF value for each element
 		GFSparseMatrix userTfidfMatrix = GraphUtils.getTfidfMatrix(ratingsMatrix, true);
@@ -161,6 +201,9 @@ public class GraphBuilder {
 		logAdjMatrixInfo();
 	}
 	
+	/**
+	 * Construct the user and item graphs using the tag-based method
+	 */
 	private void buildGraphsFromTaggings() {
 		Table<Integer, Integer, Double> userAdjTable = HashBasedTable.create();
 		Table<Integer, Integer, Double> itemAdjTable = HashBasedTable.create();

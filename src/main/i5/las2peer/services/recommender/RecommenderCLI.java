@@ -11,6 +11,10 @@ public class RecommenderCLI {
 	private static Map<String,String> options;
 	private static LibRec librec;
 	
+	/**
+	 * Main function for the command line interface
+	 * @param args command line arguments
+	 */
 	public static void main(String[] args) {
 		
 		// Read options from command line arguments
@@ -72,6 +76,10 @@ public class RecommenderCLI {
 		
 	}
 	
+	/**
+	 * Collects the options given on the command line and stores them in a Map
+	 * @param args command line arguments
+	 */
 	private static void readOptions(String[] args){
 		options = new HashMap<String,String>();
 		String par = null;
@@ -86,6 +94,9 @@ public class RecommenderCLI {
 		}
 	}
 	
+	/**
+	 * Sets the LibRec parameters according to the parameters from the command line
+	 */
 	private static void setParameters() {
 		librec.setParameter("evaluation.setup", "--test-view all --early-stop RMSE");
 		

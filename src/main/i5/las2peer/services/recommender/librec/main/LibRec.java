@@ -3,6 +3,7 @@ package i5.las2peer.services.recommender.librec.main;
 import java.io.BufferedReader;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -50,8 +51,6 @@ public class LibRec {
 	private SparseMatrix ratingsMatrix, timeMatrix;
 	private Table<Integer, Integer, Set<Long>> userTagTable, itemTagTable;
 
-//	private int numUsers, numItems;
-	
 	private Recommender model;
 	
 	private Map<Measure,Double> evalMeasures;
@@ -65,16 +64,24 @@ public class LibRec {
 		TimeComNeighSVDPlusPlus, TimeComNeighSVDPlusPlusFast
 	}
 	
+	/**
+	 * Default constructor, creates an Item-kNN recommender.
+	 */
 	public LibRec(){
 		this("itemknn");
 	}
 	
+	/**
+	 * Constructor specifying the recommender algorithm to use. Valid algorithms are
+	 * itemAvg, itemKNN, WRMF, SVD, NSVD, TNSVD, CNSVD, TCNSVD, CNSVDFast, TCNSVDFast
+	 * @param algorithm recommender algorithm
+	 */
 	public LibRec(String algorithm){
 		configuration = new Properties();
 		
 		// Common options
 		configuration.setProperty("item.ranking", "off -topN -1 -ignore -1");
-		configuration.setProperty("evaluation.setup", "--test-view all --early-stop RMSE");
+		configuration.setProperty("evaluation.setup", "--test-view all --early-stop loss");
 		configuration.setProperty("output.setup", "off");
 		configuration.setProperty("num.factors", "10");
 		configuration.setProperty("num.max.iter", "30");
@@ -143,11 +150,34 @@ public class LibRec {
 		}
 	}
 	
+	/**
+	 * Sets a parameter, for configuring the recommender algorithm or the evaluation procedure
+	 * @param parameter parameter to set
+	 * @param value parameter value
+	 */
 	public void setParameter(String parameter, String value){
 		configuration.setProperty(parameter, value);
 	}
 	
+	/**
+	 * Sets the rating data
+	 * @param ratingsList rating data
+	 * @throws Exception on number formatting errors
+	 */
 	public void setRatings(List<Rating> ratingsList) throws Exception {
+		// call setRatings() with empty user and item lists
+		setRatings(ratingsList, new LinkedList<Integer>(), new LinkedList<Integer>());
+	}
+	
+	/**
+	 * Sets the rating data. Allows including additional users and items that do not have any ratings
+	 * via the userList and itemList parameters. 
+	 * @param ratingsList rating data
+	 * @param userList list of user identifiers
+	 * @param itemList list of item identifiers
+	 * @throws Exception on number formatting errors
+	 */
+	public void setRatings(List<Rating> ratingsList, List<Integer> userList, List<Integer> itemList) throws Exception {
 		DataDAO rateDao = new DataDAO("");
 		
 		// rating threshold
@@ -156,7 +186,7 @@ public class LibRec {
 		SparseMatrix[] data;
 		
 		rateDao.setTimeUnit(TimeUnit.SECONDS);	// time unit of ratings' timestamps, not used since FilmTrust does not contain timestamps
-		data = rateDao.readData(ratingsList, binThold);
+		data = rateDao.readData(ratingsList, userList, itemList, binThold);
 		
 		ratingsMatrix = data[0];
 		timeMatrix = data[1];
@@ -165,6 +195,10 @@ public class LibRec {
 		Recommender.binThold = binThold;
 	}
 	
+	/**
+	 * Set the tagging data
+	 * @param taggings tagging data
+	 */
 	public void setTaggings(List<Tagging> taggings) {
 		DataDAO rateDao = Recommender.rateDao;
 		TimeUnit timeUnit = TimeUnit.SECONDS;
@@ -185,6 +219,7 @@ public class LibRec {
 			int user;
 			int item;
 			
+			// get inner user and item ids
 			// skip users and items that are not part of the ratings matrix
 			try{
 				user = rateDao.getUserId(userString);
@@ -216,6 +251,13 @@ public class LibRec {
 				numTaggings, numUserTags, numItemTags);
 	}
 	
+	/**
+	 * Reads and sets the rating data from a file. Valid types of dataset are
+	 * filmtrust, movielens, netflix
+	 * @param filePath file location
+	 * @param type type of dataset
+	 * @throws Exception on file I/O and number formatting errors
+	 */
 	public void readRatingsFromFile(String filePath, String type) throws Exception {
 		// DAO object
 		DataDAO rateDao = new DataDAO(filePath);
@@ -254,6 +296,11 @@ public class LibRec {
 		Recommender.binThold = binThold;
 	}
 	
+	/**
+	 * Reads and sets the rating data from a file.
+	 * @param filePath file location
+	 * @throws Exception on file I/O and number formatting errors
+	 */
 	public void readTaggingsFromFile(String filePath) throws Exception {
 		DataDAO rateDao = Recommender.rateDao;
 		TimeUnit timeUnit = TimeUnit.SECONDS;
@@ -330,12 +377,20 @@ public class LibRec {
 				numTaggings, numUserTags, numItemTags);
 	}
 	
+	/**
+	 * Log statistics on the dataset, e.g. numbers of users, items and ratings, ratings density, ...
+	 * @throws Exception on string formatting errors
+	 */
 	public void printDatasetSpecifications() throws Exception{
 		if(Recommender.rateDao != null){
 			Recommender.rateDao.printSpecs();
 		}
 	}
 	
+	/**
+	 * Builds the recommender model
+	 * @throws Exception on errors building the model
+	 */
 	public void buildModel() throws Exception{
 		Recommender.rateMatrix = ratingsMatrix;
 		Recommender.timeMatrix = timeMatrix;
@@ -345,13 +400,31 @@ public class LibRec {
 		Recommender.cf = new FileConfiger(configuration);
 		
 		model = getRecommender(ratingsMatrix, null, -1);
+		model.userTagTable = userTagTable;
+		model.itemTagTable = itemTagTable;
 		model.execute();
 	}
 	
-	public double getPrediction(int u, int i) throws Exception{
-		return model.getPrediction(u,i);
+	/**
+	 * Return a rating estimation for a particular user and item pair and current time.
+	 * @param user user identifier
+	 * @param item item identifier
+	 * @return rating estimation
+	 * @throws Exception on errors computing the rating estimation
+	 */
+	public double getPrediction(int user, int item) throws Exception{
+		// get the inner user and item identifiers u and i
+		int u = Recommender.rateDao.getUserId(Integer.toString(user));
+		int i = Recommender.rateDao.getItemId(Integer.toString(item));
+		// get and return rating estimation
+		return model.getPrediction(u, i);
 	}
 	
+	/**
+	 * Return a table (user, item, prediction) of predictions for all user-item pairs
+	 * @return prediction table
+	 * @throws Exception on errors computing the predictions
+	 */
 	public Table<Integer,Integer,Double> getAllPredictions() throws Exception{
 		Table<Integer,Integer,Double> predictionTable = HashBasedTable.create();
 		for (Map.Entry<String, Integer> userEntry : Recommender.rateDao.getUserIds().entrySet()){
@@ -367,6 +440,12 @@ public class LibRec {
 		return predictionTable;
 	}
 	
+	/**
+	 * Performs an evaluation. Splits the rating and tagging data according to the evaluation
+	 * parameters set using the setParameter() method, performs an evaluation on each subset of the data
+	 * and logs the evaluation results.
+	 * @throws InterruptedException on errors in one of the evaluation threads 
+	 */
 	public void evaluate() throws InterruptedException{
 		// Split data into training and testing data
 		Recommender.rateMatrix = ratingsMatrix;
@@ -454,6 +533,11 @@ public class LibRec {
 		Logs.info(evalRankingInfo);
 	}
 	
+	/**
+	 * Returns the evaluation result regarding the specified measure.
+	 * @param measure evaluation measure
+	 * @return
+	 */
 	public double getEvalResult(Measure measure){
 		return evalMeasures.get(measure);
 	}

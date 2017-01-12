@@ -86,7 +86,7 @@ public class ItemDao {
 			rs = stmnt.executeQuery();
 			while (rs.next()){
 				JSONObject itemObj = new JSONObject();
-				itemObj.put("ItemId", rs.getInt(1));
+				itemObj.put("itemId", rs.getInt(1));
 				itemsArray.add(itemObj);
 			}
 		}

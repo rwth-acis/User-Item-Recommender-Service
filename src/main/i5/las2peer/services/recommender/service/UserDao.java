@@ -90,7 +90,7 @@ public class UserDao {
 			rs = stmnt.executeQuery();
 			while (rs.next()){
 				JSONObject userObj = new JSONObject();
-				userObj.put("UserId", rs.getInt(1));
+				userObj.put("userId", rs.getInt(1));
 				usersArray.add(userObj);
 			}
 		}

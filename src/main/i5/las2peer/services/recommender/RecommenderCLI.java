@@ -39,7 +39,7 @@ public class RecommenderCLI {
 		} catch (Exception e) {
 			Logs.error("Error reading from dataset file " + ratingsFile);
 			Logs.error(e.getMessage());
-			e.printStackTrace();
+//			e.printStackTrace();
 			return;
 		}
 		

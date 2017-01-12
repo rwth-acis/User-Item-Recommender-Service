@@ -536,7 +536,7 @@ public class LibRec {
 	/**
 	 * Returns the evaluation result regarding the specified measure.
 	 * @param measure evaluation measure
-	 * @return
+	 * @return value
 	 */
 	public double getEvalResult(Measure measure){
 		return evalMeasures.get(measure);

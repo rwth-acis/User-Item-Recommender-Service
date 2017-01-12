@@ -114,7 +114,7 @@ public class CommunityDetector {
 	 * When using a non-overlapping community detection algorithm, then this option
 	 * has no effect, since the community structure is non-overlapping in any case.
 	 * 
-	 * @param overlapping
+	 * @param overlapping if true allow detection of overlapping community structures
 	 */
 	public void setOverlapping(boolean overlapping){
 		this.overlapping = overlapping;

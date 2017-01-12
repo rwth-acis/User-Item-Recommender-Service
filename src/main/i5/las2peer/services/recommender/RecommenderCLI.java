@@ -38,7 +38,7 @@ public class RecommenderCLI {
 			librec.readRatingsFromFile(ratingsFile, datasetType);
 		} catch (Exception e) {
 			Logs.error("Error reading from dataset file " + ratingsFile);
-			Logs.error(e.getMessage());
+//			Logs.error(e.getMessage());
 //			e.printStackTrace();
 			return;
 		}
@@ -50,8 +50,8 @@ public class RecommenderCLI {
 				librec.readTaggingsFromFile(taggingsFile);
 			} catch (Exception e) {
 				Logs.error("Error reading from tag file " + taggingsFile);
-				Logs.error(e.getMessage());
-				e.printStackTrace();
+//				Logs.error(e.getMessage());
+//				e.printStackTrace();
 				return;
 			}
 		}
@@ -60,8 +60,8 @@ public class RecommenderCLI {
 			librec.printDatasetSpecifications();
 		} catch (Exception e) {
 			Logs.error("Error printing the dataset specifications");
-			Logs.error(e.getMessage());
-			e.printStackTrace();
+//			Logs.error(e.getMessage());
+//			e.printStackTrace();
 			return;
 		}
 		

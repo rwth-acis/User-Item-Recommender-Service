@@ -68,7 +68,7 @@ public class LibRec {
 	 * Default constructor, creates an Item-kNN recommender.
 	 */
 	public LibRec(){
-		this("itemknn");
+		this("itemAvg");
 	}
 	
 	/**

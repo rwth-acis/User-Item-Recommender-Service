@@ -112,60 +112,60 @@ public class RecommenderMain extends Service {
 		return response;
 	}
 	
-	// //////////////////////////////////////////////////////////////////////////////////////
-	// Service methods for dataset import.
-	// //////////////////////////////////////////////////////////////////////////////////////
-
-	/**
-	 * Import dataset files
-	 * Imports a dataset file. So far the only supported dataset format is MovieLens. The movies.csv file must be imported first as
-	 * otherwise foreign key constraints are not satisfied when importing ratings or tags for movies that have not yet been imported.  
-	 * Curl commands that can be used to access this service to import MovieLens files:
-	 *  curl --header 'Content-Type: text/csv' --header 'Accept: text/plain' --data-binary @movies.csv 'http://localhost:8082/api/import/MovieLens/movies'
-	 *  curl --header 'Content-Type: text/csv' --header 'Accept: text/plain' --data-binary @ratings.csv 'http://localhost:8082/api/import/MovieLens/ratings'
-	 *  curl --header 'Content-Type: text/csv' --header 'Accept: text/plain' --data-binary @tags.csv 'http://localhost:8082/api/import/MovieLens/tags'
-	 * 
-	 * @param data Data to import
-	 * @param datasetName Dataset type, e.g. MovieLens
-	 * @param fileName File name, e.g. ratings
-	 * @return HTTP response with status code 200 for success and 500 for failure.
-	 */
-	@POST
-	@Path("/import/{dataset}/{file}")
-	@Consumes(MediaType.TEXT_CSV)
-	@Produces(MediaType.APPLICATION_JSON)
-	@ApiOperation(
-			value = "Import a dataset file",
-			notes = "Import a file from a dataset."
-					+ " Allowed datasets: MovieLens."
-					+ " Allowed files for the MovieLens dataset: movies, ratings, tags.")
-	@ApiResponses(value = {
-			@ApiResponse(code = HttpURLConnection.HTTP_CREATED, message = "Dataset inserted into database"),
-			@ApiResponse(code = HttpURLConnection.HTTP_INTERNAL_ERROR, message = "Could not read dataset or error accessing the database")
-	})
-	public HttpResponse importMovieLens(
-			@ApiParam(value="CSV data to import", required=true) @ContentParam String data,
-			@ApiParam(value="Dataset type", required=true) @PathParam("dataset") String datasetName,
-			@ApiParam(value="File name", required=true) @PathParam("file") String fileName)	{
-		HttpResponse response;
-		DataImporter importer = new DataImporter(dbm);
-		if (data == null || data.isEmpty()){
-			response = new HttpResponse("", HttpURLConnection.HTTP_INTERNAL_ERROR);
-		}
-		else{
-			try{
-				importer.importData(data, datasetName, fileName);
-			}
-			catch(Exception e){
-				Logger.logError(this, e);
-				response = new HttpResponse("",	HttpURLConnection.HTTP_INTERNAL_ERROR);
-				return response;
-			}
-		}
-		
-		response = new HttpResponse("", HttpURLConnection.HTTP_CREATED);
-		return response;
-	}
+//	// //////////////////////////////////////////////////////////////////////////////////////
+//	// Service methods for dataset import.
+//	// //////////////////////////////////////////////////////////////////////////////////////
+//
+//	/**
+//	 * Import dataset files
+//	 * Imports a dataset file. So far the only supported dataset format is MovieLens. The movies.csv file must be imported first as
+//	 * otherwise foreign key constraints are not satisfied when importing ratings or tags for movies that have not yet been imported.  
+//	 * Curl commands that can be used to access this service to import MovieLens files:
+//	 *  curl --header 'Content-Type: text/csv' --header 'Accept: text/plain' --data-binary @movies.csv 'http://localhost:8082/api/import/MovieLens/movies'
+//	 *  curl --header 'Content-Type: text/csv' --header 'Accept: text/plain' --data-binary @ratings.csv 'http://localhost:8082/api/import/MovieLens/ratings'
+//	 *  curl --header 'Content-Type: text/csv' --header 'Accept: text/plain' --data-binary @tags.csv 'http://localhost:8082/api/import/MovieLens/tags'
+//	 * 
+//	 * @param data Data to import
+//	 * @param datasetName Dataset type, e.g. MovieLens
+//	 * @param fileName File name, e.g. ratings
+//	 * @return HTTP response with status code 200 for success and 500 for failure.
+//	 */
+//	@POST
+//	@Path("/import/{dataset}/{file}")
+//	@Consumes(MediaType.TEXT_CSV)
+//	@Produces(MediaType.APPLICATION_JSON)
+//	@ApiOperation(
+//			value = "Import a dataset file",
+//			notes = "Import a file from a dataset."
+//					+ " Allowed datasets: MovieLens."
+//					+ " Allowed files for the MovieLens dataset: movies, ratings, tags.")
+//	@ApiResponses(value = {
+//			@ApiResponse(code = HttpURLConnection.HTTP_CREATED, message = "Dataset inserted into database"),
+//			@ApiResponse(code = HttpURLConnection.HTTP_INTERNAL_ERROR, message = "Could not read dataset or error accessing the database")
+//	})
+//	public HttpResponse importMovieLens(
+//			@ApiParam(value="CSV data to import", required=true) @ContentParam String data,
+//			@ApiParam(value="Dataset type", required=true) @PathParam("dataset") String datasetName,
+//			@ApiParam(value="File name", required=true) @PathParam("file") String fileName)	{
+//		HttpResponse response;
+//		DataImporter importer = new DataImporter(dbm);
+//		if (data == null || data.isEmpty()){
+//			response = new HttpResponse("", HttpURLConnection.HTTP_INTERNAL_ERROR);
+//		}
+//		else{
+//			try{
+//				importer.importData(data, datasetName, fileName);
+//			}
+//			catch(Exception e){
+//				Logger.logError(this, e);
+//				response = new HttpResponse("",	HttpURLConnection.HTTP_INTERNAL_ERROR);
+//				return response;
+//			}
+//		}
+//		
+//		response = new HttpResponse("", HttpURLConnection.HTTP_CREATED);
+//		return response;
+//	}
 	
 	// //////////////////////////////////////////////////////////////////////////////////////
 	// Service methods for user management.
@@ -894,27 +894,27 @@ public class RecommenderMain extends Service {
 		return response;
 	}
 
-	/**
-	 * Retrieve status
-	 * Retrieve the recommender system status.
-	 * 
-	 * @return Status of the recommender system.
-	 */
-	@GET
-	@Path("/recommender/status")
-	@Produces(MediaType.APPLICATION_JSON)
-	@ApiOperation(
-			value = "Retrieve status",
-			notes = "Retrieve the recommender system status.")
-	@ApiResponses(value = {
-			@ApiResponse(code = HttpURLConnection.HTTP_OK, message = "Status retrieved successfully"),
-			@ApiResponse(code = HttpURLConnection.HTTP_INTERNAL_ERROR, message = "Error retrieving the status")
-	})
-	public HttpResponse getRecommenderStatus(){
-		// TODO
-		// ... code ...
-		 return null;
-	}
+//	/**
+//	 * Retrieve status
+//	 * Retrieve the recommender system status.
+//	 * 
+//	 * @return Status of the recommender system.
+//	 */
+//	@GET
+//	@Path("/recommender/status")
+//	@Produces(MediaType.APPLICATION_JSON)
+//	@ApiOperation(
+//			value = "Retrieve status",
+//			notes = "Retrieve the recommender system status.")
+//	@ApiResponses(value = {
+//			@ApiResponse(code = HttpURLConnection.HTTP_OK, message = "Status retrieved successfully"),
+//			@ApiResponse(code = HttpURLConnection.HTTP_INTERNAL_ERROR, message = "Error retrieving the status")
+//	})
+//	public HttpResponse getRecommenderStatus(){
+//		// TODO
+//		// ... code ...
+//		 return null;
+//	}
 
 	
 	// //////////////////////////////////////////////////////////////////////////////////////
